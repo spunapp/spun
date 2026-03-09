@@ -68,12 +68,26 @@ create table if not exists prospects (
   estimated_revenue text,
   years_in_business integer,
   company_news text,
+  lead_score integer default 0,
+  behavioural_score integer default 0,
+  firmographic_score integer default 0,
   status text default 'prospect' check (status in ('prospect', 'contacted', 'qualified', 'negotiating', 'customer', 'lost')),
   touchpoints jsonb default '[]',
   source text default 'csv_upload',
   custom_fields jsonb default '{}',
   created_at timestamptz default now(),
   updated_at timestamptz default now()
+);
+
+-- Lead score events table
+create table if not exists lead_score_events (
+  id uuid primary key default gen_random_uuid(),
+  prospect_id uuid references prospects on delete cascade,
+  business_id uuid references businesses on delete cascade,
+  event_type text not null check (event_type in ('ad_click', 'email_open', 'email_click', 'website_visit', 'website_revisit', 'contact_form', 'firmographic')),
+  points integer not null,
+  note text,
+  created_at timestamptz default now()
 );
 
 -- Sales strategies table
@@ -122,6 +136,7 @@ alter table businesses enable row level security;
 alter table campaigns enable row level security;
 alter table ad_creatives enable row level security;
 alter table prospects enable row level security;
+alter table lead_score_events enable row level security;
 alter table sales_strategies enable row level security;
 alter table customers enable row level security;
 alter table roi_records enable row level security;
@@ -141,6 +156,11 @@ create policy "Users can manage their ad creatives" on ad_creatives
   );
 
 create policy "Users can manage their prospects" on prospects
+  for all using (
+    business_id in (select id from businesses where user_id = auth.uid())
+  );
+
+create policy "Users can manage their lead score events" on lead_score_events
   for all using (
     business_id in (select id from businesses where user_id = auth.uid())
   );
