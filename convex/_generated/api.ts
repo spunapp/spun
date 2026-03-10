@@ -1,80 +1,71 @@
 /* eslint-disable */
 /**
- * Generated API stub — will be replaced by `npx convex dev`
+ * Generated API references — will be replaced by `npx convex dev`
  *
- * This file provides type-safe references to Convex functions.
- * Run `npx convex dev` to regenerate with actual types.
+ * Uses makeFunctionReference to create proper Convex function references.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function stub(name: string): any {
-  // Return a function reference that Convex hooks can accept
-  // The actual implementation lives on the Convex server
-  const fn = (() => {}) as any
-  fn._name = name
-  fn.isRegistered = true
-  return fn
-}
+import { makeFunctionReference } from "convex/server"
 
 export const api = {
   conversations: {
-    list: stub("conversations:list"),
-    get: stub("conversations:get"),
-    getMessages: stub("conversations:getMessages"),
-    create: stub("conversations:create"),
-    updateTitle: stub("conversations:updateTitle"),
+    list: makeFunctionReference<"query">("conversations:list"),
+    get: makeFunctionReference<"query">("conversations:get"),
+    getMessages: makeFunctionReference<"query">("conversations:getMessages"),
+    create: makeFunctionReference<"mutation">("conversations:create"),
+    updateTitle: makeFunctionReference<"mutation">("conversations:updateTitle"),
   },
   messages: {
-    send: stub("messages:send"),
-    updateMetadata: stub("messages:updateMetadata"),
-    getByConversation: stub("messages:getByConversation"),
+    send: makeFunctionReference<"mutation">("messages:send"),
+    updateMetadata: makeFunctionReference<"mutation">("messages:updateMetadata"),
+    getByConversation: makeFunctionReference<"query">("messages:getByConversation"),
   },
   businesses: {
-    get: stub("businesses:get"),
-    getByUser: stub("businesses:getByUser"),
-    create: stub("businesses:create"),
-    update: stub("businesses:update"),
-    updateTrustMode: stub("businesses:updateTrustMode"),
+    get: makeFunctionReference<"query">("businesses:get"),
+    getByUser: makeFunctionReference<"query">("businesses:getByUser"),
+    create: makeFunctionReference<"mutation">("businesses:create"),
+    update: makeFunctionReference<"mutation">("businesses:update"),
+    updateTrustMode: makeFunctionReference<"mutation">("businesses:updateTrustMode"),
   },
   campaigns: {
-    listByBusiness: stub("campaigns:listByBusiness"),
-    get: stub("campaigns:get"),
-    create: stub("campaigns:create"),
-    updateStatus: stub("campaigns:updateStatus"),
+    listByBusiness: makeFunctionReference<"query">("campaigns:listByBusiness"),
+    get: makeFunctionReference<"query">("campaigns:get"),
+    create: makeFunctionReference<"mutation">("campaigns:create"),
+    updateStatus: makeFunctionReference<"mutation">("campaigns:updateStatus"),
   },
   approvals: {
-    listPending: stub("approvals:listPending"),
-    create: stub("approvals:create"),
-    approve: stub("approvals:approve"),
-    reject: stub("approvals:reject"),
+    listPending: makeFunctionReference<"query">("approvals:listPending"),
+    create: makeFunctionReference<"mutation">("approvals:create"),
+    approve: makeFunctionReference<"mutation">("approvals:approve"),
+    reject: makeFunctionReference<"mutation">("approvals:reject"),
   },
   usage: {
-    getCurrentUsage: stub("usage:getCurrentUsage"),
-    getOrCreateLedger: stub("usage:getOrCreateLedger"),
-    incrementCampaigns: stub("usage:incrementCampaigns"),
-    incrementCreatives: stub("usage:incrementCreatives"),
-    incrementChannels: stub("usage:incrementChannels"),
+    getCurrentUsage: makeFunctionReference<"query">("usage:getCurrentUsage"),
+    getOrCreateLedger: makeFunctionReference<"mutation">("usage:getOrCreateLedger"),
+    incrementCampaigns: makeFunctionReference<"mutation">("usage:incrementCampaigns"),
+    incrementCreatives: makeFunctionReference<"mutation">("usage:incrementCreatives"),
+    incrementChannels: makeFunctionReference<"mutation">("usage:incrementChannels"),
   },
   channels: {
-    listByBusiness: stub("channels:listByBusiness"),
-    connect: stub("channels:connect"),
-    disconnect: stub("channels:disconnect"),
-    updateStatus: stub("channels:updateStatus"),
-    updateTokens: stub("channels:updateTokens"),
+    listByBusiness: makeFunctionReference<"query">("channels:listByBusiness"),
+    connect: makeFunctionReference<"mutation">("channels:connect"),
+    disconnect: makeFunctionReference<"mutation">("channels:disconnect"),
+    updateStatus: makeFunctionReference<"mutation">("channels:updateStatus"),
+    updateTokens: makeFunctionReference<"mutation">("channels:updateTokens"),
   },
   prospects: {
-    listByBusiness: stub("prospects:listByBusiness"),
-    get: stub("prospects:get"),
-    create: stub("prospects:create"),
-    updateTier: stub("prospects:updateTier"),
-    updateStatus: stub("prospects:updateStatus"),
-    updateScores: stub("prospects:updateScores"),
-    logScoreEvent: stub("prospects:logScoreEvent"),
-    getScoreEvents: stub("prospects:getScoreEvents"),
+    listByBusiness: makeFunctionReference<"query">("prospects:listByBusiness"),
+    get: makeFunctionReference<"query">("prospects:get"),
+    create: makeFunctionReference<"mutation">("prospects:create"),
+    updateTier: makeFunctionReference<"mutation">("prospects:updateTier"),
+    updateStatus: makeFunctionReference<"mutation">("prospects:updateStatus"),
+    updateScores: makeFunctionReference<"mutation">("prospects:updateScores"),
+    logScoreEvent: makeFunctionReference<"mutation">("prospects:logScoreEvent"),
+    getScoreEvents: makeFunctionReference<"query">("prospects:getScoreEvents"),
   },
   ai: {
-    chat: stub("ai:chat"),
-    generateCampaign: stub("ai:generateCampaign"),
-    generateCreatives: stub("ai:generateCreatives"),
+    chat: makeFunctionReference<"action">("ai:chat"),
+    generateCampaign: makeFunctionReference<"action">("ai:generateCampaign"),
+    generateCreatives: makeFunctionReference<"action">("ai:generateCreatives"),
   },
 }
