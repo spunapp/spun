@@ -53,13 +53,13 @@ export function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-purple-500/50 resize-none disabled:opacity-50"
+            className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none disabled:opacity-50"
           />
         </div>
         <button
           onClick={handleSubmit}
           disabled={!input.trim() || disabled}
-          className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+          className="flex-shrink-0 w-10 h-10 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
         >
           <ArrowUp className="w-5 h-5" />
         </button>

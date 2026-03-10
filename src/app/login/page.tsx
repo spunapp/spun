@@ -3,7 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { auth } from "@/lib/auth/provider"
-import { Zap, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import Image from "next/image"
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false)
@@ -24,14 +25,25 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center px-4">
       <div className="max-w-sm w-full space-y-8 text-center">
         <div>
-          <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Zap className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white">Spun</h1>
-          <p className="text-slate-400 mt-2">
+          <Image
+            src="/icon-animated.gif"
+            alt="Spun"
+            width={80}
+            height={80}
+            className="mx-auto mb-4 rounded-2xl"
+            unoptimized
+          />
+          <Image
+            src="/logo.png"
+            alt="Spun"
+            width={200}
+            height={56}
+            className="mx-auto"
+          />
+          <p className="text-slate-300 mt-3">
             Your marketing department in a chat window.
           </p>
         </div>
@@ -40,7 +52,7 @@ export default function LoginPage() {
           <button
             onClick={handleLogin}
             disabled={loading}
-            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-semibold rounded-xl disabled:opacity-50 transition-all"
+            className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-xl border border-white/20 disabled:opacity-50 transition-all"
           >
             {loading ? (
               <Loader2 className="w-5 h-5 animate-spin" />

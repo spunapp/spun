@@ -37,9 +37,7 @@ export function ChatThread({
       {messages.length === 0 && !isLoading && (
         <div className="flex items-center justify-center h-full">
           <div className="text-center max-w-md">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl font-bold text-white">S</span>
-            </div>
+            <img src="/icon-animated.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-white mb-2">
               Hey! I&apos;m Spun, your CMO.
             </h2>
@@ -63,11 +61,9 @@ export function ChatThread({
 
       {isLoading && (
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-bold text-white">S</span>
-          </div>
+          <img src="/icon.png" alt="Spun" className="w-8 h-8 rounded-lg flex-shrink-0" />
           <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
-            <Loader2 className="w-4 h-4 text-purple-400 animate-spin" />
+            <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
           </div>
         </div>
       )}

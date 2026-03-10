@@ -28,15 +28,13 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
   return (
     <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       {!isUser && (
-        <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
-          <span className="text-xs font-bold text-white">S</span>
-        </div>
+        <img src="/icon.png" alt="Spun" className="w-8 h-8 rounded-lg flex-shrink-0" />
       )}
 
       <div
         className={`max-w-[80%] ${
           isUser
-            ? "bg-purple-600/20 border border-purple-500/30 rounded-2xl rounded-tr-sm"
+            ? "bg-white/10 border border-white/20 rounded-2xl rounded-tr-sm"
             : "bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm"
         } px-4 py-3`}
       >

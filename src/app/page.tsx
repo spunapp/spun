@@ -24,8 +24,8 @@ export default function HomePage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-purple-400 animate-spin" />
+      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+        <Loader2 className="w-6 h-6 text-white/50 animate-spin" />
       </div>
     )
   }

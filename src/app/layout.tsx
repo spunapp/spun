@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Spun — Your Marketing Department in a Chat Window",
   description:
     "AI-powered CMO for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+  icons: {
+    icon: "/icon.png",
+    apple: "/icon.png",
+  },
 }
 
 export default function RootLayout({

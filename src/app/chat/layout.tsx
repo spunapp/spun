@@ -1,9 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Zap, Menu, X, Settings, LogOut } from "lucide-react"
+import { Menu, X, Settings, LogOut } from "lucide-react"
 import { auth } from "@/lib/auth/provider"
 import { useRouter } from "next/navigation"
+import Image from "next/image"
 
 export default function ChatLayout({
   children,
@@ -19,11 +20,11 @@ export default function ChatLayout({
   }
 
   return (
-    <div className="h-screen flex bg-slate-950 text-white">
+    <div className="h-screen flex bg-[var(--background)] text-white">
       {/* Mobile sidebar toggle */}
       <button
         onClick={() => setSidebarOpen(true)}
-        className="lg:hidden fixed top-3 left-3 z-30 p-2 bg-slate-900 border border-white/10 rounded-lg"
+        className="lg:hidden fixed top-3 left-3 z-30 p-2 bg-[var(--background-dark)] border border-white/10 rounded-lg"
       >
         <Menu className="w-5 h-5" />
       </button>
@@ -38,16 +39,14 @@ export default function ChatLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:relative z-50 lg:z-auto w-64 h-full bg-slate-900 border-r border-white/5 flex flex-col transition-transform lg:translate-x-0 ${
+        className={`fixed lg:relative z-50 lg:z-auto w-64 h-full bg-[var(--background-dark)] border-r border-white/5 flex flex-col transition-transform lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <div className="w-7 h-7 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
+            <Image src="/icon.png" alt="Spun" width={28} height={28} className="rounded" />
             <span className="font-bold text-sm">Spun</span>
           </div>
           <button

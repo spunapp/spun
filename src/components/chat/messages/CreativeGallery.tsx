@@ -64,7 +64,7 @@ export function CreativeGallery({ content, metadata }: CreativeGalleryProps) {
 
       {previewHtml && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="relative bg-slate-900 rounded-xl border border-white/10 max-w-2xl w-full max-h-[80vh] overflow-auto">
+          <div className="relative bg-[var(--background-dark)] rounded-xl border border-white/10 max-w-2xl w-full max-h-[80vh] overflow-auto">
             <button
               onClick={() => setPreviewHtml(null)}
               className="absolute top-3 right-3 z-10 p-1 bg-slate-800 rounded-lg hover:bg-slate-700"
