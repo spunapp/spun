@@ -29,7 +29,7 @@ export default function LoginPage() {
       <div className="max-w-sm w-full space-y-8 text-center">
         <div>
           <Image
-            src="/icon-animated.gif"
+            src="/spun.gif"
             alt="Spun"
             width={80}
             height={80}
