@@ -37,7 +37,7 @@ export function ChatThread({
       {messages.length === 0 && !isLoading && (
         <div className="flex items-center justify-center h-full">
           <div className="text-center max-w-md">
-            <img src="/icon-animated.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
+            <img src="/spun.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
             <h2 className="text-xl font-semibold text-white mb-2">
               Hey! I&apos;m Spun, your CMO.
             </h2>
@@ -61,7 +61,7 @@ export function ChatThread({
 
       {isLoading && (
         <div className="flex items-start gap-3">
-          <img src="/icon.png" alt="Spun" className="w-8 h-8 rounded-lg flex-shrink-0" />
+          <img src="/spun.gif" alt="Spun is thinking" className="w-8 h-8 rounded-lg flex-shrink-0" />
           <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
             <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
           </div>
