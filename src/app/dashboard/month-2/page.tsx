@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   Users, Upload, Loader2, Zap, ChevronDown, ChevronUp,
@@ -69,11 +69,11 @@ export default function Month2Page() {
   const [tiering, setTiering] = useState(false)
   const [expandedProspect, setExpandedProspect] = useState<string | null>(null)
   const [generatingStrategy, setGeneratingStrategy] = useState<string | null>(null)
-  const [loggingActivity, setLoggingActivity] = useState<string | null>(null) // prospectId:eventType
+  const [loggingActivity, setLoggingActivity] = useState<{ prospectId: string; eventType: ActivityType } | null>(null)
   const [filterTier, setFilterTier] = useState<number | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const fileRef = useRef<HTMLInputElement>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   useEffect(() => { load() }, [])
 
@@ -144,7 +144,7 @@ export default function Month2Page() {
 
     if (saved) {
       setProspects(prev => [...prev, ...saved])
-      await tierProspects([...prospects, ...saved])
+      await tierProspects(saved)
     }
   }
 
@@ -171,8 +171,7 @@ export default function Month2Page() {
 
   async function logActivity(prospectId: string, eventType: ActivityType) {
     if (!business) return
-    const key = `${prospectId}:${eventType}`
-    setLoggingActivity(key)
+    setLoggingActivity({ prospectId, eventType })
     try {
       const res = await fetch('/api/log-activity', {
         method: 'POST',
@@ -430,8 +429,7 @@ export default function Month2Page() {
                       <p className="text-xs text-slate-500 uppercase tracking-wide mb-2">Log Interaction <span className="normal-case text-slate-600">(updates score & tier automatically)</span></p>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {ACTIVITIES.map(act => {
-                          const key = `${prospect.id}:${act.type}`
-                          const isLogging = loggingActivity === key
+                          const isLogging = loggingActivity?.prospectId === prospect.id && loggingActivity?.eventType === act.type
                           return (
                             <button
                               key={act.type}

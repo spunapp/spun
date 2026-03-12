@@ -1,7 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
-import { firmographicScore, scoreToTier } from '@/lib/types'
+import { firmographicScoreDetails, scoreToTier } from '@/lib/types'
 
 const client = new Anthropic()
 
@@ -89,23 +89,8 @@ Return ONLY a valid JSON array, no other text.`
           .filter(e => e.event_type !== 'firmographic')
           .reduce((sum, e) => sum + e.points, 0)
 
-        // Compute firmographic score from Claude's estimates
-        const firmoScore = firmographicScore(firm.company_size, firm.estimated_revenue)
-
-        // Build a breakdown note
-        const breakdown: string[] = []
-        const sizeNums = (firm.company_size || '').replace(/[^0-9]/g, ' ').trim().split(/\s+/).map(Number).filter(Boolean)
-        const maxSize = sizeNums.length > 0 ? Math.max(...sizeNums) : 0
-        if (maxSize > 0 && maxSize <= 50) breakdown.push('0-50 employees (+2)')
-        else if (maxSize <= 500) breakdown.push('51-500 employees (+4)')
-        else if (maxSize > 0) breakdown.push('501-1000+ employees (+6)')
-
-        const revNums = (firm.estimated_revenue || '').replace(/[^0-9.]/g, ' ').trim().split(/\s+/).map(Number).filter(Boolean)
-        const rev = revNums.length > 0 ? Math.max(...revNums) : 0
-        const revNorm = rev > 0 && rev < 10000 ? rev * 1000 : rev
-        if (revNorm > 0 && revNorm <= 25000) breakdown.push('Revenue <£25k (+2)')
-        else if (revNorm <= 100000) breakdown.push('Revenue £25k-£100k (+4)')
-        else if (revNorm > 100000) breakdown.push('Revenue £100k+ (+6)')
+        // Compute firmographic score and breakdown from Claude's estimates
+        const { score: firmoScore, breakdown } = firmographicScoreDetails(firm.company_size, firm.estimated_revenue)
 
         // Replace any existing firmographic event
         await supabase.from('lead_score_events').delete()

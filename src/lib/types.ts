@@ -121,26 +121,29 @@ export function scoreToTier(score: number): 1 | 2 | 3 {
   return 3
 }
 
-export function firmographicScore(companySize?: string, estimatedRevenue?: string): number {
+export function firmographicScoreDetails(companySize?: string, estimatedRevenue?: string): { score: number; breakdown: string[] } {
   let score = 0
+  const breakdown: string[] = []
   if (companySize) {
     const nums = companySize.replace(/[^0-9]/g, ' ').trim().split(/\s+/).map(Number).filter(Boolean)
     const maxSize = nums.length > 0 ? Math.max(...nums) : 0
-    if (maxSize > 0 && maxSize <= 50) score += 2
-    else if (maxSize <= 500) score += 4
-    else if (maxSize <= 1000) score += 6
-    else if (maxSize > 1000) score += 6
+    if (maxSize > 0 && maxSize <= 50) { score += 2; breakdown.push('0-50 employees (+2)') }
+    else if (maxSize <= 500) { score += 4; breakdown.push('51-500 employees (+4)') }
+    else if (maxSize > 0) { score += 6; breakdown.push('501-1000+ employees (+6)') }
   }
   if (estimatedRevenue) {
     const nums = estimatedRevenue.replace(/[^0-9.]/g, ' ').trim().split(/\s+/).map(Number).filter(Boolean)
     const rev = nums.length > 0 ? Math.max(...nums) : 0
-    // Normalise: if < 10,000 treat as thousands (e.g. "500k" stripped to 500)
     const revNorm = rev > 0 && rev < 10000 ? rev * 1000 : rev
-    if (revNorm > 0 && revNorm <= 25000) score += 2
-    else if (revNorm <= 100000) score += 4
-    else if (revNorm > 100000) score += 6
+    if (revNorm > 0 && revNorm <= 25000) { score += 2; breakdown.push('Revenue <£25k (+2)') }
+    else if (revNorm <= 100000) { score += 4; breakdown.push('Revenue £25k-£100k (+4)') }
+    else if (revNorm > 100000) { score += 6; breakdown.push('Revenue £100k+ (+6)') }
   }
-  return score
+  return { score, breakdown }
+}
+
+export function firmographicScore(companySize?: string, estimatedRevenue?: string): number {
+  return firmographicScoreDetails(companySize, estimatedRevenue).score
 }
 
 export interface Prospect {

@@ -18,7 +18,7 @@ export async function POST(req: Request) {
     // Verify ownership
     const { data: prospect } = await supabase
       .from('prospects')
-      .select('*')
+      .select('id')
       .eq('id', prospectId)
       .eq('business_id', businessId)
       .single()
@@ -42,13 +42,14 @@ export async function POST(req: Request) {
       .select('points, event_type')
       .eq('prospect_id', prospectId)
 
-    const behaviouralScore = (events || [])
-      .filter(e => e.event_type !== 'firmographic')
-      .reduce((sum, e) => sum + e.points, 0)
-
-    const firmographicScoreVal = (events || [])
-      .filter(e => e.event_type === 'firmographic')
-      .reduce((sum, e) => sum + e.points, 0)
+    const { behaviouralScore, firmographicScoreVal } = (events || []).reduce(
+      (acc, e) => {
+        if (e.event_type === 'firmographic') acc.firmographicScoreVal += e.points
+        else acc.behaviouralScore += e.points
+        return acc
+      },
+      { behaviouralScore: 0, firmographicScoreVal: 0 },
+    )
 
     const totalScore = behaviouralScore + firmographicScoreVal
     const tier = scoreToTier(totalScore)
