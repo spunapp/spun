@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     // Load business context
     const { data: business } = await supabase
       .from('businesses')
-      .select('*')
+      .select('name, description, industry, product_or_service, what_they_sell, target_audience, locations, competitors')
       .eq('id', businessId)
       .eq('user_id', user.id)
       .single()
