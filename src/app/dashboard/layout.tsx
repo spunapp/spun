@@ -8,7 +8,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import {
   Zap, LayoutDashboard, Megaphone, Users, TrendingUp,
-  LogOut, ChevronRight, Menu, X, Building2
+  LogOut, ChevronRight, Menu, X, Building2, MessageSquare
 } from 'lucide-react'
 
 const NAV = [
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/dashboard/month-1', label: 'Month 1 — Campaigns', icon: Megaphone },
   { href: '/dashboard/month-2', label: 'Month 2 — Sales', icon: Users },
   { href: '/dashboard/month-3', label: 'Month 3 — ROI', icon: TrendingUp },
+  { href: '/dashboard/chat', label: 'Chat with Spun', icon: MessageSquare },
 ]
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
