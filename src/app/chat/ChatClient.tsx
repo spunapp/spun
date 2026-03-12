@@ -15,7 +15,6 @@ export default function ChatClient() {
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
-  const [chatError, setChatError] = useState<string | null>(null)
 
   // Load user
   useEffect(() => {
@@ -98,7 +97,6 @@ export default function ChatClient() {
 
       setIsLoading(true)
       setQuickReplies([])
-      setChatError(null)
 
       try {
         await chat({
@@ -108,7 +106,6 @@ export default function ChatClient() {
         })
       } catch (err) {
         console.error("Chat error:", err)
-        setChatError(err instanceof Error ? err.message : "Something went wrong. Please try again.")
       } finally {
         setIsLoading(false)
       }
@@ -170,13 +167,6 @@ export default function ChatClient() {
         onApprove={handleApprove}
         onReject={handleReject}
       />
-
-      {/* Error banner */}
-      {chatError && (
-        <div className="mx-4 mb-2 px-3 py-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg">
-          {chatError}
-        </div>
-      )}
 
       {/* Quick replies */}
       <QuickReplies replies={quickReplies} onSelect={handleSend} />
