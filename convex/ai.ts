@@ -75,7 +75,7 @@ export const chat = action({
 
     // Call Claude with tools
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20241022",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 4096,
       system: systemPrompt,
       tools: TOOL_DEFINITIONS,
@@ -125,7 +125,7 @@ export const chat = action({
 
         // Follow-up call to get natural language response to the tool result
         const followUp = await anthropic.messages.create({
-          model: "claude-sonnet-4-5-20241022",
+          model: "claude-3-5-sonnet-20241022",
           max_tokens: 2048,
           system: systemPrompt,
           messages: [
@@ -217,7 +217,7 @@ Return ONLY valid JSON:
 }`
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20241022",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 4000,
       messages: [{ role: "user", content: prompt }],
     })
@@ -300,7 +300,7 @@ Return ONLY valid JSON:
 }`
 
       const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-5-20241022",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 3000,
         messages: [{ role: "user", content: prompt }],
       })
@@ -367,7 +367,7 @@ Return a JSON array, one object per prospect:
 Return ONLY a valid JSON array.`
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20241022",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 4000,
       messages: [{ role: "user", content: prompt }],
     })
@@ -531,7 +531,7 @@ Return ONLY valid JSON:
 }`
 
       const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-5-20241022",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 2000,
         messages: [{ role: "user", content: prompt }],
       })
