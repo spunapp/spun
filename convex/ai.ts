@@ -3,11 +3,20 @@
 import { action } from "./_generated/server"
 import { v } from "convex/values"
 import { api } from "./_generated/api"
+import type { Id } from "./_generated/dataModel"
 import Anthropic from "@anthropic-ai/sdk"
 import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
+import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
 const anthropic = new Anthropic()
+
+// Minimal ctx interface for the executeToolCall helper
+interface ToolCtx {
+  runMutation: (fn: unknown, args: unknown) => Promise<unknown>
+  runQuery: (fn: unknown, args: unknown) => Promise<unknown>
+  runAction: (fn: unknown, args: unknown) => Promise<unknown>
+}
 
 export const chat = action({
   args: {
@@ -34,50 +43,69 @@ export const chat = action({
       ? await ctx.runQuery(api.businesses.get, { id: conversation.businessId })
       : null
 
-    const messages = await ctx.runQuery(api.conversations.getMessages, {
+    const allMessages = await ctx.runQuery(api.conversations.getMessages, {
       conversationId: args.conversationId,
     })
 
-    // Build message history for Claude (last 50 messages for context)
-    const recentMessages = messages.slice(-50)
-    const claudeMessages: Anthropic.MessageParam[] = recentMessages.map(
-      (m) => ({
-        role: m.role === "user" ? ("user" as const) : ("assistant" as const),
-        content: m.content,
-      })
+    // Build Claude message history (last 50), only user/assistant roles
+    // Ensure alternating pattern — merge consecutive same-role messages
+    const filtered = (allMessages as Array<{ role: string; content: string }>)
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .slice(-50)
+
+    const claudeMessages: Anthropic.MessageParam[] = []
+    for (const m of filtered) {
+      const role = m.role as "user" | "assistant"
+      if (claudeMessages.length > 0 && claudeMessages[claudeMessages.length - 1].role === role) {
+        claudeMessages[claudeMessages.length - 1].content =
+          (claudeMessages[claudeMessages.length - 1].content as string) + "\n" + m.content
+      } else {
+        claudeMessages.push({ role, content: m.content })
+      }
+    }
+
+    // Must end with user message
+    if (claudeMessages.length === 0 || claudeMessages[claudeMessages.length - 1].role !== "user") {
+      claudeMessages.push({ role: "user", content: args.userMessage })
+    }
+
+    const systemPrompt = buildSystemPrompt(
+      business as Parameters<typeof buildSystemPrompt>[0]
     )
 
-    // Build system prompt with business context
-    const systemPrompt = buildSystemPrompt(business)
-
-    // Call Claude with tool_use
+    // Call Claude with tools
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20241022",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 4096,
       system: systemPrompt,
       tools: TOOL_DEFINITIONS,
       messages: claudeMessages,
     })
 
-    // Process response — handle tool calls and text
     let responseText = ""
-    let messageType: "text" | "strategy" | "campaign_preview" | "analytics" | "creative_gallery" | "approval_request" | "status_update" | "onboarding" = "text"
+    let messageType:
+      | "text"
+      | "strategy"
+      | "campaign_preview"
+      | "analytics"
+      | "creative_gallery"
+      | "approval_request"
+      | "status_update"
+      | "onboarding" = "text"
     let metadata: Record<string, unknown> | undefined
 
     for (const block of response.content) {
       if (block.type === "text") {
         responseText += block.text
       } else if (block.type === "tool_use") {
-        // Execute tool and get result
         const toolResult = await executeToolCall(
-          ctx,
+          ctx as unknown as ToolCtx,
           block.name,
           block.input as Record<string, unknown>,
           args.userId,
-          conversation.businessId ?? undefined
+          conversation.businessId
         )
 
-        // Determine rich message type based on tool
         if (block.name === "generate_strategy" || block.name === "generate_campaign") {
           messageType = "strategy"
           metadata = toolResult as Record<string, unknown>
@@ -95,9 +123,9 @@ export const chat = action({
           metadata = toolResult as Record<string, unknown>
         }
 
-        // Make follow-up call with tool result to get natural response
+        // Follow-up call to get natural language response to the tool result
         const followUp = await anthropic.messages.create({
-          model: "claude-sonnet-4-5-20241022",
+          model: "claude-3-5-sonnet-20241022",
           max_tokens: 2048,
           system: systemPrompt,
           messages: [
@@ -124,7 +152,8 @@ export const chat = action({
       }
     }
 
-    // Save assistant message
+    if (!responseText) responseText = "Something went wrong — please try again."
+
     const messageId = await ctx.runMutation(api.messages.send, {
       conversationId: args.conversationId,
       role: "assistant",
@@ -143,12 +172,10 @@ export const generateCampaign = action({
     phase: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const business = await ctx.runQuery(api.businesses.get, {
-      id: args.businessId,
-    })
+    const business = await ctx.runQuery(api.businesses.get, { id: args.businessId })
     if (!business) throw new Error("Business not found")
 
-    const prompt = `You are an expert marketing strategist. Create a comprehensive marketing campaign plan for the following business.
+    const prompt = `You are an expert marketing strategist. Create a comprehensive marketing campaign plan for this business.
 
 BUSINESS PROFILE:
 - Name: ${business.name}
@@ -161,11 +188,11 @@ BUSINESS PROFILE:
 - Locations: ${business.locations?.join(", ")}
 - Competitors: ${business.competitors?.join(", ")}
 
-Generate a detailed marketing campaign plan as valid JSON with this exact structure:
+Return ONLY valid JSON:
 {
   "theme": "A compelling campaign theme/concept",
   "audience_breakdown": {
-    "total_addressable_market": "Estimated TAM with numbers",
+    "total_addressable_market": "Estimated TAM",
     "serviceable_market": "Realistic reachable market",
     "target_segment": "Specific segment to target first",
     "key_characteristics": ["trait 1", "trait 2", "trait 3", "trait 4", "trait 5"]
@@ -187,19 +214,16 @@ Generate a detailed marketing campaign plan as valid JSON with this exact struct
     "mof": { "objective": "", "audience": "", "messaging": "", "creative_ideas": ["", "", ""], "kpis": ["", "", ""] },
     "bof": { "objective": "", "audience": "", "messaging": "", "creative_ideas": ["", "", ""], "kpis": ["", "", ""] }
   }
-}
-
-Return ONLY valid JSON.`
+}`
 
     const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20241022",
+      model: "claude-3-5-sonnet-20241022",
       max_tokens: 4000,
       messages: [{ role: "user", content: prompt }],
     })
 
     const textBlock = response.content.find((b) => b.type === "text")
-    if (!textBlock || textBlock.type !== "text")
-      throw new Error("No text response")
+    if (!textBlock || textBlock.type !== "text") throw new Error("No text response")
 
     const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
     const campaignData = JSON.parse(jsonMatch?.[0] || textBlock.text)
@@ -231,7 +255,6 @@ export const generateCreatives = action({
       ctx.runQuery(api.campaigns.get, { id: args.campaignId }),
       ctx.runQuery(api.businesses.get, { id: args.businessId }),
     ])
-
     if (!campaign || !business) throw new Error("Not found")
 
     const stageMap: Record<string, string> = {
@@ -239,15 +262,19 @@ export const generateCreatives = action({
       mof: "Middle of Funnel",
       bof: "Bottom of Funnel",
     }
-    const stageName = stageMap[args.funnelStage]
-    const stageData = campaign.funnel?.[args.funnelStage]
+    const stageData = (
+      campaign.funnel as Record<
+        string,
+        { objective?: string; messaging?: string; creative_ideas?: string[] }
+      >
+    )?.[args.funnelStage]
     const formats: Record<string, string[]> = {
       tof: ["Leaderboard Banner (728x90)", "Social Square (1080x1080)", "Story Format (1080x1920)"],
       mof: ["Display Banner (300x250)", "Social Carousel Slide (1080x1080)", "Video Thumbnail (1280x720)"],
       bof: ["Remarketing Banner (160x600)", "Email Header (600x200)", "Social Feed Ad (1200x628)"],
     }
 
-    const creatives = []
+    const savedIds: string[] = []
 
     for (let variant = 1; variant <= 3; variant++) {
       const format = formats[args.funnelStage]?.[variant - 1] ?? "Social Square"
@@ -257,25 +284,23 @@ export const generateCreatives = action({
 BUSINESS: ${business.name}
 INDUSTRY: ${business.industry}
 CAMPAIGN THEME: ${campaign.theme}
-FUNNEL STAGE: ${stageName} (Variant ${variant})
+FUNNEL STAGE: ${stageMap[args.funnelStage]} (Variant ${variant})
 FORMAT: ${format}
-OBJECTIVE: ${stageData?.objective}
-MESSAGING: ${stageData?.messaging}
-CREATIVE IDEA: ${stageData?.creative_ideas?.[variant - 1] || ""}
+OBJECTIVE: ${stageData?.objective ?? ""}
+MESSAGING: ${stageData?.messaging ?? ""}
+CREATIVE IDEA: ${stageData?.creative_ideas?.[variant - 1] ?? ""}
 
-Generate a JSON object:
+Return ONLY valid JSON:
 {
   "headline": "Compelling headline (max 8 words)",
   "copy": "Body copy (max 20 words)",
   "cta": "CTA button text (max 4 words)",
   "format": "${format}",
   "html_content": "Complete self-contained HTML with inline CSS. Professional ad with gradient backgrounds, bold typography. Colors: primary #7C3AED, accent #EC4899."
-}
-
-Return ONLY valid JSON.`
+}`
 
       const response = await anthropic.messages.create({
-        model: "claude-sonnet-4-5-20241022",
+        model: "claude-3-5-sonnet-20241022",
         max_tokens: 3000,
         messages: [{ role: "user", content: prompt }],
       })
@@ -287,37 +312,146 @@ Return ONLY valid JSON.`
         const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
         const creativeData = JSON.parse(jsonMatch?.[0] || textBlock.text)
 
-        creatives.push({
+        const id = await ctx.runMutation(api.adCreatives.create, {
           campaignId: args.campaignId,
           businessId: args.businessId,
           funnelStage: args.funnelStage as "tof" | "mof" | "bof",
           variant,
           format,
-          headline: creativeData.headline,
-          copy: creativeData.copy,
-          cta: creativeData.cta,
-          htmlContent: creativeData.html_content,
+          headline: creativeData.headline ?? "",
+          copy: creativeData.copy ?? "",
+          cta: creativeData.cta ?? "",
+          htmlContent: creativeData.html_content ?? "",
         })
+        savedIds.push(id as string)
       } catch {
         continue
       }
     }
 
-    return { creatives }
+    return { count: savedIds.length, campaignId: args.campaignId, funnelStage: args.funnelStage }
+  },
+})
+
+export const tierProspects = action({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, args) => {
+    const [business, prospects] = await Promise.all([
+      ctx.runQuery(api.businesses.get, { id: args.businessId }),
+      ctx.runQuery(api.prospects.listByBusiness, { businessId: args.businessId }),
+    ])
+
+    if (!business || !prospects || (prospects as unknown[]).length === 0) {
+      return { tiered: 0, message: "No prospects to tier" }
+    }
+
+    const prospectList = prospects as Array<{
+      _id: string
+      name: string
+      company: string
+      email: string
+      leadScore: number
+    }>
+
+    const prompt = `You are a B2B research analyst. Estimate firmographic data for each prospect.
+
+SELLER: ${business.name} (${business.industry}) — ${business.whatTheySell}
+TARGET PROFILE: ${business.targetAudience}
+
+PROSPECTS:
+${JSON.stringify(prospectList.map((p) => ({ id: p._id, name: p.name, company: p.company, email: p.email })), null, 2)}
+
+Return a JSON array, one object per prospect:
+[{ "id": "...", "company_size": "10-50", "estimated_revenue": "£50,000", "years_in_business": 5, "company_news": null, "tier_reasoning": "..." }]
+
+Return ONLY a valid JSON array.`
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 4000,
+      messages: [{ role: "user", content: prompt }],
+    })
+
+    const textBlock = response.content.find((b) => b.type === "text")
+    if (!textBlock || textBlock.type !== "text") throw new Error("No response")
+
+    const jsonMatch = textBlock.text.match(/\[[\s\S]*\]/)
+    const firmographicData = JSON.parse(jsonMatch?.[0] || textBlock.text) as Array<{
+      id: string
+      company_size: string
+      estimated_revenue: string
+      years_in_business: number | null
+      company_news: string | null
+      tier_reasoning: string
+    }>
+
+    const results = await Promise.all(
+      firmographicData.map(async (firm) => {
+        const events = (await ctx.runQuery(api.prospects.getScoreEvents, {
+          prospectId: firm.id as Id<"prospects">,
+        })) as Array<{ eventType: string; points: number }>
+
+        const behaviouralScore = events
+          .filter((e) => e.eventType !== "firmographic")
+          .reduce((sum, e) => sum + e.points, 0)
+
+        const { score: firmoScore, breakdown } = firmographicScoreDetails(
+          firm.company_size,
+          firm.estimated_revenue
+        )
+
+        await ctx.runMutation(api.prospects.logScoreEvent, {
+          prospectId: firm.id as Id<"prospects">,
+          businessId: args.businessId,
+          eventType: "firmographic",
+          points: firmoScore,
+          note: breakdown.join("; "),
+        })
+
+        const totalScore = behaviouralScore + firmoScore
+        const tier = scoreToTier(totalScore)
+        const tierLabel =
+          tier === 1 ? "Tier 1 (≥30 pts)" : tier === 2 ? "Tier 2 (≥15 pts)" : "Tier 3 (<15 pts)"
+
+        await Promise.all([
+          ctx.runMutation(api.prospects.updateScores, {
+            id: firm.id as Id<"prospects">,
+            leadScore: totalScore,
+            behaviouralScore,
+            firmographicScore: firmoScore,
+            tier,
+          }),
+          ctx.runMutation(api.prospects.updateTier, {
+            id: firm.id as Id<"prospects">,
+            tier,
+            tierReasoning: `${firm.tier_reasoning} Score: ${totalScore} pts → ${tierLabel}.`,
+            companySize: firm.company_size,
+            estimatedRevenue: firm.estimated_revenue,
+            yearsInBusiness: firm.years_in_business ?? undefined,
+            companyNews: firm.company_news ?? undefined,
+          }),
+        ])
+
+        return { id: firm.id, tier, score: totalScore }
+      })
+    )
+
+    const counts = results.reduce(
+      (acc, r) => { if (r) acc[r.tier] = (acc[r.tier] ?? 0) + 1; return acc },
+      {} as Record<number, number>
+    )
+
+    return { tiered: results.length, tier1: counts[1] ?? 0, tier2: counts[2] ?? 0, tier3: counts[3] ?? 0 }
   },
 })
 
 // Tool call executor
 async function executeToolCall(
-  ctx: {
-    runMutation: typeof import("./_generated/server")["action"]["prototype"]["runMutation"]
-    runQuery: typeof import("./_generated/server")["action"]["prototype"]["runQuery"]
-    runAction: typeof import("./_generated/server")["action"]["prototype"]["runAction"]
-  },
+  ctx: ToolCtx,
   toolName: string,
   input: Record<string, unknown>,
   userId: string,
-  businessId?: string
+  businessId?: Id<"businesses">
 ): Promise<unknown> {
   switch (toolName) {
     case "onboard_business": {
@@ -329,7 +463,13 @@ async function executeToolCall(
         whatTheySell: input.whatTheySell as string,
         industry: input.industry as string,
         targetAudience: input.targetAudience as string,
-        demographics: (input.demographics as { gender?: string; ageRange?: string; incomeRange?: string; locationType?: string }) ?? {},
+        demographics:
+          (input.demographics as {
+            gender?: string
+            ageRange?: string
+            incomeRange?: string
+            locationType?: string
+          }) ?? {},
         locations: (input.locations as string[]) ?? [],
         competitors: (input.competitors as string[]) ?? [],
         imageryUrls: [],
@@ -339,50 +479,133 @@ async function executeToolCall(
 
     case "generate_campaign": {
       if (!businessId) return { error: "No business context" }
-      const result = await ctx.runAction(api.ai.generateCampaign, {
-        businessId: businessId as never,
+      return await ctx.runAction(api.ai.generateCampaign, {
+        businessId,
         phase: input.phase as number | undefined,
       })
-      return result
     }
 
     case "generate_creatives": {
       if (!businessId) return { error: "No business context" }
-      const result = await ctx.runAction(api.ai.generateCreatives, {
-        campaignId: input.campaignId as never,
-        businessId: businessId as never,
+      return await ctx.runAction(api.ai.generateCreatives, {
+        campaignId: input.campaignId as Id<"campaigns">,
+        businessId,
         funnelStage: input.funnelStage as string,
       })
-      return result
     }
 
-    case "check_usage": {
+    case "tier_prospects": {
       if (!businessId) return { error: "No business context" }
-      const usage = await ctx.runQuery(api.usage.getCurrentUsage, {
-        businessId: businessId as never,
-      })
-      return usage
+      return await ctx.runAction(api.ai.tierProspects, { businessId })
     }
 
-    case "connect_channel": {
+    case "generate_sales_strategy": {
+      if (!businessId) return { error: "No business context" }
+      const [prospect, business] = (await Promise.all([
+        ctx.runQuery(api.prospects.get, { id: input.prospectId as Id<"prospects"> }),
+        ctx.runQuery(api.businesses.get, { id: businessId }),
+      ])) as [
+        { name: string; company: string; tier?: number; leadScore?: number; status: string } | null,
+        { name: string; industry: string; whatTheySell: string } | null,
+      ]
+      if (!prospect || !business) return { error: "Prospect or business not found" }
+
+      const prompt = `Generate a personalised B2B sales outreach strategy.
+
+SELLER: ${business.name} (${business.industry}) — ${business.whatTheySell}
+PROSPECT: ${prospect.name} at ${prospect.company}
+TIER: ${prospect.tier ?? "untiered"} (score: ${prospect.leadScore ?? 0})
+
+Return ONLY valid JSON:
+{
+  "suggested_channel": "linkedin|email|phone",
+  "message_template": "personalised opening message (2-3 sentences)",
+  "follow_up_sequence": [
+    {"day": 3, "channel": "email", "message": "..."},
+    {"day": 7, "channel": "linkedin", "message": "..."},
+    {"day": 14, "channel": "email", "message": "..."},
+    {"day": 21, "channel": "phone", "message": "..."}
+  ],
+  "positive_response_strategy": "What to do if they respond positively",
+  "negative_response_strategy": "What to do if they push back"
+}`
+
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20241022",
+        max_tokens: 2000,
+        messages: [{ role: "user", content: prompt }],
+      })
+      const textBlock = response.content.find((b) => b.type === "text")
+      if (!textBlock || textBlock.type !== "text") return { error: "No response" }
+
+      const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
+      const strategy = JSON.parse(jsonMatch?.[0] || textBlock.text)
+
+      await ctx.runMutation(api.salesStrategies.upsert, {
+        businessId,
+        prospectId: input.prospectId as Id<"prospects">,
+        suggestedChannel: strategy.suggested_channel ?? "email",
+        messageTemplate: strategy.message_template ?? "",
+        followUpSequence: strategy.follow_up_sequence ?? [],
+        positiveResponseStrategy: strategy.positive_response_strategy ?? "",
+        negativeResponseStrategy: strategy.negative_response_strategy ?? "",
+      })
+      return { ...strategy, prospectId: input.prospectId }
+    }
+
+    case "calculate_roi": {
+      if (!businessId) return { error: "No business context" }
+      const customers = (await ctx.runQuery(api.customers.listByBusiness, { businessId })) as Array<{
+        contractValue: number
+        marketingSpendAttributed: number
+      }>
+      const totalRevenue = customers.reduce((sum, c) => sum + c.contractValue, 0)
+      const totalSpend =
+        (input.adSpend as number) ??
+        customers.reduce((sum, c) => sum + c.marketingSpendAttributed, 0)
+      const roi = totalSpend > 0 ? ((totalRevenue - totalSpend) / totalSpend) * 100 : 0
+      const cac = customers.length > 0 ? totalSpend / customers.length : 0
+      const ltv = customers.length > 0 ? totalRevenue / customers.length : 0
       return {
-        action: "redirect",
-        message: `To connect ${input.platform}, I need to redirect you to authorize access. Ready?`,
+        customers: customers.length,
+        totalRevenue,
+        totalSpend,
+        roi: Math.round(roi),
+        cac: Math.round(cac),
+        ltv: Math.round(ltv),
+      }
+    }
+
+    case "launch_campaign": {
+      return {
+        campaignId: input.campaignId,
         platform: input.platform,
+        budget: input.budget,
+        status: "queued_for_approval",
+        message: `Campaign queued for launch on ${input.platform}. Review and approve to go live.`,
       }
     }
 
     case "analyze_performance": {
       if (!businessId) return { error: "No business context" }
-      const campaigns = await ctx.runQuery(api.campaigns.listByBusiness, {
-        businessId: businessId as never,
-      })
+      const campaigns = (await ctx.runQuery(api.campaigns.listByBusiness, { businessId })) as Array<{
+        theme: string
+        status: string
+        budgetBreakdown: unknown
+      }>
+      return { campaigns: campaigns.map((c) => ({ theme: c.theme, status: c.status, budget: c.budgetBreakdown })) }
+    }
+
+    case "check_usage": {
+      if (!businessId) return { error: "No business context" }
+      return await ctx.runQuery(api.usage.getCurrentUsage, { businessId })
+    }
+
+    case "connect_channel": {
       return {
-        campaigns: campaigns.map((c) => ({
-          theme: c.theme,
-          status: c.status,
-          budget: c.budgetBreakdown,
-        })),
+        action: "redirect",
+        message: `To connect ${input.platform}, I'll redirect you to authorise access. Ready?`,
+        platform: input.platform,
       }
     }
 
