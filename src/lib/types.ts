@@ -35,9 +35,6 @@ export function scoreToTier(score: number): 1 | 2 | 3 {
   return 3
 }
 
-
-  companySize?: string,
-  estimatedRevenue?: string
 export function firmographicScoreDetails(companySize?: string, estimatedRevenue?: string): { score: number; breakdown: string[] } {
   let score = 0
   const breakdown: string[] = []
