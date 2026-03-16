@@ -1,7 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 
-const client = new Anthropic()
+const MODEL = 'anthropic/claude-opus-4'
 
 export async function POST(req: Request) {
   try {
@@ -46,31 +45,68 @@ CURRENT DATA:
 
 You can help with: marketing strategy, campaign ideas, ad copy, sales outreach, prospect prioritisation, pricing, competitive positioning, ROI analysis, and general business growth questions. Keep responses focused and practical.`
 
-    const stream = await client.messages.stream({
-      model: 'claude-opus-4-6',
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages: messages.map((m: { role: string; content: string }) => ({
-        role: m.role as 'user' | 'assistant',
-        content: m.content,
-      })),
+    const apiKey = process.env.OPENROUTER_API_KEY
+    if (!apiKey) throw new Error('OPENROUTER_API_KEY not set')
+
+    const orResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 1024,
+        stream: true,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.map((m: { role: string; content: string }) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        ],
+      }),
     })
 
-    // Stream the response as Server-Sent Events
+    if (!orResponse.ok || !orResponse.body) {
+      const err = await orResponse.text()
+      throw new Error(`OpenRouter error: ${orResponse.status} ${err}`)
+    }
+
+    // Re-stream OpenRouter SSE → frontend SSE format
     const encoder = new TextEncoder()
+    const reader = orResponse.body.getReader()
+    const decoder = new TextDecoder()
+
     const readable = new ReadableStream({
       async start(controller) {
+        let buffer = ''
         try {
-          for await (const chunk of stream) {
-            if (
-              chunk.type === 'content_block_delta' &&
-              chunk.delta.type === 'text_delta'
-            ) {
-              const data = JSON.stringify({ text: chunk.delta.text })
-              controller.enqueue(encoder.encode(`data: ${data}\n\n`))
+          while (true) {
+            const { done, value } = await reader.read()
+            if (done) break
+            buffer += decoder.decode(value, { stream: true })
+            const lines = buffer.split('\n')
+            buffer = lines.pop() ?? ''
+            for (const line of lines) {
+              const trimmed = line.trim()
+              if (!trimmed.startsWith('data:')) continue
+              const payload = trimmed.slice(5).trim()
+              if (payload === '[DONE]') {
+                controller.enqueue(encoder.encode('data: [DONE]\n\n'))
+                continue
+              }
+              try {
+                const parsed = JSON.parse(payload)
+                const text = parsed.choices?.[0]?.delta?.content
+                if (text) {
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
+                }
+              } catch {
+                // ignore malformed chunks
+              }
             }
           }
-          controller.enqueue(encoder.encode('data: [DONE]\n\n'))
           controller.close()
         } catch (err) {
           controller.error(err)
