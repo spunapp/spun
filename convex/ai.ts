@@ -4,12 +4,45 @@ import { action } from "./_generated/server"
 import { v } from "convex/values"
 import { api } from "./_generated/api"
 import type { Id } from "./_generated/dataModel"
-import Anthropic from "@anthropic-ai/sdk"
 import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-const anthropic = new Anthropic()
+const MODEL = "anthropic/claude-opus-4"
+
+type OrMessage = {
+  role: "system" | "user" | "assistant" | "tool"
+  content: string | null
+  tool_calls?: Array<{ id: string; type: "function"; function: { name: string; arguments: string } }>
+  tool_call_id?: string
+}
+
+function toOrTools(tools: typeof TOOL_DEFINITIONS) {
+  return tools.map((t) => ({
+    type: "function" as const,
+    function: { name: t.name, description: t.description, parameters: t.input_schema },
+  }))
+}
+
+async function callOpenRouter(
+  messages: OrMessage[],
+  options: { tools?: ReturnType<typeof toOrTools>; maxTokens?: number } = {}
+) {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) throw new Error("OPENROUTER_API_KEY not set")
+  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: options.maxTokens ?? 4096,
+      messages,
+      ...(options.tools ? { tools: options.tools } : {}),
+    }),
+  })
+  if (!res.ok) throw new Error(`OpenRouter error: ${res.status} ${await res.text()}`)
+  return res.json()
+}
 
 // Minimal ctx interface for the executeToolCall helper
 interface ToolCtx {
@@ -47,42 +80,23 @@ export const chat = action({
       conversationId: args.conversationId,
     })
 
-    // Build Claude message history (last 50), only user/assistant roles
-    // Ensure alternating pattern — merge consecutive same-role messages
-    const filtered = (allMessages as Array<{ role: string; content: string }>)
-      .filter((m) => m.role === "user" || m.role === "assistant")
-      .slice(-50)
-
-    const claudeMessages: Anthropic.MessageParam[] = []
-    for (const m of filtered) {
-      const role = m.role as "user" | "assistant"
-      if (claudeMessages.length > 0 && claudeMessages[claudeMessages.length - 1].role === role) {
-        claudeMessages[claudeMessages.length - 1].content =
-          (claudeMessages[claudeMessages.length - 1].content as string) + "\n" + m.content
-      } else {
-        claudeMessages.push({ role, content: m.content })
-      }
-    }
-
-    // Must end with user message
-    if (claudeMessages.length === 0 || claudeMessages[claudeMessages.length - 1].role !== "user") {
-      claudeMessages.push({ role: "user", content: args.userMessage })
-    }
-
     const systemPrompt = buildSystemPrompt(
       business as Parameters<typeof buildSystemPrompt>[0]
     )
+    const orTools = toOrTools(TOOL_DEFINITIONS)
 
-    // Call Claude with tools
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4096,
-      system: systemPrompt,
-      tools: TOOL_DEFINITIONS,
-      messages: claudeMessages,
-    })
+    const orMessages: OrMessage[] = [
+      { role: "system", content: systemPrompt },
+      ...(allMessages as Array<{ role: string; content: string }>)
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .slice(-50)
+        .map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+    ]
 
-    let responseText = ""
+    const response = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096 })
+    const responseMessage = response.choices[0].message
+
+    let responseText = responseMessage.content ?? ""
     let messageType:
       | "text"
       | "strategy"
@@ -94,61 +108,45 @@ export const chat = action({
       | "onboarding" = "text"
     let metadata: Record<string, unknown> | undefined
 
-    for (const block of response.content) {
-      if (block.type === "text") {
-        responseText += block.text
-      } else if (block.type === "tool_use") {
+    if (responseMessage.tool_calls) {
+      for (const tc of responseMessage.tool_calls) {
+        const toolName = tc.function.name
+        const toolInput = JSON.parse(tc.function.arguments)
+
         const toolResult = await executeToolCall(
           ctx as unknown as ToolCtx,
-          block.name,
-          block.input as Record<string, unknown>,
+          toolName,
+          toolInput,
           args.userId,
           conversation.businessId
         )
 
-        if (block.name === "generate_strategy" || block.name === "generate_campaign") {
+        if (toolName === "generate_strategy" || toolName === "generate_campaign") {
           messageType = "strategy"
           metadata = toolResult as Record<string, unknown>
-        } else if (block.name === "generate_creatives") {
+        } else if (toolName === "generate_creatives") {
           messageType = "creative_gallery"
           metadata = toolResult as Record<string, unknown>
-        } else if (block.name === "analyze_performance" || block.name === "calculate_roi") {
+        } else if (toolName === "analyze_performance" || toolName === "calculate_roi") {
           messageType = "analytics"
           metadata = toolResult as Record<string, unknown>
-        } else if (block.name === "launch_campaign") {
+        } else if (toolName === "launch_campaign") {
           messageType = "approval_request"
           metadata = toolResult as Record<string, unknown>
-        } else if (block.name === "onboard_business") {
+        } else if (toolName === "onboard_business") {
           messageType = "onboarding"
           metadata = toolResult as Record<string, unknown>
         }
 
-        // Follow-up call to get natural language response to the tool result
-        const followUp = await anthropic.messages.create({
-          model: "claude-3-5-sonnet-20241022",
-          max_tokens: 2048,
-          system: systemPrompt,
-          messages: [
-            ...claudeMessages,
-            { role: "assistant", content: response.content },
-            {
-              role: "user",
-              content: [
-                {
-                  type: "tool_result",
-                  tool_use_id: block.id,
-                  content: JSON.stringify(toolResult),
-                },
-              ],
-            },
+        const followUp = await callOpenRouter(
+          [
+            ...orMessages,
+            { role: "assistant", content: responseMessage.content ?? null, tool_calls: responseMessage.tool_calls },
+            { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) },
           ],
-        })
-
-        for (const followUpBlock of followUp.content) {
-          if (followUpBlock.type === "text") {
-            responseText += followUpBlock.text
-          }
-        }
+          { maxTokens: 2048 }
+        )
+        responseText += followUp.choices[0].message.content ?? ""
       }
     }
 
@@ -216,17 +214,11 @@ Return ONLY valid JSON:
   }
 }`
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4000,
-      messages: [{ role: "user", content: prompt }],
-    })
+    const campaignResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 4000 })
+    const campaignText = campaignResp.choices[0].message.content ?? ""
 
-    const textBlock = response.content.find((b) => b.type === "text")
-    if (!textBlock || textBlock.type !== "text") throw new Error("No text response")
-
-    const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
-    const campaignData = JSON.parse(jsonMatch?.[0] || textBlock.text)
+    const jsonMatch = campaignText.match(/\{[\s\S]*\}/)
+    const campaignData = JSON.parse(jsonMatch?.[0] || campaignText)
 
     const campaignId = await ctx.runMutation(api.campaigns.create, {
       businessId: args.businessId,
@@ -236,7 +228,7 @@ Return ONLY valid JSON:
       suggestedChannels: campaignData.suggested_channels,
       budgetBreakdown: campaignData.budget_breakdown,
       funnel: campaignData.funnel,
-      rawContent: textBlock.text,
+      rawContent: campaignText,
       status: "draft",
     })
 
@@ -299,18 +291,17 @@ Return ONLY valid JSON:
   "html_content": "Complete self-contained HTML with inline CSS. Professional ad with gradient backgrounds, bold typography. Colors: primary #7C3AED, accent #EC4899."
 }`
 
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 3000,
-        messages: [{ role: "user", content: prompt }],
-      })
-
-      const textBlock = response.content.find((b) => b.type === "text")
-      if (!textBlock || textBlock.type !== "text") continue
+      let creativeText: string
+      try {
+        const creativeResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 3000 })
+        creativeText = creativeResp.choices[0].message.content ?? ""
+      } catch {
+        continue
+      }
 
       try {
-        const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
-        const creativeData = JSON.parse(jsonMatch?.[0] || textBlock.text)
+        const jsonMatch = creativeText.match(/\{[\s\S]*\}/)
+        const creativeData = JSON.parse(jsonMatch?.[0] || creativeText)
 
         const id = await ctx.runMutation(api.adCreatives.create, {
           campaignId: args.campaignId,
@@ -366,17 +357,11 @@ Return a JSON array, one object per prospect:
 
 Return ONLY a valid JSON array.`
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 4000,
-      messages: [{ role: "user", content: prompt }],
-    })
+    const tierResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 4000 })
+    const tierText = tierResp.choices[0].message.content ?? ""
 
-    const textBlock = response.content.find((b) => b.type === "text")
-    if (!textBlock || textBlock.type !== "text") throw new Error("No response")
-
-    const jsonMatch = textBlock.text.match(/\[[\s\S]*\]/)
-    const firmographicData = JSON.parse(jsonMatch?.[0] || textBlock.text) as Array<{
+    const jsonMatch = tierText.match(/\[[\s\S]*\]/)
+    const firmographicData = JSON.parse(jsonMatch?.[0] || tierText) as Array<{
       id: string
       company_size: string
       estimated_revenue: string
@@ -530,16 +515,11 @@ Return ONLY valid JSON:
   "negative_response_strategy": "What to do if they push back"
 }`
 
-      const response = await anthropic.messages.create({
-        model: "claude-3-5-sonnet-20241022",
-        max_tokens: 2000,
-        messages: [{ role: "user", content: prompt }],
-      })
-      const textBlock = response.content.find((b) => b.type === "text")
-      if (!textBlock || textBlock.type !== "text") return { error: "No response" }
+      const stratResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 2000 })
+      const stratText = stratResp.choices[0].message.content ?? ""
 
-      const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
-      const strategy = JSON.parse(jsonMatch?.[0] || textBlock.text)
+      const jsonMatch = stratText.match(/\{[\s\S]*\}/)
+      const strategy = JSON.parse(jsonMatch?.[0] || stratText)
 
       await ctx.runMutation(api.salesStrategies.upsert, {
         businessId,
