@@ -1,8 +1,20 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
-const client = new Anthropic()
+const MODEL = 'anthropic/claude-opus-4'
+
+async function callOpenRouter(prompt: string, maxTokens: number): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set')
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+  })
+  if (!res.ok) throw new Error(`OpenRouter error: ${res.status} ${await res.text()}`)
+  const data = await res.json()
+  return data.choices[0].message.content ?? ''
+}
 
 export async function POST(req: Request) {
   try {
@@ -52,22 +64,14 @@ Generate a comprehensive sales strategy as JSON:
 
 Return ONLY valid JSON, no other text.`
 
-    const stream = client.messages.stream({
-      model: 'claude-opus-4-6',
-      max_tokens: 2500,
-      messages: [{ role: 'user', content: prompt }]
-    })
-
-    const message = await stream.finalMessage()
-    const textBlock = message.content.find(b => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') throw new Error('No text response')
+    const text = await callOpenRouter(prompt, 2500)
 
     let strategyData
     try {
-      const jsonMatch = textBlock.text.match(/\{[\s\S]*\}/)
-      strategyData = JSON.parse(jsonMatch?.[0] || textBlock.text)
+      const jsonMatch = text.match(/\{[\s\S]*\}/)
+      strategyData = JSON.parse(jsonMatch?.[0] || text)
     } catch {
-      throw new Error('Invalid JSON from Claude')
+      throw new Error('Invalid JSON from OpenRouter')
     }
 
     const { data: strategy, error } = await supabase

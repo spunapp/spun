@@ -1,9 +1,22 @@
-import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 import { firmographicScoreDetails, scoreToTier } from '@/lib/types'
 
-const client = new Anthropic()
+const MODEL = 'anthropic/claude-opus-4'
+
+async function callOpenRouter(prompt: string, maxTokens: number): Promise<string> {
+  const apiKey = process.env.OPENROUTER_API_KEY
+  if (!apiKey) throw new Error('OPENROUTER_API_KEY not set')
+  const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ model: MODEL, max_tokens: maxTokens, messages: [{ role: 'user', content: prompt }] }),
+  })
+  if (!res.ok) throw new Error(`OpenRouter error: ${res.status} ${await res.text()}`)
+  const data = await res.json()
+  return data.choices[0].message.content ?? ''
+}
+
 
 export async function POST(req: Request) {
   try {
@@ -47,16 +60,7 @@ Return a JSON array — one object per prospect:
 
 Return ONLY a valid JSON array, no other text.`
 
-    const stream = client.messages.stream({
-      model: 'claude-opus-4-6',
-      max_tokens: 6000,
-      thinking: { type: 'adaptive' },
-      messages: [{ role: 'user', content: prompt }]
-    })
-
-    const message = await stream.finalMessage()
-    const textBlock = message.content.find(b => b.type === 'text')
-    if (!textBlock || textBlock.type !== 'text') throw new Error('No text response')
+    const text = await callOpenRouter(prompt, 6000)
 
     let firmographicData: Array<{
       id: string
@@ -68,10 +72,10 @@ Return ONLY a valid JSON array, no other text.`
     }>
 
     try {
-      const jsonMatch = textBlock.text.match(/\[[\s\S]*\]/)
-      firmographicData = JSON.parse(jsonMatch?.[0] || textBlock.text)
+      const jsonMatch = text.match(/\[[\s\S]*\]/)
+      firmographicData = JSON.parse(jsonMatch?.[0] || text)
     } catch {
-      throw new Error('Invalid JSON from Claude')
+      throw new Error('Invalid JSON from OpenRouter')
     }
 
     const updates = await Promise.all(
