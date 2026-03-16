@@ -1,6 +1,14 @@
-import type Anthropic from "@anthropic-ai/sdk"
+type ToolDefinition = {
+  name: string
+  description: string
+  input_schema: {
+    type: "object"
+    properties: Record<string, unknown>
+    required?: string[]
+  }
+}
 
-export const TOOL_DEFINITIONS: Anthropic.Tool[] = [
+export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "onboard_business",
     description:
