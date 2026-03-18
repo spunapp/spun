@@ -26,7 +26,41 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <SignIn routing="path" path="/login" />
+        <SignIn
+          routing="path"
+          path="/login"
+          appearance={{
+            variables: {
+              colorBackground: "#1F333B",
+              colorPrimary: "#5B9BAA",
+              colorText: "#f8fafc",
+              colorTextSecondary: "#94a3b8",
+              colorInputBackground: "#273E47",
+              colorInputText: "#f8fafc",
+              colorNeutral: "#94a3b8",
+              borderRadius: "0.75rem",
+            },
+            elements: {
+              card: "shadow-none border border-white/10",
+              headerTitle: "text-white",
+              headerSubtitle: "text-slate-400",
+              socialButtonsBlockButton:
+                "border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-colors",
+              socialButtonsBlockButtonText: "text-white font-medium",
+              dividerLine: "bg-white/10",
+              dividerText: "text-slate-500",
+              formFieldLabel: "text-slate-300",
+              formFieldInput:
+                "border border-white/10 focus:border-[#5B9BAA] focus:ring-[#5B9BAA]",
+              formButtonPrimary:
+                "bg-[#5B9BAA] hover:bg-[#4A8A9A] text-white transition-colors",
+              footerActionLink: "text-[#5B9BAA] hover:text-[#7BB5C4] transition-colors",
+              identityPreviewText: "text-white",
+              identityPreviewEditButton: "text-[#5B9BAA]",
+              alertText: "text-slate-300",
+            },
+          }}
+        />
 
         <div className="text-sm text-slate-400 space-y-1">
           <p>One chat. Full funnel.</p>
