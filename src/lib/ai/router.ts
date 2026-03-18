@@ -3,9 +3,9 @@
 export type TaskComplexity = "simple" | "standard" | "complex"
 
 export const MODEL_MAP: Record<TaskComplexity, string> = {
-  simple: "claude-haiku-4-5-20251001", // Copy variants, formatting, quick answers
-  standard: "claude-sonnet-4-5-20241022", // Strategy, campaigns, analysis
-  complex: "claude-opus-4-6", // Deep strategy, multi-step reasoning, orchestration
+  simple: "google/gemini-3.1", // Copy variants, formatting, quick answers
+  standard: "google/gemini-3.1", // Strategy, campaigns, analysis
+  complex: "google/gemini-3.1", // Deep strategy, multi-step reasoning, orchestration
 }
 
 export function getModelForTask(task: string): string {
