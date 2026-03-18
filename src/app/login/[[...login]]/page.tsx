@@ -28,7 +28,7 @@ export default function LoginPage() {
 
         <SignIn routing="path" path="/login" />
 
-        <div className="text-xs text-slate-600 space-y-1">
+        <div className="text-sm text-slate-400 space-y-1">
           <p>One chat. Full funnel.</p>
           <p>Strategy. Campaigns. Creatives. Execution. Analytics.</p>
         </div>
