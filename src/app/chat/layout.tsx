@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Menu, X, Settings, LogOut } from "lucide-react"
-import { auth } from "@/lib/auth/provider"
+import { useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
 
@@ -12,10 +12,11 @@ export default function ChatLayout({
   children: React.ReactNode
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { signOut } = useClerk()
   const router = useRouter()
 
   async function handleLogout() {
-    await auth.logout()
+    await signOut()
     router.push("/login")
   }
 

@@ -1,34 +1,26 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useAuth } from "@clerk/nextjs"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { auth } from "@/lib/auth/provider"
 import { Loader2 } from "lucide-react"
 
 export default function HomePage() {
+  const { isLoaded, isSignedIn } = useAuth()
   const router = useRouter()
-  const [checking, setChecking] = useState(true)
 
   useEffect(() => {
-    async function check() {
-      const authenticated = await auth.isAuthenticated()
-      if (authenticated) {
-        router.replace("/chat")
-      } else {
-        router.replace("/login")
-      }
-      setChecking(false)
+    if (!isLoaded) return
+    if (isSignedIn) {
+      router.replace("/chat")
+    } else {
+      router.replace("/login")
     }
-    check()
-  }, [router])
+  }, [isLoaded, isSignedIn, router])
 
-  if (checking) {
-    return (
-      <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
-        <Loader2 className="w-6 h-6 text-white/50 animate-spin" />
-      </div>
-    )
-  }
-
-  return null
+  return (
+    <div className="min-h-screen bg-[var(--background)] flex items-center justify-center">
+      <Loader2 className="w-6 h-6 text-white/50 animate-spin" />
+    </div>
+  )
 }
