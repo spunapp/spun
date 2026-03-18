@@ -67,5 +67,15 @@ export const api = {
     chat: makeFunctionReference<"action">("ai:chat"),
     generateCampaign: makeFunctionReference<"action">("ai:generateCampaign"),
     generateCreatives: makeFunctionReference<"action">("ai:generateCreatives"),
+    tierProspects: makeFunctionReference<"action">("ai:tierProspects"),
+  },
+  salesStrategies: {
+    getByProspect: makeFunctionReference<"query">("salesStrategies:getByProspect"),
+    listByBusiness: makeFunctionReference<"query">("salesStrategies:listByBusiness"),
+    upsert: makeFunctionReference<"mutation">("salesStrategies:upsert"),
+  },
+  customers: {
+    listByBusiness: makeFunctionReference<"query">("customers:listByBusiness"),
+    create: makeFunctionReference<"mutation">("customers:create"),
   },
 }
