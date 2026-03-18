@@ -34,31 +34,56 @@ export default function LoginPage() {
               colorBackground: "#1F333B",
               colorPrimary: "#5B9BAA",
               colorText: "#f8fafc",
-              colorTextSecondary: "#94a3b8",
+              colorTextSecondary: "#cbd5e1",
               colorInputBackground: "#273E47",
               colorInputText: "#f8fafc",
-              colorNeutral: "#94a3b8",
+              colorNeutral: "#cbd5e1",
               borderRadius: "0.75rem",
             },
             elements: {
-              card: "shadow-none border border-white/10",
-              headerTitle: "text-white",
-              headerSubtitle: "text-slate-400",
-              socialButtonsBlockButton:
-                "border border-white/30 bg-white/15 text-white hover:bg-white/25 transition-colors",
-              socialButtonsBlockButtonText: "text-white font-medium",
-              socialButtonsBlockButtonArrow: "text-white",
-              dividerLine: "bg-white/10",
-              dividerText: "text-slate-500",
-              formFieldLabel: "text-slate-300",
-              formFieldInput:
-                "border border-white/10 focus:border-[#5B9BAA] focus:ring-[#5B9BAA]",
-              formButtonPrimary:
-                "bg-[#5B9BAA] hover:bg-[#4A8A9A] text-white transition-colors",
-              footerActionLink: "text-[#5B9BAA] hover:text-[#7BB5C4] transition-colors",
-              identityPreviewText: "text-white",
-              identityPreviewEditButton: "text-[#5B9BAA]",
-              alertText: "text-slate-300",
+              card: {
+                style: {
+                  boxShadow: "none",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                },
+              },
+              headerTitle: {
+                style: { color: "#ffffff", fontSize: "1.125rem" },
+              },
+              headerSubtitle: {
+                style: { color: "#cbd5e1" },
+              },
+              socialButtonsBlockButton: {
+                style: {
+                  backgroundColor: "rgba(255,255,255,0.18)",
+                  border: "1px solid rgba(255,255,255,0.35)",
+                  color: "#ffffff",
+                },
+              },
+              socialButtonsBlockButtonText: {
+                style: { color: "#ffffff", fontWeight: 500 },
+              },
+              dividerLine: {
+                style: { backgroundColor: "rgba(255,255,255,0.12)" },
+              },
+              dividerText: {
+                style: { color: "#94a3b8" },
+              },
+              formFieldLabel: {
+                style: { color: "#e2e8f0", fontWeight: 500 },
+              },
+              formFieldInput: {
+                style: {
+                  border: "1px solid rgba(255,255,255,0.2)",
+                  color: "#ffffff",
+                },
+              },
+              formButtonPrimary: {
+                style: { backgroundColor: "#5B9BAA", color: "#ffffff" },
+              },
+              footerActionLink: {
+                style: { color: "#5B9BAA" },
+              },
             },
           }}
         />
