@@ -12,7 +12,7 @@ export default function HomePage() {
   useEffect(() => {
     if (!isLoaded) return
     if (isSignedIn) {
-      router.replace("/chat")
+      router.replace("/pricing")
     } else {
       router.replace("/login")
     }
