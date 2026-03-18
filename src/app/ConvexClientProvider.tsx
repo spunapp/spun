@@ -48,7 +48,7 @@ function ConvexWithClerkAuth({ children }: { children: ReactNode }) {
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider signInForceRedirectUrl="/pricing" signUpForceRedirectUrl="/pricing">
       <ConvexWithClerkAuth>{children}</ConvexWithClerkAuth>
     </ClerkProvider>
   )
