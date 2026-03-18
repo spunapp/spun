@@ -53,6 +53,10 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   color: #ffffff !important;
 }
+.cl-formFieldInput::placeholder {
+  color: #94a3b8 !important;
+  opacity: 1 !important;
+}
 .cl-formButtonPrimary {
   background-color: #5B9BAA !important;
   color: #ffffff !important;
