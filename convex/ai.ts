@@ -111,15 +111,27 @@ export const chat = action({
     if (responseMessage.tool_calls) {
       for (const tc of responseMessage.tool_calls) {
         const toolName = tc.function.name
-        const toolInput = JSON.parse(tc.function.arguments)
+        let toolInput: Record<string, unknown>
+        try {
+          toolInput = JSON.parse(tc.function.arguments)
+        } catch {
+          responseText += `\n\nSorry, I had trouble processing the ${toolName} action. Please try again.`
+          continue
+        }
 
-        const toolResult = await executeToolCall(
-          ctx as unknown as ToolCtx,
-          toolName,
-          toolInput,
-          args.userId,
-          conversation.businessId
-        )
+        let toolResult: unknown
+        try {
+          toolResult = await executeToolCall(
+            ctx as unknown as ToolCtx,
+            toolName,
+            toolInput,
+            args.userId,
+            conversation.businessId
+          )
+        } catch (err) {
+          responseText += `\n\nSomething went wrong while running ${toolName}. Please try again.`
+          continue
+        }
 
         if (toolName === "generate_strategy" || toolName === "generate_campaign") {
           messageType = "strategy"
@@ -218,7 +230,12 @@ Return ONLY valid JSON:
     const campaignText = campaignResp.choices[0].message.content ?? ""
 
     const jsonMatch = campaignText.match(/\{[\s\S]*\}/)
-    const campaignData = JSON.parse(jsonMatch?.[0] || campaignText)
+    let campaignData: Record<string, unknown>
+    try {
+      campaignData = JSON.parse(jsonMatch?.[0] || campaignText)
+    } catch {
+      throw new Error("Failed to parse campaign data from AI response. Please try again.")
+    }
 
     const campaignId = await ctx.runMutation(api.campaigns.create, {
       businessId: args.businessId,
@@ -361,7 +378,7 @@ Return ONLY a valid JSON array.`
     const tierText = tierResp.choices[0].message.content ?? ""
 
     const jsonMatch = tierText.match(/\[[\s\S]*\]/)
-    const firmographicData = JSON.parse(jsonMatch?.[0] || tierText) as Array<{
+    let firmographicData: Array<{
       id: string
       company_size: string
       estimated_revenue: string
@@ -369,6 +386,11 @@ Return ONLY a valid JSON array.`
       company_news: string | null
       tier_reasoning: string
     }>
+    try {
+      firmographicData = JSON.parse(jsonMatch?.[0] || tierText)
+    } catch {
+      return { tiered: 0, message: "Failed to parse prospect data from AI response. Please try again." }
+    }
 
     const results = await Promise.all(
       firmographicData.map(async (firm) => {
@@ -519,7 +541,12 @@ Return ONLY valid JSON:
       const stratText = stratResp.choices[0].message.content ?? ""
 
       const jsonMatch = stratText.match(/\{[\s\S]*\}/)
-      const strategy = JSON.parse(jsonMatch?.[0] || stratText)
+      let strategy: Record<string, unknown>
+      try {
+        strategy = JSON.parse(jsonMatch?.[0] || stratText)
+      } catch {
+        return { error: "Failed to parse sales strategy from AI response. Please try again." }
+      }
 
       await ctx.runMutation(api.salesStrategies.upsert, {
         businessId,
