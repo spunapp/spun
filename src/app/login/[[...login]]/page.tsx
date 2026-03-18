@@ -45,8 +45,9 @@ export default function LoginPage() {
               headerTitle: "text-white",
               headerSubtitle: "text-slate-400",
               socialButtonsBlockButton:
-                "border border-white/10 bg-white/5 text-white hover:bg-white/10 transition-colors",
+                "border border-white/30 bg-white/15 text-white hover:bg-white/25 transition-colors",
               socialButtonsBlockButtonText: "text-white font-medium",
+              socialButtonsBlockButtonArrow: "text-white",
               dividerLine: "bg-white/10",
               dividerText: "text-slate-500",
               formFieldLabel: "text-slate-300",
