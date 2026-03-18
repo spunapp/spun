@@ -1,3 +1,5 @@
+// @ts-nocheck — Convex typechecks this file during deploy; skip Next.js checking
+// to avoid circular type inference (api.d.ts ↔ ai.ts)
 "use node"
 
 import { action } from "./_generated/server"
