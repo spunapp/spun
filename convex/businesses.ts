@@ -113,3 +113,46 @@ export const updateTrustMode = mutation({
     await ctx.db.patch(args.id, { trustMode: args.trustMode })
   },
 })
+
+// Link a business to an organisation (account).
+// Finds or creates the organisation by the business name the user provides,
+// then stores the organisationId on the business record.
+export const linkOrganisation = mutation({
+  args: {
+    businessId: v.id("businesses"),
+    organisationName: v.string(),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    let org = await ctx.db
+      .query("organisations")
+      .withIndex("by_name", (q) => q.eq("name", args.organisationName))
+      .first()
+
+    if (!org) {
+      const orgId = await ctx.db.insert("organisations", {
+        name: args.organisationName,
+        createdByUserId: args.userId,
+        createdAt: Date.now(),
+      })
+      org = await ctx.db.get(orgId)
+    }
+
+    await ctx.db.patch(args.businessId, { organisationId: org!._id })
+
+    return org
+  },
+})
+
+// Returns the business along with its linked organisation (account), if any.
+export const getWithOrganisation = query({
+  args: { id: v.id("businesses") },
+  handler: async (ctx, args) => {
+    const business = await ctx.db.get(args.id)
+    if (!business) return null
+    const organisation = business.organisationId
+      ? await ctx.db.get(business.organisationId)
+      : null
+    return { ...business, organisation }
+  },
+})
