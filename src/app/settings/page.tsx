@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
@@ -104,11 +104,14 @@ export default function SettingsPage() {
     setBudget(business.defaultCampaignBudget?.toString() ?? "")
     setCurrency(business.currency ?? "GBP")
     setInitialised(true)
-    // Bootstrap organisation for existing businesses that don't have one yet
-    if (!business.organisationId && userId) {
+  }
+
+  // Bootstrap organisation for existing businesses that don't have one yet
+  useEffect(() => {
+    if (business && !business.organisationId && userId) {
       ensureOrganisation({ businessId: business._id, userId })
     }
-  }
+  }, [business?._id])
 
   // Notification toggles
   const defaultNotifs = {
