@@ -6,7 +6,7 @@ import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink } from "lucide-react"
-import type { Id } from "../../../convex/_generated/dataModel"
+import type { Id, Doc } from "../../../convex/_generated/dataModel"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)" },
@@ -137,7 +137,9 @@ export default function SettingsPage() {
     })
   }
 
-  const connectedMap = new Map(channels?.map((c) => [c.platform, c]) ?? [])
+  const connectedMap = new Map<string, Doc<"connectedChannels">>(
+    (channels ?? []).map((c: Doc<"connectedChannels">) => [c.platform, c])
+  )
 
   function statusIcon(status: string) {
     if (status === "active") return <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
