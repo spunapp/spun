@@ -4,10 +4,12 @@ import { v } from "convex/values"
 export default defineSchema({
   organisations: defineTable({
     name: v.string(),
+    accountId: v.string(),
     createdByUserId: v.string(),
     createdAt: v.number(),
   })
     .index("by_name", ["name"])
+    .index("by_account_id", ["accountId"])
     .index("by_creator", ["createdByUserId"]),
 
   businesses: defineTable({

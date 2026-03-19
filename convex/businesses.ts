@@ -130,8 +130,11 @@ export const linkOrganisation = mutation({
       .first()
 
     if (!org) {
+      const all = await ctx.db.query("organisations").collect()
+      const accountId = String(all.length + 1).padStart(5, "0")
       const orgId = await ctx.db.insert("organisations", {
         name: args.organisationName,
+        accountId,
         createdByUserId: args.userId,
         createdAt: Date.now(),
       })

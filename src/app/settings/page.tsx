@@ -5,7 +5,7 @@ import { useQuery, useMutation } from "convex/react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
-import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
 
 const PLATFORMS = [
@@ -73,7 +73,13 @@ export default function SettingsPage() {
   const router = useRouter()
   const userId = user?.id ?? null
 
+  const [accountIdVisible, setAccountIdVisible] = useState(false)
+
   const business = useQuery(api.businesses.getByUser, userId ? { userId } : "skip")
+  const organisation = useQuery(
+    api.organisations.getByBusiness,
+    business?._id ? { businessId: business._id } : "skip"
+  )
   const channels = useQuery(
     api.channels.listByBusiness,
     business?._id ? { businessId: business._id } : "skip"
@@ -317,6 +323,23 @@ export default function SettingsPage() {
                 <p className="text-xs text-slate-400 mb-0.5">Email</p>
                 <p className="text-sm text-white">{user?.primaryEmailAddress?.emailAddress ?? "—"}</p>
               </div>
+              {organisation?.accountId && (
+                <div>
+                  <p className="text-xs text-slate-400 mb-0.5">Account ID</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm text-white font-mono">
+                      {accountIdVisible ? organisation.accountId : "•".repeat(organisation.accountId.length)}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setAccountIdVisible((v) => !v)}
+                      className="text-slate-500 hover:text-slate-300 transition-colors"
+                    >
+                      {accountIdVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
             <div className="flex flex-col gap-3">
               <button
