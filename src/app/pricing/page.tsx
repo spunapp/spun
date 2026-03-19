@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import Image from "next/image"
+import Link from "next/link"
 import { Check } from "lucide-react"
 
 const standardBenefits = [
@@ -52,21 +53,23 @@ export default function PricingPage() {
     <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-12">
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
-        <Image
-          src="/spun.gif"
-          alt="Spun"
-          width={64}
-          height={64}
-          className="mx-auto rounded-2xl"
-          unoptimized
-        />
-        <Image
-          src="/logo.png"
-          alt="Spun"
-          width={160}
-          height={45}
-          className="mx-auto"
-        />
+        <Link href="/" className="inline-block">
+          <Image
+            src="/spun.gif"
+            alt="Spun"
+            width={64}
+            height={64}
+            className="mx-auto rounded-2xl"
+            unoptimized
+          />
+          <Image
+            src="/logo.png"
+            alt="Spun"
+            width={160}
+            height={45}
+            className="mx-auto mt-4"
+          />
+        </Link>
         <p className="text-slate-300 text-lg">Choose the plan that fits your business</p>
       </div>
 
