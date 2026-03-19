@@ -17,6 +17,7 @@ import type * as channels from "../channels.js";
 import type * as conversations from "../conversations.js";
 import type * as customers from "../customers.js";
 import type * as messages from "../messages.js";
+import type * as organisations from "../organisations.js";
 import type * as prospects from "../prospects.js";
 import type * as salesStrategies from "../salesStrategies.js";
 import type * as usage from "../usage.js";
@@ -37,6 +38,7 @@ declare const fullApi: ApiFromModules<{
   conversations: typeof conversations;
   customers: typeof customers;
   messages: typeof messages;
+  organisations: typeof organisations;
   prospects: typeof prospects;
   salesStrategies: typeof salesStrategies;
   usage: typeof usage;
