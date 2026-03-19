@@ -47,7 +47,7 @@ export default function ChatLayout({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <Image src="/icon.png" alt="Spun" width={28} height={28} className="rounded" />
+            <Image src="/icon.png" alt="Spun" width={28} height={28} className="rounded shrink-0" />
             <span className="font-bold text-sm">Spun</span>
           </div>
           <button
