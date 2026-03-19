@@ -79,6 +79,27 @@ export const update = mutation({
   },
 })
 
+export const updateSettings = mutation({
+  args: {
+    id: v.id("businesses"),
+    defaultCampaignBudget: v.optional(v.number()),
+    currency: v.optional(v.string()),
+    notifications: v.optional(v.object({
+      campaignApprovals: v.boolean(),
+      usageWarnings: v.boolean(),
+      integrationExpiry: v.boolean(),
+      weeklySummary: v.boolean(),
+    })),
+  },
+  handler: async (ctx, args) => {
+    const { id, ...updates } = args
+    const filtered = Object.fromEntries(
+      Object.entries(updates).filter(([, v]) => v !== undefined)
+    )
+    await ctx.db.patch(id, filtered)
+  },
+})
+
 export const updateTrustMode = mutation({
   args: {
     id: v.id("businesses"),

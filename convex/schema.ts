@@ -30,6 +30,14 @@ export default defineSchema({
       v.literal("auto")
     ),
     onboardingComplete: v.boolean(),
+    defaultCampaignBudget: v.optional(v.number()),
+    currency: v.optional(v.string()),
+    notifications: v.optional(v.object({
+      campaignApprovals: v.boolean(),
+      usageWarnings: v.boolean(),
+      integrationExpiry: v.boolean(),
+      weeklySummary: v.boolean(),
+    })),
   }).index("by_user", ["userId"]),
 
   conversations: defineTable({
