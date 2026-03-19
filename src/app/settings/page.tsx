@@ -91,6 +91,7 @@ export default function SettingsPage() {
 
   const disconnectChannel = useMutation(api.channels.disconnect)
   const updateSettings = useMutation(api.businesses.updateSettings)
+  const ensureOrganisation = useMutation(api.businesses.ensureOrganisation)
 
   // Local state for campaign defaults
   const [budget, setBudget] = useState<string>("")
@@ -103,6 +104,10 @@ export default function SettingsPage() {
     setBudget(business.defaultCampaignBudget?.toString() ?? "")
     setCurrency(business.currency ?? "GBP")
     setInitialised(true)
+    // Bootstrap organisation for existing businesses that don't have one yet
+    if (!business.organisationId && userId) {
+      ensureOrganisation({ businessId: business._id, userId })
+    }
   }
 
   // Notification toggles
