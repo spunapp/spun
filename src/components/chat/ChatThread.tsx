@@ -39,7 +39,7 @@ export function ChatThread({
           <div className="text-center max-w-md">
             <img src="/spun.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-contain" />
             <h2 className="text-xl font-semibold text-white mb-2">
-              Hey! I&apos;m Spun, your CMO.
+              Hi! I&apos;m Spun, your AI Marketing Team.
             </h2>
             <p className="text-slate-400">
               Tell me about your business and I&apos;ll start building your
