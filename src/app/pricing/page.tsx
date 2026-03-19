@@ -53,7 +53,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-12">
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
-        <Link href="/" className="inline-block">
+        <Link href="/chat" className="inline-block">
           <Image
             src="/spun.gif"
             alt="Spun"
