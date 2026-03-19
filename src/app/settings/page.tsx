@@ -74,12 +74,17 @@ export default function SettingsPage() {
   const userId = user?.id ?? null
 
   const [accountIdVisible, setAccountIdVisible] = useState(false)
+  const [accountId, setAccountId] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!userId) return
+    fetch("/api/account-id")
+      .then((r) => r.json())
+      .then((data) => { if (data.accountId) setAccountId(data.accountId) })
+      .catch(() => {})
+  }, [userId])
 
   const business = useQuery(api.businesses.getByUser, userId ? { userId } : "skip")
-  const organisation = useQuery(
-    api.organisations.getByBusiness,
-    business?._id ? { businessId: business._id } : "skip"
-  )
   const channels = useQuery(
     api.channels.listByBusiness,
     business?._id ? { businessId: business._id } : "skip"
@@ -91,7 +96,6 @@ export default function SettingsPage() {
 
   const disconnectChannel = useMutation(api.channels.disconnect)
   const updateSettings = useMutation(api.businesses.updateSettings)
-  const ensureOrganisation = useMutation(api.businesses.ensureOrganisation)
 
   // Local state for campaign defaults
   const [budget, setBudget] = useState<string>("")
@@ -105,13 +109,6 @@ export default function SettingsPage() {
     setCurrency(business.currency ?? "GBP")
     setInitialised(true)
   }
-
-  // Bootstrap organisation for existing businesses that don't have one yet
-  useEffect(() => {
-    if (business && !business.organisationId && userId) {
-      ensureOrganisation({ businessId: business._id, userId })
-    }
-  }, [business?._id])
 
   // Notification toggles
   const defaultNotifs = {
@@ -331,12 +328,12 @@ export default function SettingsPage() {
                 <p className="text-xs text-slate-400 mb-0.5">Email</p>
                 <p className="text-sm text-white">{user?.primaryEmailAddress?.emailAddress ?? "—"}</p>
               </div>
-              {organisation?.accountId && (
+              {accountId && (
                 <div>
                   <p className="text-xs text-slate-400 mb-0.5">Account ID</p>
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-white font-mono">
-                      {accountIdVisible ? organisation.accountId : "•".repeat(organisation.accountId.length)}
+                      {accountIdVisible ? accountId : "•".repeat(accountId.length)}
                     </p>
                     <button
                       type="button"
