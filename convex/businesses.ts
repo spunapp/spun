@@ -147,6 +147,45 @@ export const linkOrganisation = mutation({
   },
 })
 
+// Ensures a business has an organisation. If not, creates one using the business name.
+// Safe to call multiple times — no-ops if the org already exists.
+export const ensureOrganisation = mutation({
+  args: {
+    businessId: v.id("businesses"),
+    userId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const business = await ctx.db.get(args.businessId)
+    if (!business) return null
+
+    // Already linked — return existing org
+    if (business.organisationId) {
+      return await ctx.db.get(business.organisationId)
+    }
+
+    // Check if an org with this business name exists
+    let org = await ctx.db
+      .query("organisations")
+      .withIndex("by_name", (q) => q.eq("name", business.name))
+      .first()
+
+    if (!org) {
+      const all = await ctx.db.query("organisations").collect()
+      const accountId = String(all.length + 1).padStart(5, "0")
+      const orgId = await ctx.db.insert("organisations", {
+        name: business.name,
+        accountId,
+        createdByUserId: args.userId,
+        createdAt: Date.now(),
+      })
+      org = await ctx.db.get(orgId)
+    }
+
+    await ctx.db.patch(args.businessId, { organisationId: org!._id })
+    return org
+  },
+})
+
 // Returns the business along with its linked organisation (account), if any.
 export const getWithOrganisation = query({
   args: { id: v.id("businesses") },
