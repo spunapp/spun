@@ -63,7 +63,10 @@ export default function ChatLayout({
 
         {/* Footer */}
         <div className="border-t border-white/5 p-3 space-y-1">
-          <button className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all">
+          <button
+            onClick={() => router.push("/settings")}
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-all"
+          >
             <Settings className="w-3.5 h-3.5" />
             Settings
           </button>
