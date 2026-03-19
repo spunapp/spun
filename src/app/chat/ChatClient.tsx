@@ -2,27 +2,21 @@
 
 import { useState, useCallback, useEffect } from "react"
 import { useQuery, useMutation, useAction } from "convex/react"
+import { useUser } from "@clerk/nextjs"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
-import { auth } from "@/lib/auth/provider"
 
 export default function ChatClient() {
-  const [userId, setUserId] = useState<string | null>(null)
+  const { user } = useUser()
+  const userId = user?.id ?? null
   const [activeConversationId, setActiveConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
-
-  // Load user
-  useEffect(() => {
-    auth.getUser().then((user) => {
-      if (user) setUserId(user.id)
-    })
-  }, [])
 
   // Queries
   const conversations = useQuery(
