@@ -2,8 +2,17 @@ import { defineSchema, defineTable } from "convex/server"
 import { v } from "convex/values"
 
 export default defineSchema({
+  organisations: defineTable({
+    name: v.string(),
+    createdByUserId: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_name", ["name"])
+    .index("by_creator", ["createdByUserId"]),
+
   businesses: defineTable({
     userId: v.string(),
+    organisationId: v.optional(v.id("organisations")),
     name: v.string(),
     description: v.string(),
     productOrService: v.union(
