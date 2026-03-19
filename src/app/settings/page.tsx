@@ -329,7 +329,7 @@ export default function SettingsPage() {
                 Sign out
               </button>
               <a
-                href={`mailto:hello@spun.ai?subject=Delete%20My%20Account&body=Hi%2C%0A%0APlease%20delete%20my%20account%20associated%20with%20this%20email%20address.%0A%0AThank%20you.`}
+                href={`mailto:hello@spun.bot?subject=Delete%20My%20Account&body=Hi%2C%0A%0APlease%20delete%20my%20account%20associated%20with%20this%20email%20address.%0A%0AThank%20you.`}
                 className="text-sm text-slate-500 hover:text-slate-400 transition-colors"
               >
                 Delete account
