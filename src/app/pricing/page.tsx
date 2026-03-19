@@ -151,7 +151,7 @@ export default function PricingPage() {
           </div>
 
           <a
-            href="mailto:hello@spun.ai"
+            href="mailto:hello@spun.bot"
             className="w-full border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-3 rounded-xl transition-colors mb-8 text-center block"
           >
             Contact us
