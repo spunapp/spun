@@ -37,7 +37,7 @@ export function ChatThread({
       {messages.length === 0 && !isLoading && (
         <div className="flex items-center justify-center h-full">
           <div className="text-center max-w-md">
-            <img src="/spun.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4" />
+            <img src="/spun.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-contain" />
             <h2 className="text-xl font-semibold text-white mb-2">
               Hey! I&apos;m Spun, your CMO.
             </h2>
