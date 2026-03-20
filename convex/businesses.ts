@@ -11,6 +11,18 @@ export const getByUser = query({
   },
 })
 
+export const getForCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) return null
+    return await ctx.db
+      .query("businesses")
+      .withIndex("by_user", (q) => q.eq("userId", identity.subject))
+      .first()
+  },
+})
+
 export const get = query({
   args: { id: v.id("businesses") },
   handler: async (ctx, args) => {

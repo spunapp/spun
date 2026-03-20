@@ -49,10 +49,7 @@ export default function BrandAssetsPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
-  const business = useQuery(
-    api.businesses.getByUser,
-    user?.id ? { userId: user.id } : "skip"
-  )
+  const business = useQuery(api.businesses.getForCurrentUser)
   const assets = useQuery(
     api.brandAssets.list,
     business?._id ? { businessId: business._id } : "skip"
@@ -168,7 +165,18 @@ export default function BrandAssetsPage() {
         {business === undefined || (business !== null && assets === undefined) ? (
           <div className="text-center py-16 text-slate-500 text-sm">Loading…</div>
         ) : business === null ? (
-          <div className="text-center py-16 text-slate-500 text-sm">No business profile found.</div>
+          <div className="text-center py-16 space-y-3">
+            <p className="text-slate-400 text-sm font-medium">No business profile found</p>
+            <p className="text-slate-500 text-xs max-w-xs mx-auto">
+              Set up your business profile in the chat first, then come back to manage your brand assets.
+            </p>
+            <button
+              onClick={() => router.push("/chat")}
+              className="mt-2 px-4 py-2 bg-[#5B9BAA]/20 hover:bg-[#5B9BAA]/30 text-[#5B9BAA] text-xs font-medium rounded-lg transition-colors"
+            >
+              Go to chat
+            </button>
+          </div>
         ) : visible.length === 0 ? (
           <div className="text-center py-16 text-slate-500 text-sm">
             {assets!.length === 0
