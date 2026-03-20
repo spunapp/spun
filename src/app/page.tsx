@@ -57,8 +57,8 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="border-b border-white/5 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Image src="/spun.gif" alt="" width={32} height={32} className="h-8 w-8 rounded-lg" unoptimized />
+          <div className="flex items-center gap-1">
+            <Image src="/spun.gif" alt="" width={36} height={36} className="h-9 w-auto rounded-lg" unoptimized />
             <Image src="/logo.png" alt="Spun" width={120} height={34} className="h-9 w-auto" />
           </div>
           <Link
