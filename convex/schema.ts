@@ -210,6 +210,24 @@ export default defineSchema({
     channelsConnected: v.number(),
   }).index("by_business", ["businessId"]),
 
+  brandAssets: defineTable({
+    businessId: v.id("businesses"),
+    userId: v.string(),
+    storageId: v.id("_storage"),
+    name: v.string(),
+    type: v.union(
+      v.literal("images"),
+      v.literal("videos"),
+      v.literal("documents"),
+      v.literal("audio")
+    ),
+    size: v.number(),
+    mimeType: v.string(),
+    addedAt: v.number(),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_user", ["userId"]),
+
   connectedChannels: defineTable({
     businessId: v.id("businesses"),
     platform: v.string(),
