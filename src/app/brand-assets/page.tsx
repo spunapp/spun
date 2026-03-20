@@ -2,14 +2,13 @@
 
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Upload, ImageIcon, FileText, Film, Music, Trash2 } from "lucide-react"
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect, Component, ReactNode } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { useUser } from "@clerk/nextjs"
 import { api } from "../../../convex/_generated/api"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
 
 type BrandAsset = Doc<"brandAssets"> & { url: string | null }
-
 type AssetType = "all" | "images" | "videos" | "documents" | "audio"
 
 const FILTERS: { id: AssetType; label: string }[] = [
@@ -40,6 +39,64 @@ function AssetIcon({ type }: { type: string }) {
   return <FileText className="w-6 h-6 text-slate-400" />
 }
 
+class ErrorBoundary extends Component<{ children: ReactNode; fallback: ReactNode }, { error: boolean }> {
+  state = { error: false }
+  static getDerivedStateFromError() { return { error: true } }
+  render() { return this.state.error ? this.props.fallback : this.props.children }
+}
+
+function AssetGrid({ businessId, filter }: { businessId: Id<"businesses">; filter: AssetType }) {
+  const assets = useQuery(api.brandAssets.list, { businessId })
+  const remove = useMutation(api.brandAssets.remove)
+
+  const visible: BrandAsset[] = !assets
+    ? []
+    : filter === "all"
+    ? (assets as BrandAsset[])
+    : (assets as BrandAsset[]).filter((a) => a.type === filter)
+
+  if (assets === undefined) {
+    return <div className="text-center py-16 text-slate-500 text-sm">Loading…</div>
+  }
+  if (visible.length === 0) {
+    return (
+      <div className="text-center py-16 text-slate-500 text-sm">
+        {assets.length === 0 ? "No assets yet — upload your first brand file above." : `No ${filter} found.`}
+      </div>
+    )
+  }
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+      {visible.map((asset) => (
+        <div key={asset._id} className="group bg-[var(--background-dark)] border border-white/5 rounded-xl overflow-hidden">
+          <div className="h-32 bg-white/[0.03] flex items-center justify-center relative">
+            {asset.type === "images" && asset.url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
+            ) : asset.type === "videos" && asset.url ? (
+              <video src={asset.url} className="w-full h-full object-cover" muted />
+            ) : (
+              <AssetIcon type={asset.type} />
+            )}
+            <button
+              onClick={() => remove({ id: asset._id as Id<"brandAssets">, storageId: asset.storageId })}
+              className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-red-400" />
+            </button>
+          </div>
+          <div className="px-3 py-2">
+            <p className="text-xs font-medium text-white truncate">{asset.name}</p>
+            <p className="text-xs text-slate-500 mt-0.5">
+              {formatBytes(asset.size)} · {new Date(asset.addedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            </p>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export default function BrandAssetsPage() {
   const router = useRouter()
   const { user } = useUser()
@@ -53,17 +110,11 @@ export default function BrandAssetsPage() {
     api.businesses.getByUser,
     user?.id ? { userId: user.id } : "skip"
   )
-  const assets = useQuery(
-    api.brandAssets.list,
-    business?._id ? { businessId: business._id } : "skip"
-  )
 
   const createBusiness = useMutation(api.businesses.create)
   const generateUploadUrl = useMutation(api.brandAssets.generateUploadUrl)
   const save = useMutation(api.brandAssets.save)
-  const remove = useMutation(api.brandAssets.remove)
 
-  // Auto-create a business profile if the user doesn't have one yet
   const creatingRef = useRef(false)
   useEffect(() => {
     if (business === null && user?.id && !creatingRef.current) {
@@ -117,20 +168,10 @@ export default function BrandAssetsPage() {
     }
   }
 
-  const visible: BrandAsset[] = !assets
-    ? []
-    : filter === "all"
-    ? (assets as BrandAsset[])
-    : (assets as BrandAsset[]).filter((a) => a.type === filter)
-
   return (
     <div className="min-h-screen bg-[var(--background)] text-white">
-      {/* Header */}
       <div className="border-b border-white/5 px-6 py-4 flex items-center gap-4">
-        <button
-          onClick={() => router.back()}
-          className="p-2 hover:bg-white/5 rounded-lg transition-colors"
-        >
+        <button onClick={() => router.back()} className="p-2 hover:bg-white/5 rounded-lg transition-colors">
           <ArrowLeft className="w-4 h-4 text-slate-400" />
         </button>
         <h1 className="text-base font-semibold">Brand assets</h1>
@@ -156,9 +197,7 @@ export default function BrandAssetsPage() {
             {uploading ? "Uploading…" : "Drop files here or click to upload"}
           </p>
           <p className="text-xs text-slate-500 mt-1">Images, videos, documents, audio — any brand files</p>
-          {uploadError && (
-            <p className="text-xs text-red-400 mt-2">{uploadError}</p>
-          )}
+          {uploadError && <p className="text-xs text-red-400 mt-2">{uploadError}</p>}
           <input
             ref={inputRef}
             type="file"
@@ -176,9 +215,7 @@ export default function BrandAssetsPage() {
               key={f.id}
               onClick={() => setFilter(f.id)}
               className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                filter === f.id
-                  ? "bg-white/10 text-white"
-                  : "text-slate-400 hover:text-white"
+                filter === f.id ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"
               }`}
             >
               {f.label}
@@ -186,51 +223,15 @@ export default function BrandAssetsPage() {
           ))}
         </div>
 
-        {/* Asset grid */}
-        {business === undefined || (business !== null && assets === undefined) ? (
+        {/* Asset grid — isolated so errors here don't crash the upload zone */}
+        {business === undefined ? (
           <div className="text-center py-16 text-slate-500 text-sm">Loading…</div>
         ) : business === null ? (
           <div className="text-center py-16 text-slate-500 text-sm">Setting up your profile…</div>
-        ) : visible.length === 0 ? (
-          <div className="text-center py-16 text-slate-500 text-sm">
-            {assets!.length === 0
-              ? "No assets yet — upload your first brand file above."
-              : `No ${filter} found.`}
-          </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {visible.map((asset) => (
-              <div
-                key={asset._id}
-                className="group bg-[var(--background-dark)] border border-white/5 rounded-xl overflow-hidden"
-              >
-                {/* Preview */}
-                <div className="h-32 bg-white/[0.03] flex items-center justify-center relative">
-                  {asset.type === "images" && asset.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={asset.url} alt={asset.name} className="w-full h-full object-cover" />
-                  ) : asset.type === "videos" && asset.url ? (
-                    <video src={asset.url} className="w-full h-full object-cover" muted />
-                  ) : (
-                    <AssetIcon type={asset.type} />
-                  )}
-                  <button
-                    onClick={() => remove({ id: asset._id as Id<"brandAssets">, storageId: asset.storageId })}
-                    className="absolute top-2 right-2 p-1.5 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
-                  </button>
-                </div>
-                {/* Info */}
-                <div className="px-3 py-2">
-                  <p className="text-xs font-medium text-white truncate">{asset.name}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {formatBytes(asset.size)} · {new Date(asset.addedAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <ErrorBoundary fallback={<div className="text-center py-16 text-slate-500 text-sm">Could not load assets — uploads still work above.</div>}>
+            <AssetGrid businessId={business._id} filter={filter} />
+          </ErrorBoundary>
         )}
       </div>
     </div>
