@@ -88,7 +88,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-lg text-slate-400 max-w-2xl mx-auto mt-6 leading-relaxed">
-          Founders have enough to worry about. Spun is your always-on marketing team — strategy,
+          Founders have enough to worry about. Spun is your always-on AI marketing team — strategy,
           campaigns, creatives, and analytics — for a fraction of the cost of a single hire.
         </p>
 
