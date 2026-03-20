@@ -147,6 +147,65 @@ export const linkOrganisation = mutation({
   },
 })
 
+// Deletes a user's business, organisation, and all associated data.
+export const deleteAccount = mutation({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const business = await ctx.db
+      .query("businesses")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .first()
+    if (!business) return
+
+    const businessId = business._id
+
+    // Delete all business-linked records
+    const tables = [
+      "campaigns",
+      "adCreatives",
+      "prospects",
+      "leadScoreEvents",
+      "salesStrategies",
+      "customers",
+      "roiRecords",
+      "approvalQueue",
+      "usageLedger",
+      "connectedChannels",
+      "conversations",
+    ] as const
+
+    for (const table of tables) {
+      const rows = await ctx.db
+        .query(table as any)
+        .withIndex("by_business" as any, (q: any) => q.eq("businessId", businessId))
+        .collect()
+      for (const row of rows) await ctx.db.delete(row._id)
+    }
+
+    // Delete messages for any conversations
+    const convos = await ctx.db
+      .query("conversations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect()
+    for (const convo of convos) {
+      const msgs = await ctx.db
+        .query("messages")
+        .withIndex("by_conversation", (q) => q.eq("conversationId", convo._id))
+        .collect()
+      for (const msg of msgs) await ctx.db.delete(msg._id)
+      await ctx.db.delete(convo._id)
+    }
+
+    // Delete the organisation
+    if (business.organisationId) {
+      await ctx.db.delete(business.organisationId)
+    }
+
+    // Delete the business
+    await ctx.db.delete(businessId)
+  },
+})
+
 // Ensures a business has an organisation. If not, creates one using the business name.
 // Safe to call multiple times — no-ops if the org already exists.
 export const ensureOrganisation = mutation({
