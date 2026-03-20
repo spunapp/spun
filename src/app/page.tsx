@@ -89,18 +89,12 @@ export default function HomePage() {
           campaigns, creatives, and analytics — for a fraction of the cost of a single hire.
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 mt-10">
+        <div className="flex items-center justify-center mt-10">
           <Link
             href="/login"
             className="inline-flex items-center gap-2 bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-sm"
           >
-            Get started free <ArrowRight className="w-4 h-4" />
-          </Link>
-          <Link
-            href="/pricing"
-            className="inline-flex items-center gap-2 text-slate-300 hover:text-white font-medium px-7 py-3.5 rounded-xl border border-white/10 hover:border-white/20 transition-colors text-sm"
-          >
-            View pricing
+            Get Started <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
