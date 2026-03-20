@@ -77,6 +77,18 @@ export default function SettingsPage() {
   const [accountId, setAccountId] = useState<string | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [deleteInput, setDeleteInput] = useState("")
+  const [deleting, setDeleting] = useState(false)
+
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    try {
+      await fetch("/api/delete-account", { method: "DELETE" })
+      await signOut()
+      router.push("/login")
+    } catch {
+      setDeleting(false)
+    }
+  }
 
   useEffect(() => {
     if (!userId) return
@@ -375,48 +387,57 @@ export default function SettingsPage() {
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-[var(--background-dark)] border border-white/10 rounded-2xl p-6 w-full max-w-sm mx-4 space-y-5">
-            <div>
-              <p className="text-base font-semibold text-red-400">Are you sure?</p>
-              <p className="text-xs text-slate-400 mt-1.5">
-                This will permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1.5">
-                Enter your Account ID to confirm
-              </label>
-              <input
-                type="text"
-                value={deleteInput}
-                onChange={(e) => setDeleteInput(e.target.value)}
-                placeholder="e.g. 00001"
-                className="w-full bg-[var(--background)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-red-400/50"
-              />
-            </div>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setDeleteModalOpen(false)}
-                className="flex-1 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg py-2 transition-colors"
-              >
-                Cancel
-              </button>
-              <a
-                href={
-                  deleteInput === accountId
-                    ? `mailto:hello@spun.bot?subject=Delete%20My%20Account&body=Hi%2C%0A%0APlease%20delete%20my%20account%20associated%20with%20this%20email%20address.%0A%0AThank%20you.`
-                    : undefined
-                }
-                onClick={(e) => { if (deleteInput !== accountId) e.preventDefault() }}
-                className={`flex-1 text-center text-sm rounded-lg py-2 transition-colors ${
-                  deleteInput === accountId
-                    ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                    : "bg-red-500/20 text-red-400/40 cursor-not-allowed"
-                }`}
-              >
-                Delete account
-              </a>
-            </div>
+            {deleting ? (
+              <div className="flex flex-col items-center gap-3 py-4">
+                <svg className="animate-spin w-7 h-7 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                </svg>
+                <p className="text-sm text-slate-400">Deleting your account…</p>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <p className="text-base font-semibold text-red-400">Are you sure?</p>
+                  <p className="text-xs text-slate-400 mt-1.5">
+                    This will permanently delete your account and all associated data. This action cannot be undone.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs text-slate-400 mb-1.5">
+                    Enter your Account ID to confirm
+                  </label>
+                  <input
+                    type="text"
+                    value={deleteInput}
+                    onChange={(e) => setDeleteInput(e.target.value)}
+                    placeholder="e.g. 00001"
+                    className="w-full bg-[var(--background)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-red-400/50"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteModalOpen(false)}
+                    className="flex-1 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg py-2 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deleteInput !== accountId}
+                    onClick={handleDeleteAccount}
+                    className={`flex-1 text-sm rounded-lg py-2 transition-colors ${
+                      deleteInput === accountId
+                        ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                        : "bg-red-500/20 text-red-400/40 cursor-not-allowed"
+                    }`}
+                  >
+                    Delete account
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
