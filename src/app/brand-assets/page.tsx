@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import { ArrowLeft, Upload, ImageIcon, FileText, Film, Music, Trash2 } from "lucide-react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { useUser } from "@clerk/nextjs"
 import { api } from "../../../convex/_generated/api"
@@ -55,9 +55,17 @@ export default function BrandAssetsPage() {
     business?._id ? { businessId: business._id } : "skip"
   )
 
+  const ensureBusiness = useMutation(api.businesses.ensureForCurrentUser)
   const generateUploadUrl = useMutation(api.brandAssets.generateUploadUrl)
   const save = useMutation(api.brandAssets.save)
   const remove = useMutation(api.brandAssets.remove)
+
+  // Auto-create a business profile if the user doesn't have one yet
+  useEffect(() => {
+    if (business === null) {
+      ensureBusiness({ name: user?.fullName ?? user?.firstName ?? "My Business" })
+    }
+  }, [business])
 
   async function uploadFiles(files: FileList | null) {
     if (!files || !business?._id || !user?.id) return
@@ -165,18 +173,7 @@ export default function BrandAssetsPage() {
         {business === undefined || (business !== null && assets === undefined) ? (
           <div className="text-center py-16 text-slate-500 text-sm">Loading…</div>
         ) : business === null ? (
-          <div className="text-center py-16 space-y-3">
-            <p className="text-slate-400 text-sm font-medium">No business profile found</p>
-            <p className="text-slate-500 text-xs max-w-xs mx-auto">
-              Set up your business profile in the chat first, then come back to manage your brand assets.
-            </p>
-            <button
-              onClick={() => router.push("/chat")}
-              className="mt-2 px-4 py-2 bg-[#5B9BAA]/20 hover:bg-[#5B9BAA]/30 text-[#5B9BAA] text-xs font-medium rounded-lg transition-colors"
-            >
-              Go to chat
-            </button>
-          </div>
+          <div className="text-center py-16 text-slate-500 text-sm">Setting up your profile…</div>
         ) : visible.length === 0 ? (
           <div className="text-center py-16 text-slate-500 text-sm">
             {assets!.length === 0

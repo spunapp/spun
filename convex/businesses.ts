@@ -23,6 +23,37 @@ export const getForCurrentUser = query({
   },
 })
 
+export const ensureForCurrentUser = mutation({
+  args: { name: v.string() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity()
+    if (!identity) throw new Error("Not authenticated")
+    const userId = identity.subject
+
+    const existing = await ctx.db
+      .query("businesses")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .first()
+    if (existing) return existing._id
+
+    return await ctx.db.insert("businesses", {
+      userId,
+      name: args.name,
+      description: "",
+      productOrService: "service",
+      whatTheySell: "",
+      industry: "",
+      targetAudience: "",
+      demographics: {},
+      locations: [],
+      competitors: [],
+      imageryUrls: [],
+      trustMode: "draft",
+      onboardingComplete: false,
+    })
+  },
+})
+
 export const get = query({
   args: { id: v.id("businesses") },
   handler: async (ctx, args) => {
