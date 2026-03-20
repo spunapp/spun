@@ -6,7 +6,9 @@ import { useState, useRef } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { useUser } from "@clerk/nextjs"
 import { api } from "../../../convex/_generated/api"
-import type { Id } from "../../../convex/_generated/dataModel"
+import type { Id, Doc } from "../../../convex/_generated/dataModel"
+
+type BrandAsset = Doc<"brandAssets"> & { url: string | null }
 
 type AssetType = "all" | "images" | "videos" | "documents" | "audio"
 
@@ -86,11 +88,11 @@ export default function BrandAssetsPage() {
     }
   }
 
-  const visible = !assets
+  const visible: BrandAsset[] = !assets
     ? []
     : filter === "all"
-    ? assets
-    : assets.filter((a) => a.type === filter)
+    ? (assets as BrandAsset[])
+    : (assets as BrandAsset[]).filter((a) => a.type === filter)
 
   return (
     <div className="min-h-screen bg-[var(--background)] text-white">
