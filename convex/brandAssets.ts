@@ -1,15 +1,9 @@
 import { mutation, query } from "./_generated/server"
-import { v, ConvexError } from "convex/values"
+import { v } from "convex/values"
 
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity()
-    if (!identity) {
-      throw new ConvexError(
-        "Not authenticated. Please sign out and sign back in, then try again."
-      )
-    }
     return await ctx.storage.generateUploadUrl()
   },
 })
