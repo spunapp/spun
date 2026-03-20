@@ -47,6 +47,7 @@ export default function BrandAssetsPage() {
   const [filter, setFilter] = useState<AssetType>("all")
   const [dragging, setDragging] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
 
   const business = useQuery(
     api.businesses.getByUser,
@@ -64,6 +65,7 @@ export default function BrandAssetsPage() {
   async function uploadFiles(files: FileList | null) {
     if (!files || !business?._id || !user?.id) return
     setUploading(true)
+    setUploadError(null)
     try {
       for (const file of Array.from(files)) {
         const uploadUrl = await generateUploadUrl()
@@ -72,7 +74,10 @@ export default function BrandAssetsPage() {
           headers: { "Content-Type": file.type },
           body: file,
         })
-        const { storageId } = await res.json()
+        if (!res.ok) throw new Error(`Upload failed (${res.status})`)
+        const data = await res.json()
+        const storageId = data.storageId
+        if (!storageId) throw new Error("Upload failed: no storage ID returned")
         await save({
           businessId: business._id,
           userId: user.id,
@@ -83,6 +88,8 @@ export default function BrandAssetsPage() {
           mimeType: file.type,
         })
       }
+    } catch (err) {
+      setUploadError(err instanceof Error ? err.message : "Upload failed")
     } finally {
       setUploading(false)
     }
@@ -127,6 +134,9 @@ export default function BrandAssetsPage() {
             {uploading ? "Uploading…" : "Drop files here or click to upload"}
           </p>
           <p className="text-xs text-slate-500 mt-1">Images, videos, documents, audio — any brand files</p>
+          {uploadError && (
+            <p className="text-xs text-red-400 mt-2">{uploadError}</p>
+          )}
           <input
             ref={inputRef}
             type="file"
@@ -155,11 +165,13 @@ export default function BrandAssetsPage() {
         </div>
 
         {/* Asset grid */}
-        {assets === undefined ? (
+        {business === undefined || (business !== null && assets === undefined) ? (
           <div className="text-center py-16 text-slate-500 text-sm">Loading…</div>
+        ) : business === null ? (
+          <div className="text-center py-16 text-slate-500 text-sm">No business profile found.</div>
         ) : visible.length === 0 ? (
           <div className="text-center py-16 text-slate-500 text-sm">
-            {assets.length === 0
+            {assets!.length === 0
               ? "No assets yet — upload your first brand file above."
               : `No ${filter} found.`}
           </div>
