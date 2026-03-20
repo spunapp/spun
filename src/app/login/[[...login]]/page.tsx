@@ -6,40 +6,12 @@ import { useEffect } from "react"
 
 function DimDevModeBanner() {
   useEffect(() => {
-    function dim(el: Element) {
-      const html = (el as HTMLElement)
-      html.style.setProperty("background", "#1f2937", "important")
-      html.style.setProperty("background-color", "#1f2937", "important")
-      html.style.setProperty("color", "#4b5563", "important")
-      html.style.setProperty("border-color", "transparent", "important")
-      html.style.setProperty("box-shadow", "none", "important")
-      html.style.setProperty("opacity", "0.55", "important")
-      html.querySelectorAll("*").forEach((child) => {
-        const c = child as HTMLElement
-        c.style.setProperty("color", "#4b5563", "important")
-        c.style.setProperty("fill", "#4b5563", "important")
-        c.style.setProperty("background", "transparent", "important")
-        c.style.setProperty("background-color", "transparent", "important")
-      })
-    }
-
-    function scan() {
-      // Walk every element and check for orange background or "Development mode" text
+function scan() {
       document.querySelectorAll("*").forEach((el) => {
-        const text = el.textContent?.trim()
-        if (text === "Development mode" || text === "Development Mode") {
-          // Style this element and its parent(s) up 3 levels
-          dim(el)
-          let p: Element | null = el
-          for (let i = 0; i < 4; i++) {
-            p = p?.parentElement ?? null
-            if (p) dim(p)
-          }
-        }
-        // Also catch by computed orange/amber background
-        const bg = getComputedStyle(el).backgroundColor
-        if (bg && (bg.includes("247, 107") || bg.includes("251, 146") || bg.includes("245, 158"))) {
-          dim(el)
+        if (el.childElementCount === 0 && el.textContent?.trim() === "Development mode") {
+          const html = el as HTMLElement
+          html.style.setProperty("color", "#4b5563", "important")
+          html.style.setProperty("opacity", "0.7", "important")
         }
       })
     }
@@ -136,14 +108,6 @@ export default function LoginPage() {
               },
               footerActionLink: {
                 style: { color: "#5B9BAA" },
-              },
-              badge: {
-                style: {
-                  backgroundColor: "#1f2937",
-                  color: "#4b5563",
-                  border: "none",
-                  opacity: 0.55,
-                },
               },
             },
           }}
