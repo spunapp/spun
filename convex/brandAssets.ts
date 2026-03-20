@@ -1,10 +1,16 @@
 import { mutation, query } from "./_generated/server"
-import { v } from "convex/values"
+import { v, ConvexError } from "convex/values"
 
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
-    return await ctx.storage.generateUploadUrl()
+    try {
+      return await ctx.storage.generateUploadUrl()
+    } catch (e) {
+      throw new ConvexError(
+        `Storage error: ${e instanceof Error ? e.message : String(e)}`
+      )
+    }
   },
 })
 

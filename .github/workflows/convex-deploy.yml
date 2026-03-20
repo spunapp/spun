@@ -13,6 +13,6 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
-      - run: npx convex deploy
+      - run: npx convex deploy --verbose
         env:
           CONVEX_DEPLOY_KEY: ${{ secrets.CONVEX_DEPLOY_KEY }}
