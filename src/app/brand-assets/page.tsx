@@ -49,23 +49,40 @@ export default function BrandAssetsPage() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
 
-  const business = useQuery(api.businesses.getForCurrentUser)
+  const business = useQuery(
+    api.businesses.getByUser,
+    user?.id ? { userId: user.id } : "skip"
+  )
   const assets = useQuery(
     api.brandAssets.list,
     business?._id ? { businessId: business._id } : "skip"
   )
 
-  const ensureBusiness = useMutation(api.businesses.ensureForCurrentUser)
+  const createBusiness = useMutation(api.businesses.create)
   const generateUploadUrl = useMutation(api.brandAssets.generateUploadUrl)
   const save = useMutation(api.brandAssets.save)
   const remove = useMutation(api.brandAssets.remove)
 
   // Auto-create a business profile if the user doesn't have one yet
+  const creatingRef = useRef(false)
   useEffect(() => {
-    if (business === null) {
-      ensureBusiness({ name: user?.fullName ?? user?.firstName ?? "My Business" })
+    if (business === null && user?.id && !creatingRef.current) {
+      creatingRef.current = true
+      createBusiness({
+        userId: user.id,
+        name: user.fullName ?? user.firstName ?? "My Business",
+        description: "",
+        productOrService: "service",
+        whatTheySell: "",
+        industry: "",
+        targetAudience: "",
+        demographics: {},
+        locations: [],
+        competitors: [],
+        imageryUrls: [],
+      }).catch(() => { creatingRef.current = false })
     }
-  }, [business])
+  }, [business, user?.id])
 
   async function uploadFiles(files: FileList | null) {
     if (!files || !business?._id || !user?.id) return
