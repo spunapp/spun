@@ -57,9 +57,11 @@ export default function HomePage() {
       {/* Nav */}
       <nav className="border-b border-white/5 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0">
             <Image src="/spun.gif" alt="" width={36} height={36} className="h-9 w-auto rounded-lg" unoptimized />
-            <span className="text-xl font-bold tracking-wide text-white">spun</span>
+            <div className="overflow-hidden h-9" style={{ width: 42 }}>
+              <Image src="/logo.png" alt="Spun" width={80} height={36} className="h-9 w-auto" style={{ marginLeft: -20 }} />
+            </div>
           </div>
           <Link
             href="/login"
