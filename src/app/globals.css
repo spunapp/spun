@@ -68,6 +68,25 @@ body {
   color: #ffffff !important;
 }
 
+/* Clerk "Development mode" banner — dim to dark grey */
+.cl-devModeStripe,
+[class*="cl-devMod"],
+[class*="cl-developmentMode"],
+[data-clerk-dev-mode-notice] {
+  background-color: #1f2937 !important;
+  color: #4b5563 !important;
+  opacity: 0.5 !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.cl-devModeStripe *,
+[class*="cl-devMod"] *,
+[class*="cl-developmentMode"] *,
+[data-clerk-dev-mode-notice] * {
+  color: #4b5563 !important;
+  fill: #4b5563 !important;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
