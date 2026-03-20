@@ -11,6 +11,7 @@
 import type * as adCreatives from "../adCreatives.js";
 import type * as ai from "../ai.js";
 import type * as approvals from "../approvals.js";
+import type * as brandAssets from "../brandAssets.js";
 import type * as businesses from "../businesses.js";
 import type * as campaigns from "../campaigns.js";
 import type * as channels from "../channels.js";
@@ -32,6 +33,7 @@ declare const fullApi: ApiFromModules<{
   adCreatives: typeof adCreatives;
   ai: typeof ai;
   approvals: typeof approvals;
+  brandAssets: typeof brandAssets;
   businesses: typeof businesses;
   campaigns: typeof campaigns;
   channels: typeof channels;
