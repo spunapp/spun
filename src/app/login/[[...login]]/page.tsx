@@ -84,6 +84,12 @@ export default function LoginPage() {
               footerActionLink: {
                 style: { color: "#5B9BAA" },
               },
+              badge: {
+                style: { backgroundColor: "transparent", color: "#4b5563", border: "none", opacity: 0.5 },
+              },
+              tagInputItem: {
+                style: { backgroundColor: "transparent", color: "#4b5563" },
+              },
             },
           }}
         />
