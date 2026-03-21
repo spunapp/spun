@@ -13,11 +13,9 @@ export default function ChatLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { signOut } = useClerk()
-  const router = useRouter()
 
   async function handleLogout() {
-    await signOut()
-    router.push("/login")
+    await signOut({ redirectUrl: "/login" })
   }
 
   return (
