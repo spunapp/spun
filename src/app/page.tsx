@@ -47,12 +47,17 @@ export default function HomePage() {
             <Image src="/spun.gif" alt="" width={36} height={36} className="h-9 w-auto rounded-lg" unoptimized />
             <Image src="/logo.png" alt="Spun" width={120} height={34} className="h-9 w-auto" />
           </div>
-          <Link
-            href="/login"
-            className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-          >
-            Sign in →
-          </Link>
+          <div className="flex items-center gap-6">
+            <Link href="/faq" className="text-sm text-slate-400 hover:text-white transition-colors">
+              FAQ
+            </Link>
+            <Link
+              href="/login"
+              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
+            >
+              Sign in →
+            </Link>
+          </div>
         </div>
       </nav>
 
