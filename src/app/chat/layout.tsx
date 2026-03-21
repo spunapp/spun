@@ -16,8 +16,7 @@ export default function ChatLayout({
   const router = useRouter()
 
   async function handleLogout() {
-    await signOut()
-    router.push("/login")
+    await signOut({ redirectUrl: "/login" })
   }
 
   return (

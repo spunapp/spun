@@ -83,8 +83,7 @@ export default function SettingsPage() {
     setDeleting(true)
     try {
       await fetch("/api/delete-account", { method: "DELETE" })
-      await signOut()
-      router.push("/login")
+      await signOut({ redirectUrl: "/login" })
     } catch {
       setDeleting(false)
     }
@@ -363,8 +362,7 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-3">
               <button
                 onClick={async () => {
-                  await signOut()
-                  router.push("/login")
+                  await signOut({ redirectUrl: "/login" })
                 }}
                 className="text-sm text-red-400 hover:text-red-300 transition-colors text-left"
               >
