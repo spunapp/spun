@@ -97,7 +97,7 @@ export default function HomePage() {
             href="/login"
             className="inline-flex items-center gap-2 bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-sm"
           >
-            Get Started <ArrowRight className="w-4 h-4" />
+            Start your free trial <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       </section>
@@ -174,7 +174,7 @@ export default function HomePage() {
           href="/login"
           className="inline-flex items-center gap-2 bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold px-8 py-4 rounded-xl transition-colors"
         >
-          Start using Spun today <ArrowRight className="w-4 h-4" />
+          Start your free trial <ArrowRight className="w-4 h-4" />
         </Link>
       </section>
 

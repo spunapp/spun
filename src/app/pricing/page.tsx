@@ -90,7 +90,7 @@ export default function PricingPage() {
             onClick={() => router.push("/chat")}
             className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8"
           >
-            Get started
+            Start your 14 day free trial
           </button>
 
           <ul className="space-y-3">
@@ -120,7 +120,7 @@ export default function PricingPage() {
             onClick={() => router.push("/chat")}
             className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8"
           >
-            Get started
+            Start your 14 day free trial
           </button>
 
           <InheritedLabel from="Standard" />
