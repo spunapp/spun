@@ -62,7 +62,7 @@ export default function HomePage() {
             <Image src="/logo.png" alt="Spun" width={120} height={34} className="h-9 w-auto" />
           </div>
           <Link
-            href="/login"
+            href="/pricing"
             className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
           >
             Sign in →
@@ -94,7 +94,7 @@ export default function HomePage() {
 
         <div className="flex items-center justify-center mt-10">
           <Link
-            href="/login"
+            href="/pricing"
             className="inline-flex items-center gap-2 bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-sm"
           >
             Start your free trial <ArrowRight className="w-4 h-4" />
@@ -171,7 +171,7 @@ export default function HomePage() {
       {/* Bottom CTA */}
       <section className="max-w-6xl mx-auto px-6 pb-20 text-center">
         <Link
-          href="/login"
+          href="/pricing"
           className="inline-flex items-center gap-2 bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold px-8 py-4 rounded-xl transition-colors"
         >
           Start your free trial <ArrowRight className="w-4 h-4" />
