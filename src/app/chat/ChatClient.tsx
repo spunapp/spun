@@ -18,9 +18,9 @@ export default function ChatClient() {
   const [error, setError] = useState<string | null>(null)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
 
-  // Single combined query: conversations + messages for the latest conversation
-  const initialData = useQuery(
-    api.conversations.listWithLatestMessages,
+  // Queries
+  const conversations = useQuery(
+    api.conversations.list,
     userId ? { userId } : "skip"
   )
   const business = useQuery(
@@ -28,19 +28,17 @@ export default function ChatClient() {
     userId ? { userId } : "skip"
   )
 
-  // Only fires when user explicitly switches to a non-latest conversation
-  const switchedMessages = useQuery(
-    api.conversations.getMessages,
-    selectedConversationId && selectedConversationId !== initialData?.latestConversationId
-      ? { conversationId: selectedConversationId }
-      : "skip"
-  )
-
-  const conversations = initialData?.conversations
-  // Derive active conversation without needing a useEffect + setState cycle
+  // Derive active conversation directly from query result — no useEffect+setState round-trip
   const activeConversationId =
-    selectedConversationId ?? (initialData?.latestConversationId as Id<"conversations"> | null) ?? null
-  const messages = switchedMessages ?? initialData?.messages
+    selectedConversationId ??
+    (conversations && conversations.length > 0
+      ? (conversations[0]._id as Id<"conversations">)
+      : null)
+
+  const messages = useQuery(
+    api.conversations.getMessages,
+    activeConversationId ? { conversationId: activeConversationId } : "skip"
+  )
 
   // Mutations & Actions
   const createConversation = useMutation(api.conversations.create)
@@ -165,7 +163,7 @@ export default function ChatClient() {
           }>
         }
         isLoading={isLoading}
-        isInitializing={initialData === undefined}
+        isInitializing={conversations === undefined || (activeConversationId !== null && messages === undefined)}
         onApprove={handleApprove}
         onReject={handleReject}
       />
