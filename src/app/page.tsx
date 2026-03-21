@@ -48,8 +48,8 @@ export default function HomePage() {
             <Image src="/logo.png" alt="Spun" width={120} height={34} className="h-9 w-auto" />
           </div>
           <div className="flex items-center gap-6">
-            <Link href="/faq" className="text-sm text-slate-400 hover:text-white transition-colors">
-              FAQ
+            <Link href="/faq" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              FAQs
             </Link>
             <Link
               href="/login"
