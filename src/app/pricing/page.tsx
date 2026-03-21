@@ -87,7 +87,7 @@ export default function PricingPage() {
           </div>
 
           <button
-            onClick={() => router.push("/chat")}
+            onClick={() => router.push("/login")}
             className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8"
           >
             Start your 14 day free trial
@@ -117,7 +117,7 @@ export default function PricingPage() {
           </div>
 
           <button
-            onClick={() => router.push("/chat")}
+            onClick={() => router.push("/login")}
             className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8"
           >
             Start your 14 day free trial
