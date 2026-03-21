@@ -1,8 +1,5 @@
 "use client"
 
-import { useAuth } from "@clerk/nextjs"
-import { useEffect } from "react"
-import { useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, Zap, Target, Megaphone, BarChart3, Lightbulb, Rocket } from "lucide-react"
@@ -41,17 +38,6 @@ const FEATURES = [
 ]
 
 export default function HomePage() {
-  const { isLoaded, isSignedIn } = useAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      router.replace("/pricing")
-    }
-  }, [isLoaded, isSignedIn, router])
-
-  if (isLoaded && isSignedIn) return null
-
   return (
     <div className="min-h-screen bg-[var(--background)] text-white overflow-x-hidden">
       {/* Nav */}
