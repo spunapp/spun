@@ -1,44 +1,50 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { useQuery, useMutation, useAction } from "convex/react"
+import { usePreloadedQuery, useQuery, useMutation, useAction } from "convex/react"
 import { useUser } from "@clerk/nextjs"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
+import type { Preloaded } from "convex/react"
 import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
 
-export default function ChatClient() {
-  const { user } = useUser()
-  const userId = user?.id ?? null
+type Props = {
+  userId: string
+  preloadedData: Preloaded<typeof api.conversations.listWithLatestMessages>
+  preloadedBusiness: Preloaded<typeof api.businesses.getByUser>
+}
+
+export default function ChatClient({ userId, preloadedData, preloadedBusiness }: Props) {
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
 
-  // Queries
-  const conversations = useQuery(
-    api.conversations.list,
-    userId ? { userId } : "skip"
-  )
-  const business = useQuery(
-    api.businesses.getByUser,
-    userId ? { userId } : "skip"
-  )
+  // Data is available immediately — no loading waterfall
+  const initialData = usePreloadedQuery(preloadedData)
+  const business = usePreloadedQuery(preloadedBusiness)
 
-  // Derive active conversation directly from query result — no useEffect+setState round-trip
+  const { conversations, latestConversationId } = initialData
+
+  // Derive active conversation from selection or the server-preloaded latest
   const activeConversationId =
-    selectedConversationId ??
-    (conversations && conversations.length > 0
-      ? (conversations[0]._id as Id<"conversations">)
-      : null)
+    selectedConversationId ?? (latestConversationId as Id<"conversations"> | null)
 
-  const messages = useQuery(
+  // Only fires when user explicitly switches to a non-latest conversation
+  const switchedMessages = useQuery(
     api.conversations.getMessages,
-    activeConversationId ? { conversationId: activeConversationId } : "skip"
+    selectedConversationId && selectedConversationId !== latestConversationId
+      ? { conversationId: selectedConversationId }
+      : "skip"
   )
+
+  const messages =
+    selectedConversationId && selectedConversationId !== latestConversationId
+      ? switchedMessages
+      : initialData.messages
 
   // Mutations & Actions
   const createConversation = useMutation(api.conversations.create)
@@ -70,17 +76,9 @@ export default function ChatClient() {
       const lastMsg = messages[messages.length - 1]
       if (lastMsg.role === "assistant") {
         if (lastMsg.messageType === "campaign_preview") {
-          setQuickReplies([
-            "Approve this",
-            "Adjust budget",
-            "Try different angle",
-          ])
+          setQuickReplies(["Approve this", "Adjust budget", "Try different angle"])
         } else if (lastMsg.messageType === "strategy") {
-          setQuickReplies([
-            "Generate creatives",
-            "Adjust targeting",
-            "Launch this",
-          ])
+          setQuickReplies(["Generate creatives", "Adjust targeting", "Launch this"])
         } else {
           setQuickReplies([])
         }
@@ -97,11 +95,7 @@ export default function ChatClient() {
       setError(null)
 
       try {
-        await chat({
-          conversationId: activeConversationId,
-          userMessage: message,
-          userId,
-        })
+        await chat({ conversationId: activeConversationId, userMessage: message, userId })
       } catch (err) {
         console.error("Chat error:", err)
         setError("Something went wrong. Please try again.")
@@ -163,7 +157,7 @@ export default function ChatClient() {
           }>
         }
         isLoading={isLoading}
-        isInitializing={conversations === undefined || (activeConversationId !== null && messages === undefined)}
+        isInitializing={false}
         onApprove={handleApprove}
         onReject={handleReject}
       />
@@ -188,11 +182,7 @@ export default function ChatClient() {
       <ChatInput
         onSend={handleSend}
         disabled={isLoading || !activeConversationId}
-        placeholder={
-          business
-            ? "Talk to Spun..."
-            : "Tell me about your business..."
-        }
+        placeholder={business ? "Talk to Spun..." : "Tell me about your business..."}
       />
     </div>
   )

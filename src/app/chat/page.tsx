@@ -1,73 +1,28 @@
-"use client"
+import { auth } from "@clerk/nextjs/server"
+import { preloadQuery } from "convex/nextjs"
+import { api } from "../../../convex/_generated/api"
+import ChatClient from "./ChatClient"
+import ChatErrorBoundary from "./ChatErrorBoundary"
 
-import React, { Component, ReactNode } from "react"
-import dynamic from "next/dynamic"
+export default async function ChatPage() {
+  const { userId } = await auth()
 
-const ChatClient = dynamic(() => import("./ChatClient"), {
-  ssr: false,
-  loading: () => (
-    <div className="flex items-center justify-center h-full">
-      <div className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-    </div>
-  ),
-})
-
-class ChatErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean; error: string }
-> {
-  constructor(props: { children: ReactNode }) {
-    super(props)
-    this.state = { hasError: false, error: "" }
+  if (!userId) {
+    return null
   }
 
-  static getDerivedStateFromError(error: Error) {
-    return { hasError: true, error: error.message }
-  }
+  const [preloadedData, preloadedBusiness] = await Promise.all([
+    preloadQuery(api.conversations.listWithLatestMessages, { userId }),
+    preloadQuery(api.businesses.getByUser, { userId }),
+  ])
 
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="flex items-center justify-center h-full p-8">
-          <div className="max-w-md text-center space-y-4">
-            <div className="w-12 h-12 mx-auto bg-red-500/10 rounded-full flex items-center justify-center">
-              <span className="text-red-400 text-xl">!</span>
-            </div>
-            <h2 className="text-lg font-semibold text-white">
-              Backend not connected
-            </h2>
-            <p className="text-sm text-slate-400">
-              Spun needs a Convex backend to run. Set it up with:
-            </p>
-            <pre className="bg-slate-800 rounded-lg p-3 text-left text-xs text-green-400 overflow-x-auto">
-              <code>npx convex dev</code>
-            </pre>
-            <p className="text-xs text-slate-500">
-              This will create your backend and add the URL to{" "}
-              <code className="text-slate-400">.env.local</code>. Then restart
-              the dev server.
-            </p>
-            <details className="text-left">
-              <summary className="text-xs text-slate-600 cursor-pointer">
-                Error details
-              </summary>
-              <pre className="mt-2 text-xs text-slate-600 whitespace-pre-wrap">
-                {this.state.error}
-              </pre>
-            </details>
-          </div>
-        </div>
-      )
-    }
-
-    return this.props.children
-  }
-}
-
-export default function ChatPage() {
   return (
     <ChatErrorBoundary>
-      <ChatClient />
+      <ChatClient
+        userId={userId}
+        preloadedData={preloadedData}
+        preloadedBusiness={preloadedBusiness}
+      />
     </ChatErrorBoundary>
   )
 }
