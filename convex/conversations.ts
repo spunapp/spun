@@ -32,6 +32,28 @@ export const getMessages = query({
   },
 })
 
+export const listWithLatestMessages = query({
+  args: { userId: v.string() },
+  handler: async (ctx, args) => {
+    const conversations = await ctx.db
+      .query("conversations")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .collect()
+    const latest = conversations[0] ?? null
+    const messages = latest
+      ? await ctx.db
+          .query("messages")
+          .withIndex("by_conversation", (q) =>
+            q.eq("conversationId", latest._id)
+          )
+          .order("asc")
+          .collect()
+      : []
+    return { conversations, latestConversationId: latest?._id ?? null, messages }
+  },
+})
+
 export const create = mutation({
   args: {
     userId: v.string(),

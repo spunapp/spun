@@ -12,25 +12,35 @@ import { QuickReplies } from "@/components/chat/QuickReplies"
 export default function ChatClient() {
   const { user } = useUser()
   const userId = user?.id ?? null
-  const [activeConversationId, setActiveConversationId] =
+  const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
 
-  // Queries
-  const conversations = useQuery(
-    api.conversations.list,
+  // Single combined query: conversations + messages for the latest conversation
+  const initialData = useQuery(
+    api.conversations.listWithLatestMessages,
     userId ? { userId } : "skip"
   )
   const business = useQuery(
     api.businesses.getByUser,
     userId ? { userId } : "skip"
   )
-  const messages = useQuery(
+
+  // Only fires when user explicitly switches to a non-latest conversation
+  const switchedMessages = useQuery(
     api.conversations.getMessages,
-    activeConversationId ? { conversationId: activeConversationId } : "skip"
+    selectedConversationId && selectedConversationId !== initialData?.latestConversationId
+      ? { conversationId: selectedConversationId }
+      : "skip"
   )
+
+  const conversations = initialData?.conversations
+  // Derive active conversation without needing a useEffect + setState cycle
+  const activeConversationId =
+    selectedConversationId ?? (initialData?.latestConversationId as Id<"conversations"> | null) ?? null
+  const messages = switchedMessages ?? initialData?.messages
 
   // Mutations & Actions
   const createConversation = useMutation(api.conversations.create)
@@ -46,16 +56,10 @@ export default function ChatClient() {
         businessId: business?._id,
         title: business ? "Marketing Strategy" : "Getting Started",
       }).then((id) => {
-        setActiveConversationId(id)
+        setSelectedConversationId(id)
       })
-    } else if (
-      conversations &&
-      conversations.length > 0 &&
-      !activeConversationId
-    ) {
-      setActiveConversationId(conversations[0]._id as Id<"conversations">)
     }
-  }, [userId, conversations, business, activeConversationId, createConversation])
+  }, [userId, conversations, business, createConversation])
 
   // Determine quick replies based on context
   useEffect(() => {
@@ -161,7 +165,7 @@ export default function ChatClient() {
           }>
         }
         isLoading={isLoading}
-        isInitializing={conversations === undefined || (activeConversationId !== null && messages === undefined)}
+        isInitializing={initialData === undefined}
         onApprove={handleApprove}
         onReject={handleReject}
       />
