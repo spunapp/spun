@@ -62,7 +62,7 @@ export default function HomePage() {
             <Image src="/logo.png" alt="Spun" width={120} height={34} className="h-9 w-auto" />
           </div>
           <Link
-            href="/pricing"
+            href="/login"
             className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
           >
             Sign in →
