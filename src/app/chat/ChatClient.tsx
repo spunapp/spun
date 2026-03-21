@@ -161,6 +161,7 @@ export default function ChatClient() {
           }>
         }
         isLoading={isLoading}
+        isInitializing={conversations === undefined || (activeConversationId !== null && messages === undefined)}
         onApprove={handleApprove}
         onReject={handleReject}
       />

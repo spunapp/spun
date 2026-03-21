@@ -16,6 +16,7 @@ interface Message {
 interface ChatThreadProps {
   messages: Message[]
   isLoading: boolean
+  isInitializing?: boolean
   onApprove?: (approvalId: string) => void
   onReject?: (approvalId: string) => void
 }
@@ -23,6 +24,7 @@ interface ChatThreadProps {
 export function ChatThread({
   messages,
   isLoading,
+  isInitializing = false,
   onApprove,
   onReject,
 }: ChatThreadProps) {
@@ -34,7 +36,7 @@ export function ChatThread({
 
   return (
     <div className="flex-1 overflow-y-auto px-4 py-6 space-y-4">
-      {messages.length === 0 && !isLoading && (
+      {messages.length === 0 && !isLoading && !isInitializing && (
         <div className="flex items-center justify-center h-full">
           <div className="text-center max-w-md">
             <img src="/spun.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-contain" />
