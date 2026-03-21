@@ -2,6 +2,7 @@
 
 import { SignIn } from "@clerk/nextjs"
 import Image from "next/image"
+import Link from "next/link"
 import { useEffect } from "react"
 
 function DimDevModeBanner() {
@@ -31,14 +32,16 @@ export default function LoginPage() {
       <DimDevModeBanner />
       <div className="max-w-sm w-full space-y-8 text-center">
         <div>
-          <Image
-            src="/spun.gif"
-            alt="Spun"
-            width={80}
-            height={80}
-            className="mx-auto mb-4 rounded-2xl"
-            unoptimized
-          />
+          <Link href="/">
+            <Image
+              src="/spun.gif"
+              alt="Spun"
+              width={80}
+              height={80}
+              className="mx-auto mb-4 rounded-2xl cursor-pointer"
+              unoptimized
+            />
+          </Link>
           <Image
             src="/logo.png"
             alt="Spun"
