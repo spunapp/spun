@@ -1,50 +1,44 @@
 "use client"
 
 import { useState, useCallback, useEffect } from "react"
-import { usePreloadedQuery, useQuery, useMutation, useAction } from "convex/react"
+import { useQuery, useMutation, useAction } from "convex/react"
 import { useUser } from "@clerk/nextjs"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
-import type { Preloaded } from "convex/react"
 import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
 
-type Props = {
-  userId: string
-  preloadedData: Preloaded<typeof api.conversations.listWithLatestMessages>
-  preloadedBusiness: Preloaded<typeof api.businesses.getByUser>
-}
-
-export default function ChatClient({ userId, preloadedData, preloadedBusiness }: Props) {
+export default function ChatClient() {
+  const { user } = useUser()
+  const userId = user?.id ?? null
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
 
-  // Data is available immediately — no loading waterfall
-  const initialData = usePreloadedQuery(preloadedData)
-  const business = usePreloadedQuery(preloadedBusiness)
-
-  const { conversations, latestConversationId } = initialData
-
-  // Derive active conversation from selection or the server-preloaded latest
-  const activeConversationId =
-    selectedConversationId ?? (latestConversationId as Id<"conversations"> | null)
-
-  // Only fires when user explicitly switches to a non-latest conversation
-  const switchedMessages = useQuery(
-    api.conversations.getMessages,
-    selectedConversationId && selectedConversationId !== latestConversationId
-      ? { conversationId: selectedConversationId }
-      : "skip"
+  // Queries
+  const conversations = useQuery(
+    api.conversations.list,
+    userId ? { userId } : "skip"
+  )
+  const business = useQuery(
+    api.businesses.getByUser,
+    userId ? { userId } : "skip"
   )
 
-  const messages =
-    selectedConversationId && selectedConversationId !== latestConversationId
-      ? switchedMessages
-      : initialData.messages
+  // Derive active conversation directly — no useEffect+setState round-trip
+  const activeConversationId =
+    selectedConversationId ??
+    (conversations && conversations.length > 0
+      ? (conversations[0]._id as Id<"conversations">)
+      : null)
+
+  const messages = useQuery(
+    api.conversations.getMessages,
+    activeConversationId ? { conversationId: activeConversationId } : "skip"
+  )
 
   // Mutations & Actions
   const createConversation = useMutation(api.conversations.create)
@@ -157,7 +151,7 @@ export default function ChatClient({ userId, preloadedData, preloadedBusiness }:
           }>
         }
         isLoading={isLoading}
-        isInitializing={false}
+        isInitializing={conversations === undefined || (activeConversationId !== null && messages === undefined)}
         onApprove={handleApprove}
         onReject={handleReject}
       />
