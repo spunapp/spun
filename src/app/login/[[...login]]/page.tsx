@@ -57,6 +57,7 @@ export default function LoginPage() {
         <SignIn
           routing="path"
           path="/login"
+          forceRedirectUrl="/chat"
           appearance={{
             variables: {
               colorBackground: "#1F333B",
