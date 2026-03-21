@@ -142,7 +142,7 @@ export default function ChatClient() {
           </h1>
           <p className="text-xs text-slate-500">
             {business
-              ? `${business.industry} — ${business.trustMode} mode`
+              ? `${business.industry} — ${business.trustMode === "draft" ? "preview before executing" : business.trustMode + " mode"}`
               : "Your Marketing Team is ready"}
           </p>
         </div>
