@@ -121,11 +121,11 @@ export default function SettingsPage() {
     try {
       const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
       if (!tokenRes.ok) throw new Error("Failed to get connect token")
-      const { token, expiresAt } = await tokenRes.json()
+      const { token, expiresAt, connectLinkUrl } = await tokenRes.json()
 
       const pd = createFrontendClient({
         externalUserId: userId,
-        tokenCallback: () => Promise.resolve({ token, expiresAt: new Date(expiresAt), connectLinkUrl: "" }),
+        tokenCallback: () => Promise.resolve({ token, expiresAt: new Date(expiresAt), connectLinkUrl }),
       })
 
       await new Promise<void>((resolve, reject) => {
