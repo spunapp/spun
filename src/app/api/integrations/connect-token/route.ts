@@ -41,8 +41,10 @@ export async function POST(request: Request) {
     const { access_token } = await oauthRes.json()
 
     // Step 2: Create the short-lived Connect token for this user.
-    // Intentionally omit x-pd-environment so Pipedream uses the project's
-    // own environment setting (avoids "session expired" mismatches).
+    // x-pd-environment is required by Pipedream. Defaults to "production";
+    // set PIPEDREAM_PROJECT_ENVIRONMENT=development if your project uses
+    // the development environment in the Pipedream dashboard.
+    const pdEnvironment = process.env.PIPEDREAM_PROJECT_ENVIRONMENT ?? "production"
     const origin = request.headers.get("origin") ?? ""
     const tokenBody: Record<string, unknown> = { external_user_id: userId }
     if (origin) tokenBody.allowed_origins = [origin]
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
         headers: {
           Authorization: `Bearer ${access_token}`,
           "Content-Type": "application/json",
+          "x-pd-environment": pdEnvironment,
         },
         body: JSON.stringify(tokenBody),
       }
