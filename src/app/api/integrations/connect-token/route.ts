@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server"
 import { NextResponse } from "next/server"
+import { PipedreamClient } from "@pipedream/sdk/server"
 
 // Creates a short-lived Pipedream Connect token for the current user.
 // The frontend passes this token to @pipedream/sdk to open the Connect popup,
@@ -21,36 +22,23 @@ export async function POST(request: Request) {
     )
   }
 
-  const credentials = Buffer.from(`${clientId}:${clientSecret}`).toString("base64")
-
-  // Include the requesting origin in allowed_origins so Pipedream's iframe
-  // can post messages back to this page correctly.
+  // Include the requesting origin so Pipedream's iframe can post messages
+  // back to this page correctly.
   const origin = request.headers.get("origin") ?? ""
-  const body: Record<string, unknown> = { external_user_id: userId }
-  if (origin) body.allowed_origins = [origin]
 
-  const response = await fetch(
-    `https://api.pipedream.com/v1/connect/${projectId}/tokens`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${credentials}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    }
-  )
+  try {
+    // PipedreamClient handles the OAuth client-credentials exchange
+    // (POST /v1/oauth/token → Bearer token) before calling the tokens API.
+    const pd = new PipedreamClient({ projectId, clientId, clientSecret })
+    const result = await pd.tokens.create({
+      externalUserId: userId,
+      ...(origin ? { allowedOrigins: [origin] } : {}),
+    })
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    console.error("Pipedream token creation failed:", response.status, errorText)
-    // Return the real error to the client so it can be shown in the UI
-    return NextResponse.json(
-      { error: `Pipedream error ${response.status}: ${errorText}` },
-      { status: 502 }
-    )
+    return NextResponse.json({ token: result.token, expiresAt: result.expiresAt })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error("Pipedream token creation failed:", msg)
+    return NextResponse.json({ error: `Pipedream error: ${msg}` }, { status: 502 })
   }
-
-  const data = await response.json()
-  return NextResponse.json({ token: data.token, expiresAt: data.expires_at })
 }
