@@ -5,18 +5,19 @@ import { useQuery, useMutation } from "convex/react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
-import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff } from "lucide-react"
+import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
+import { createFrontendClient } from "@pipedream/sdk/browser"
 
 const PLATFORMS = [
-  { id: "meta", label: "Meta (Facebook & Instagram)" },
-  { id: "google", label: "Google Ads" },
-  { id: "ga4", label: "Google Analytics 4" },
-  { id: "klaviyo", label: "Klaviyo" },
-  { id: "tiktok", label: "TikTok Ads" },
-  { id: "linkedin", label: "LinkedIn Ads" },
-  { id: "shopify", label: "Shopify" },
-  { id: "buffer", label: "Buffer" },
+  { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
+  { id: "google", label: "Google Ads", pipedreamApp: "google_ads" },
+  { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics" },
+  { id: "klaviyo", label: "Klaviyo", pipedreamApp: "klaviyo" },
+  { id: "tiktok", label: "TikTok Ads", pipedreamApp: "tiktok_ads" },
+  { id: "linkedin", label: "LinkedIn Ads", pipedreamApp: null },
+  { id: "shopify", label: "Shopify", pipedreamApp: null },
+  { id: "buffer", label: "Buffer", pipedreamApp: null },
 ]
 
 const CURRENCIES = [
@@ -108,7 +109,56 @@ export default function SettingsPage() {
   )
 
   const disconnectChannel = useMutation(api.channels.disconnect)
+  const upsertChannel = useMutation(api.channels.upsert)
   const updateSettings = useMutation(api.businesses.updateSettings)
+
+  const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null)
+  const [connectFeedback, setConnectFeedback] = useState<{ platform: string; success: boolean } | null>(null)
+
+  async function handleConnect(platformId: string, pipedreamApp: string) {
+    if (!business?._id || connectingPlatform || !userId) return
+    setConnectingPlatform(platformId)
+    try {
+      const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
+      if (!tokenRes.ok) throw new Error("Failed to get connect token")
+      const { token, expiresAt } = await tokenRes.json()
+
+      const pd = createFrontendClient({
+        externalUserId: userId,
+        tokenCallback: () => Promise.resolve({ token, expiresAt: new Date(expiresAt), connectLinkUrl: "" }),
+      })
+
+      await new Promise<void>((resolve, reject) => {
+        pd.connectAccount({
+          app: pipedreamApp,
+          token,
+          onSuccess: async ({ id }: { id: string }) => {
+            try {
+              await upsertChannel({
+                businessId: business._id as Id<"businesses">,
+                platform: platformId,
+                oauthAccessToken: id,
+              })
+              setConnectFeedback({ platform: platformId, success: true })
+              resolve()
+            } catch (e) {
+              reject(e)
+            }
+          },
+          onError: (err: Error) => reject(err),
+          onClose: ({ successful }: { successful: boolean }) => {
+            if (!successful) reject(new Error("User closed the connect window"))
+          },
+        })
+      })
+    } catch (err) {
+      console.error("Connect error:", err)
+      setConnectFeedback({ platform: platformId, success: false })
+    } finally {
+      setConnectingPlatform(null)
+      setTimeout(() => setConnectFeedback(null), 3000)
+    }
+  }
 
   // Local state for campaign defaults
   const [budget, setBudget] = useState<string>("")
@@ -214,8 +264,17 @@ export default function SettingsPage() {
                         <Unlink className="w-3 h-3" />
                         Disconnect
                       </button>
+                    ) : platform.pipedreamApp ? (
+                      <button
+                        onClick={() => handleConnect(platform.id, platform.pipedreamApp!)}
+                        disabled={connectingPlatform === platform.id}
+                        className="flex items-center gap-1.5 text-xs text-[#5B9BAA] hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-[#5B9BAA]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Link2 className="w-3 h-3" />
+                        {connectingPlatform === platform.id ? "Connecting…" : connectFeedback?.platform === platform.id && !connectFeedback.success ? "Failed — retry" : "Connect"}
+                      </button>
                     ) : (
-                      <span className="text-xs text-slate-600">Not connected</span>
+                      <span className="text-xs text-slate-600">Coming soon</span>
                     )}
                   </li>
                 )

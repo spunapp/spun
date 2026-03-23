@@ -50,6 +50,31 @@ export const updateStatus = mutation({
   },
 })
 
+export const upsert = mutation({
+  args: {
+    businessId: v.id("businesses"),
+    platform: v.string(),
+    oauthAccessToken: v.string(),
+    oauthRefreshToken: v.optional(v.string()),
+    tokenExpiresAt: v.optional(v.number()),
+    platformAccountId: v.optional(v.string()),
+    platformAccountName: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
+    const existing = await ctx.db
+      .query("connectedChannels")
+      .withIndex("by_business_platform", (q) =>
+        q.eq("businessId", args.businessId).eq("platform", args.platform)
+      )
+      .first()
+    if (existing) {
+      await ctx.db.patch(existing._id, { ...args, status: "active" })
+      return existing._id
+    }
+    return await ctx.db.insert("connectedChannels", { ...args, status: "active" })
+  },
+})
+
 export const updateTokens = mutation({
   args: {
     id: v.id("connectedChannels"),
