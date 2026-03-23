@@ -7,7 +7,8 @@ import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
-import { createFrontendClient } from "@pipedream/sdk/browser"
+// @pipedream/sdk browser import removed — we create the iframe manually
+// using connect_link_url so the session URL Pipedream generates is used directly
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
@@ -121,53 +122,84 @@ export default function SettingsPage() {
     setConnectingPlatform(platformId)
     setConnectError(null)
     try {
-      // tokenCallback fetches a fresh token on demand (when the iframe needs it),
-      // matching the official Pipedream Connect example pattern exactly.
-      const pd = createFrontendClient({
-        externalUserId: userId,
-        tokenCallback: async () => {
-          const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
-          const tokenData = await tokenRes.json()
-          if (!tokenRes.ok) throw new Error(tokenData.error ?? "Failed to get connect token")
-          return { token: tokenData.token, expiresAt: new Date(tokenData.expiresAt), connectLinkUrl: "" }
-        },
-      })
+      // Fetch the connect token from the backend
+      const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
+      const tokenData = await tokenRes.json()
+      if (!tokenRes.ok) throw new Error(tokenData.error ?? "Failed to get connect token")
+
+      // Use the connect_link_url Pipedream generated for this exact session.
+      // This URL embeds the environment and all session info, so it works
+      // correctly regardless of environment setting. We add &app= so Pipedream
+      // knows which app to connect.
+      const connectLinkUrl: string = tokenData.connectLinkUrl
+      const sep = connectLinkUrl.includes("?") ? "&" : "?"
+      const iframeSrc = `${connectLinkUrl}${sep}app=${encodeURIComponent(pipedreamApp)}`
+      console.log("[Pipedream] iframeSrc:", iframeSrc)
 
       await new Promise<void>((resolve, reject) => {
-        pd.connectAccount({
-          app: pipedreamApp,
-          // No 'token' here — SDK calls tokenCallback at iframe creation time
-          onSuccess: async ({ id }: { id: string }) => {
-            try {
-              await upsertChannel({
-                businessId: business._id as Id<"businesses">,
-                platform: platformId,
-                oauthAccessToken: id,
-              })
-              setConnectFeedback({ platform: platformId, success: true })
-              resolve()
-            } catch (e) {
-              reject(e)
-            }
-          },
-          onError: (err: Error) => reject(err),
-          onClose: ({ successful, completed }: { successful: boolean; completed: boolean }) => {
-            // Only reject if the window was closed without the user intentionally cancelling.
-            // completed=false means the user dismissed the popup before any result.
-            if (!successful && completed) {
-              // onError already fired; this is a no-op (promise already rejected).
-            } else if (!successful && !completed) {
-              // User closed the popup manually — not an error, just cancelled.
-              reject(new Error("cancelled"))
-            }
-          },
-        })
+        let settled = false
+        let connectionSuccessful = false
+        let connectionCompleted = false
+
+        const iframe = document.createElement("iframe")
+        iframe.title = "Pipedream Connect"
+        iframe.style.cssText = "position:fixed;inset:0;z-index:2147483647;border:0;display:block;overflow:hidden auto"
+        iframe.width = "100%"
+        iframe.height = "100%"
+
+        const cleanup = () => {
+          iframe.remove()
+          window.removeEventListener("message", onMessage)
+        }
+
+        const settle = (fn: () => void) => {
+          if (settled) return
+          settled = true
+          cleanup()
+          fn()
+        }
+
+        const onMessage = (e: MessageEvent) => {
+          switch (e.data?.type) {
+            case "success":
+              connectionSuccessful = true
+              connectionCompleted = true
+              // Don't cleanup yet — wait for upsertChannel then resolve
+              Promise.resolve()
+                .then(() => upsertChannel({
+                  businessId: business._id as Id<"businesses">,
+                  platform: platformId,
+                  oauthAccessToken: e.data.authProvisionId,
+                }))
+                .then(() => {
+                  setConnectFeedback({ platform: platformId, success: true })
+                  settle(resolve)
+                })
+                .catch((err) => settle(() => reject(err)))
+              break
+            case "error":
+              connectionCompleted = true
+              settle(() => reject(new Error(e.data?.error ?? "Connection error")))
+              break
+            case "close":
+              if (!connectionSuccessful && !connectionCompleted) {
+                // User dismissed without completing — treat as cancellation
+                settle(() => reject(new Error("cancelled")))
+              } else if (!connectionSuccessful) {
+                // onError already fired; close is just cleanup
+                settle(() => {})
+              }
+              // If successful, onSuccess + upsertChannel resolves it
+              break
+          }
+        }
+
+        window.addEventListener("message", onMessage)
+        iframe.src = iframeSrc
+        document.body.appendChild(iframe)
       })
     } catch (err) {
-      if (err instanceof Error && err.message === "cancelled") {
-        // User closed the popup — don't show error state
-        return
-      }
+      if (err instanceof Error && err.message === "cancelled") return
       const msg = err instanceof Error ? err.message : String(err)
       console.error("Connect error:", msg)
       setConnectFeedback({ platform: platformId, success: false })
