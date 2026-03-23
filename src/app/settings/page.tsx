@@ -129,7 +129,7 @@ export default function SettingsPage() {
           const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
           const tokenData = await tokenRes.json()
           if (!tokenRes.ok) throw new Error(tokenData.error ?? "Failed to get connect token")
-          return { token: tokenData.token, expiresAt: new Date(tokenData.expiresAt) }
+          return { token: tokenData.token, expiresAt: new Date(tokenData.expiresAt), connectLinkUrl: "" }
         },
       })
 
