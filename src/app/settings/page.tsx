@@ -114,18 +114,23 @@ export default function SettingsPage() {
 
   const [connectingPlatform, setConnectingPlatform] = useState<string | null>(null)
   const [connectFeedback, setConnectFeedback] = useState<{ platform: string; success: boolean } | null>(null)
+  const [connectError, setConnectError] = useState<string | null>(null)
 
   async function handleConnect(platformId: string, pipedreamApp: string) {
     if (!business?._id || connectingPlatform || !userId) return
     setConnectingPlatform(platformId)
+    setConnectError(null)
     try {
       const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
-      if (!tokenRes.ok) throw new Error("Failed to get connect token")
-      const { token, expiresAt, connectLinkUrl } = await tokenRes.json()
+      const tokenData = await tokenRes.json()
+      if (!tokenRes.ok) {
+        throw new Error(tokenData.error ?? "Failed to get connect token")
+      }
+      const { token, expiresAt } = tokenData
 
       const pd = createFrontendClient({
         externalUserId: userId,
-        tokenCallback: () => Promise.resolve({ token, expiresAt: new Date(expiresAt), connectLinkUrl }),
+        tokenCallback: () => Promise.resolve({ token, expiresAt: new Date(expiresAt), connectLinkUrl: "" }),
       })
 
       await new Promise<void>((resolve, reject) => {
@@ -146,17 +151,30 @@ export default function SettingsPage() {
             }
           },
           onError: (err: Error) => reject(err),
-          onClose: ({ successful }: { successful: boolean }) => {
-            if (!successful) reject(new Error("User closed the connect window"))
+          onClose: ({ successful, completed }: { successful: boolean; completed: boolean }) => {
+            // Only reject if the window was closed without the user intentionally cancelling.
+            // completed=false means the user dismissed the popup before any result.
+            if (!successful && completed) {
+              // onError already fired; this is a no-op (promise already rejected).
+            } else if (!successful && !completed) {
+              // User closed the popup manually — not an error, just cancelled.
+              reject(new Error("cancelled"))
+            }
           },
         })
       })
     } catch (err) {
-      console.error("Connect error:", err)
+      if (err instanceof Error && err.message === "cancelled") {
+        // User closed the popup — don't show error state
+        return
+      }
+      const msg = err instanceof Error ? err.message : String(err)
+      console.error("Connect error:", msg)
       setConnectFeedback({ platform: platformId, success: false })
+      setConnectError(msg)
     } finally {
       setConnectingPlatform(null)
-      setTimeout(() => setConnectFeedback(null), 3000)
+      setTimeout(() => { setConnectFeedback(null); setConnectError(null) }, 8000)
     }
   }
 
@@ -239,6 +257,12 @@ export default function SettingsPage() {
         {/* Connected Platforms */}
         <section>
           <SectionHeading>Connected Platforms</SectionHeading>
+          {connectError && (
+            <div className="mb-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3">
+              <p className="text-xs text-red-400 font-medium mb-0.5">Connection failed</p>
+              <p className="text-xs text-red-300/70 break-all">{connectError}</p>
+            </div>
+          )}
           <Card>
             <ul className="divide-y divide-white/5">
               {PLATFORMS.map((platform) => {
