@@ -28,37 +28,58 @@ export async function POST() {
   try {
     const pd = new PipedreamClient({ projectId, projectEnvironment, clientId, clientSecret })
 
-    // Derive the request origin so Pipedream allows the Connect iframe to load
-    // from this host. Without allowedOrigins the iframe is rejected.
+    // Build the list of allowed origins for the Connect iframe.
+    // Pipedream REQUIRES allowedOrigins for browser-based token usage — without
+    // it the iframe shows "session expired".
+    const allowedOrigins = new Set<string>()
+
+    // 1. Try Origin / Referer headers from the request
     const hdrs = await headers()
-    const origin = hdrs.get("origin") ?? hdrs.get("referer")
-    const allowedOrigins: string[] = []
-    if (origin) {
-      try {
-        const url = new URL(origin)
-        allowedOrigins.push(url.origin)
-      } catch { /* ignore malformed */ }
+    for (const headerName of ["origin", "referer"]) {
+      const val = hdrs.get(headerName)
+      if (val) {
+        try { allowedOrigins.add(new URL(val).origin) } catch { /* ignore */ }
+      }
     }
 
-    // Parse any extra origins from the environment (JSON array or comma-separated)
+    // 2. Reconstruct origin from Host / X-Forwarded-Host (works on Vercel)
+    const host = hdrs.get("x-forwarded-host") ?? hdrs.get("host")
+    const proto = hdrs.get("x-forwarded-proto") ?? "https"
+    if (host) {
+      allowedOrigins.add(`${proto}://${host}`)
+    }
+
+    // 3. Vercel auto-sets VERCEL_URL (e.g. "my-app-abc123.vercel.app")
+    if (process.env.VERCEL_URL) {
+      allowedOrigins.add(`https://${process.env.VERCEL_URL}`)
+    }
+    // Vercel also sets VERCEL_PROJECT_PRODUCTION_URL for the production domain
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      allowedOrigins.add(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
+    }
+
+    // 4. Parse any extra origins from the environment (JSON array or comma-separated)
     const envOrigins = process.env.PIPEDREAM_ALLOWED_ORIGINS
     if (envOrigins) {
       try {
         const parsed = JSON.parse(envOrigins)
-        if (Array.isArray(parsed)) allowedOrigins.push(...parsed)
+        if (Array.isArray(parsed)) parsed.forEach((o: string) => allowedOrigins.add(o))
       } catch {
-        allowedOrigins.push(...envOrigins.split(",").map((s: string) => s.trim()))
+        envOrigins.split(",").forEach((s) => allowedOrigins.add(s.trim()))
       }
     }
 
+    const originsArray = [...allowedOrigins].filter(Boolean)
+
     const result = await pd.tokens.create({
       externalUserId: userId,
-      ...(allowedOrigins.length > 0 && { allowedOrigins }),
+      ...(originsArray.length > 0 && { allowedOrigins: originsArray }),
     })
 
     return NextResponse.json({
       token: result.token,
       expiresAt: result.expiresAt,
+      connectLinkUrl: result.connectLinkUrl,
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)

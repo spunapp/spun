@@ -124,7 +124,11 @@ export default function SettingsPage() {
     const res = await fetch("/api/integrations/connect-token", { method: "POST" })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? "Failed to get connect token")
-    return { token: data.token as string, expiresAt: new Date(data.expiresAt), connectLinkUrl: "" }
+    return {
+      token: data.token as string,
+      expiresAt: new Date(data.expiresAt),
+      connectLinkUrl: (data.connectLinkUrl as string) ?? "",
+    }
   }, [])
 
   const getPdClient = useCallback(async () => {
