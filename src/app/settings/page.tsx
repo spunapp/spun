@@ -121,22 +121,22 @@ export default function SettingsPage() {
     setConnectingPlatform(platformId)
     setConnectError(null)
     try {
-      const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
-      const tokenData = await tokenRes.json()
-      if (!tokenRes.ok) {
-        throw new Error(tokenData.error ?? "Failed to get connect token")
-      }
-      const { token, expiresAt } = tokenData
-
+      // tokenCallback fetches a fresh token on demand (when the iframe needs it),
+      // matching the official Pipedream Connect example pattern exactly.
       const pd = createFrontendClient({
         externalUserId: userId,
-        tokenCallback: () => Promise.resolve({ token, expiresAt: new Date(expiresAt), connectLinkUrl: "" }),
+        tokenCallback: async () => {
+          const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
+          const tokenData = await tokenRes.json()
+          if (!tokenRes.ok) throw new Error(tokenData.error ?? "Failed to get connect token")
+          return { token: tokenData.token, expiresAt: new Date(tokenData.expiresAt) }
+        },
       })
 
       await new Promise<void>((resolve, reject) => {
         pd.connectAccount({
           app: pipedreamApp,
-          token,
+          // No 'token' here — SDK calls tokenCallback at iframe creation time
           onSuccess: async ({ id }: { id: string }) => {
             try {
               await upsertChannel({
