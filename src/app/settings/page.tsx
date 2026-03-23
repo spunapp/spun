@@ -7,8 +7,8 @@ import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
-// @pipedream/sdk browser import removed — we create the iframe manually
-// using connect_link_url so the session URL Pipedream generates is used directly
+// @pipedream/sdk browser import removed — we open the Pipedream Connect
+// iframe manually using _static/connect.html with the token
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
@@ -127,26 +127,10 @@ export default function SettingsPage() {
       const tokenData = await tokenRes.json()
       if (!tokenRes.ok) throw new Error(tokenData.error ?? "Failed to get connect token")
 
-      // Use the connect_link_url Pipedream generated for this exact session.
-      // This URL embeds the environment and all session info, so it works
-      // correctly regardless of environment setting. We add &app= so Pipedream
-      // knows which app to connect.
-      const connectLinkUrl: string = tokenData.connectLinkUrl
+      // Use Pipedream's _static/connect.html with the token for iframe embedding.
+      // The connectLinkUrl is a shareable link not designed for iframe use.
       const token: string = tokenData.token
-      console.log("[Pipedream] connectLinkUrl:", connectLinkUrl)
-      console.log("[Pipedream] token:", token)
-
-      // Try both URL strategies so we can compare in console:
-      // Strategy A: connect_link_url + app param
-      const sep = connectLinkUrl.includes("?") ? "&" : "?"
-      const iframeSrcA = `${connectLinkUrl}${sep}app=${encodeURIComponent(pipedreamApp)}`
-      // Strategy B: SDK's own _static/connect.html + token + app
-      const iframeSrcB = `https://pipedream.com/_static/connect.html?token=${encodeURIComponent(token)}&app=${encodeURIComponent(pipedreamApp)}`
-      console.log("[Pipedream] iframeSrc (connect_link_url strategy):", iframeSrcA)
-      console.log("[Pipedream] iframeSrc (_static strategy):", iframeSrcB)
-
-      // Use strategy A (connect_link_url) for now
-      const iframeSrc = iframeSrcA
+      const iframeSrc = `https://pipedream.com/_static/connect.html?token=${encodeURIComponent(token)}&app=${encodeURIComponent(pipedreamApp)}`
 
       await new Promise<void>((resolve, reject) => {
         let settled = false

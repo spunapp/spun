@@ -15,7 +15,8 @@ export async function POST() {
   const clientId = process.env.PIPEDREAM_CLIENT_ID
   const clientSecret = process.env.PIPEDREAM_CLIENT_SECRET
   const projectEnvironment =
-    (process.env.PIPEDREAM_PROJECT_ENVIRONMENT as "development" | "production" | undefined) ?? "production"
+    (process.env.PIPEDREAM_PROJECT_ENVIRONMENT as "development" | "production" | undefined) ??
+    (process.env.NODE_ENV === "production" ? "production" : "development")
 
   if (!projectId || !clientId || !clientSecret) {
     return NextResponse.json(
