@@ -120,7 +120,7 @@ export default function SettingsPage() {
   // The client caches the token and refreshes it automatically via tokenCallback.
   const pdClientRef = useRef<FrontendClient | null>(null)
 
-  const fetchToken = useCallback(async () => {
+  const fetchToken = useCallback(async (): Promise<{ token: string; expiresAt: Date; connectLinkUrl: string }> => {
     const res = await fetch("/api/integrations/connect-token", { method: "POST" })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? "Failed to get connect token")
@@ -134,7 +134,8 @@ export default function SettingsPage() {
     const { createFrontendClient } = await import("@pipedream/sdk/browser")
     const client = createFrontendClient({
       externalUserId: userId,
-      tokenCallback: fetchToken,
+      // SDK calls this whenever it needs a fresh token (initial load + after each connection)
+      tokenCallback: () => fetchToken(),
     })
     pdClientRef.current = client
     return client
