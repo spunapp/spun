@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
-import type { BrowserClient as FrontendClient } from "@pipedream/sdk/browser"
+import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
@@ -119,31 +119,22 @@ export default function SettingsPage() {
   // Lazily initialise the Pipedream browser SDK client.
   // The client caches the token and refreshes it automatically via tokenCallback.
   const pdClientRef = useRef<FrontendClient | null>(null)
-  const tokenRef = useRef<{ token: string; expiresAt: Date } | null>(null)
 
   const fetchToken = useCallback(async () => {
     const res = await fetch("/api/integrations/connect-token", { method: "POST" })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? "Failed to get connect token")
-    const entry = { token: data.token as string, expiresAt: new Date(data.expiresAt) }
-    tokenRef.current = entry
-    return entry
+    return { token: data.token as string, expiresAt: new Date(data.expiresAt), connectLinkUrl: "" }
   }, [])
 
   const getPdClient = useCallback(async () => {
     if (pdClientRef.current) return pdClientRef.current
     if (!userId) throw new Error("Not signed in")
 
-    const initial = await fetchToken()
     const { createFrontendClient } = await import("@pipedream/sdk/browser")
     const client = createFrontendClient({
       externalUserId: userId,
-      token: initial.token,
-      tokenCallback: async () => {
-        const cur = tokenRef.current
-        if (cur && cur.expiresAt > new Date()) return cur
-        return fetchToken()
-      },
+      tokenCallback: fetchToken,
     })
     pdClientRef.current = client
     return client
