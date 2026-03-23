@@ -132,9 +132,21 @@ export default function SettingsPage() {
       // correctly regardless of environment setting. We add &app= so Pipedream
       // knows which app to connect.
       const connectLinkUrl: string = tokenData.connectLinkUrl
+      const token: string = tokenData.token
+      console.log("[Pipedream] connectLinkUrl:", connectLinkUrl)
+      console.log("[Pipedream] token:", token)
+
+      // Try both URL strategies so we can compare in console:
+      // Strategy A: connect_link_url + app param
       const sep = connectLinkUrl.includes("?") ? "&" : "?"
-      const iframeSrc = `${connectLinkUrl}${sep}app=${encodeURIComponent(pipedreamApp)}`
-      console.log("[Pipedream] iframeSrc:", iframeSrc)
+      const iframeSrcA = `${connectLinkUrl}${sep}app=${encodeURIComponent(pipedreamApp)}`
+      // Strategy B: SDK's own _static/connect.html + token + app
+      const iframeSrcB = `https://pipedream.com/_static/connect.html?token=${encodeURIComponent(token)}&app=${encodeURIComponent(pipedreamApp)}`
+      console.log("[Pipedream] iframeSrc (connect_link_url strategy):", iframeSrcA)
+      console.log("[Pipedream] iframeSrc (_static strategy):", iframeSrcB)
+
+      // Use strategy A (connect_link_url) for now
+      const iframeSrc = iframeSrcA
 
       await new Promise<void>((resolve, reject) => {
         let settled = false
@@ -179,7 +191,8 @@ export default function SettingsPage() {
               break
             case "error":
               connectionCompleted = true
-              settle(() => reject(new Error(e.data?.error ?? "Connection error")))
+              console.log("[Pipedream] error message data:", JSON.stringify(e.data))
+              settle(() => reject(new Error(e.data?.error || e.data?.message || JSON.stringify(e.data) || "Connection error")))
               break
             case "close":
               if (!connectionSuccessful && !connectionCompleted) {
