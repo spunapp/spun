@@ -29,7 +29,8 @@ export async function POST() {
     // exchange (POST /v1/oauth/token → Bearer token) automatically.
     const pd = new PipedreamClient({ projectId, projectEnvironment, clientId, clientSecret })
     const result = await pd.tokens.create({ externalUserId: userId })
-    return NextResponse.json({ token: result.token, expiresAt: result.expiresAt })
+    console.log("Pipedream token created:", { token: result.token, connectLinkUrl: result.connectLinkUrl })
+    return NextResponse.json({ token: result.token, expiresAt: result.expiresAt, connectLinkUrl: result.connectLinkUrl })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error("Pipedream connect-token error:", msg)
