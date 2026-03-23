@@ -1,14 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useQuery, useMutation } from "convex/react"
 import { useUser, useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
-// @pipedream/sdk browser import removed — we open the Pipedream Connect
-// iframe manually using _static/connect.html with the token
+import type { BrowserClient as FrontendClient } from "@pipedream/sdk/browser"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
@@ -117,87 +116,79 @@ export default function SettingsPage() {
   const [connectFeedback, setConnectFeedback] = useState<{ platform: string; success: boolean } | null>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
 
+  // Lazily initialise the Pipedream browser SDK client.
+  // The client caches the token and refreshes it automatically via tokenCallback.
+  const pdClientRef = useRef<FrontendClient | null>(null)
+  const tokenRef = useRef<{ token: string; expiresAt: Date } | null>(null)
+
+  const fetchToken = useCallback(async () => {
+    const res = await fetch("/api/integrations/connect-token", { method: "POST" })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error ?? "Failed to get connect token")
+    const entry = { token: data.token as string, expiresAt: new Date(data.expiresAt) }
+    tokenRef.current = entry
+    return entry
+  }, [])
+
+  const getPdClient = useCallback(async () => {
+    if (pdClientRef.current) return pdClientRef.current
+    if (!userId) throw new Error("Not signed in")
+
+    const initial = await fetchToken()
+    const { createFrontendClient } = await import("@pipedream/sdk/browser")
+    const client = createFrontendClient({
+      externalUserId: userId,
+      token: initial.token,
+      tokenCallback: async () => {
+        const cur = tokenRef.current
+        if (cur && cur.expiresAt > new Date()) return cur
+        return fetchToken()
+      },
+    })
+    pdClientRef.current = client
+    return client
+  }, [userId, fetchToken])
+
   async function handleConnect(platformId: string, pipedreamApp: string) {
     if (!business?._id || connectingPlatform || !userId) return
     setConnectingPlatform(platformId)
     setConnectError(null)
     try {
-      // Fetch the connect token from the backend
-      const tokenRes = await fetch("/api/integrations/connect-token", { method: "POST" })
-      const tokenData = await tokenRes.json()
-      if (!tokenRes.ok) throw new Error(tokenData.error ?? "Failed to get connect token")
+      const client = await getPdClient()
 
-      // Use Pipedream's _static/connect.html with the token for iframe embedding.
-      // The connectLinkUrl is a shareable link not designed for iframe use.
-      const token: string = tokenData.token
-      const iframeSrc = `https://pipedream.com/_static/connect.html?token=${encodeURIComponent(token)}&app=${encodeURIComponent(pipedreamApp)}`
-
+      // connectAccount uses callbacks, not promise rejection, so we wrap in a
+      // promise to integrate with our try/catch flow.
       await new Promise<void>((resolve, reject) => {
-        let settled = false
-        let connectionSuccessful = false
-        let connectionCompleted = false
-
-        const iframe = document.createElement("iframe")
-        iframe.title = "Pipedream Connect"
-        iframe.style.cssText = "position:fixed;inset:0;z-index:2147483647;border:0;display:block;overflow:hidden auto"
-        iframe.width = "100%"
-        iframe.height = "100%"
-
-        const cleanup = () => {
-          iframe.remove()
-          window.removeEventListener("message", onMessage)
-        }
-
-        const settle = (fn: () => void) => {
-          if (settled) return
-          settled = true
-          cleanup()
-          fn()
-        }
-
-        const onMessage = (e: MessageEvent) => {
-          switch (e.data?.type) {
-            case "success":
-              connectionSuccessful = true
-              connectionCompleted = true
-              // Don't cleanup yet — wait for upsertChannel then resolve
-              Promise.resolve()
-                .then(() => upsertChannel({
-                  businessId: business._id as Id<"businesses">,
-                  platform: platformId,
-                  oauthAccessToken: e.data.authProvisionId,
-                }))
-                .then(() => {
-                  setConnectFeedback({ platform: platformId, success: true })
-                  settle(resolve)
-                })
-                .catch((err) => settle(() => reject(err)))
-              break
-            case "error":
-              connectionCompleted = true
-              console.log("[Pipedream] error message data:", JSON.stringify(e.data))
-              settle(() => reject(new Error(e.data?.error || e.data?.message || JSON.stringify(e.data) || "Connection error")))
-              break
-            case "close":
-              if (!connectionSuccessful && !connectionCompleted) {
-                // User dismissed without completing — treat as cancellation
-                settle(() => reject(new Error("cancelled")))
-              } else if (!connectionSuccessful) {
-                // onError already fired; close is just cleanup
-                settle(() => {})
-              }
-              // If successful, onSuccess + upsertChannel resolves it
-              break
-          }
-        }
-
-        window.addEventListener("message", onMessage)
-        iframe.src = iframeSrc
-        document.body.appendChild(iframe)
+        client.connectAccount({
+          app: pipedreamApp,
+          onSuccess: async ({ id: authProvisionId }) => {
+            try {
+              await upsertChannel({
+                businessId: business._id as Id<"businesses">,
+                platform: platformId,
+                oauthAccessToken: authProvisionId,
+              })
+              setConnectFeedback({ platform: platformId, success: true })
+              // Refresh token after use (tokens are single-use for creating accounts)
+              fetchToken().catch(() => {})
+              resolve()
+            } catch (err) {
+              reject(err)
+            }
+          },
+          onError: (err) => {
+            reject(err)
+          },
+          onClose: ({ successful, completed }) => {
+            if (!successful && !completed) {
+              reject(new Error("cancelled"))
+            }
+          },
+        })
       })
     } catch (err) {
-      if (err instanceof Error && err.message === "cancelled") return
       const msg = err instanceof Error ? err.message : String(err)
+      if (msg === "cancelled" || msg.includes("closed")) return
       console.error("Connect error:", msg)
       setConnectFeedback({ platform: platformId, success: false })
       setConnectError(msg)

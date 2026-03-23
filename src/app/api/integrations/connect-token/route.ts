@@ -1,10 +1,11 @@
 import { auth } from "@clerk/nextjs/server"
+import { headers } from "next/headers"
 import { NextResponse } from "next/server"
 import { PipedreamClient } from "@pipedream/sdk/server"
 
 // Creates a short-lived Pipedream Connect token for the current user.
-// The frontend passes this token to @pipedream/sdk to open the Connect popup,
-// so users can link their ad accounts via Pipedream's own approved OAuth apps.
+// The frontend passes this token to @pipedream/sdk/browser to open the Connect
+// popup, so users can link their ad accounts via Pipedream's own OAuth apps.
 export async function POST() {
   const { userId } = await auth()
   if (!userId) {
@@ -26,12 +27,40 @@ export async function POST() {
   }
 
   try {
-    // Use the official SDK client — it handles the OAuth client-credentials
-    // exchange (POST /v1/oauth/token → Bearer token) automatically.
     const pd = new PipedreamClient({ projectId, projectEnvironment, clientId, clientSecret })
-    const result = await pd.tokens.create({ externalUserId: userId })
-    console.log("Pipedream token created:", { token: result.token, connectLinkUrl: result.connectLinkUrl })
-    return NextResponse.json({ token: result.token, expiresAt: result.expiresAt, connectLinkUrl: result.connectLinkUrl })
+
+    // Derive the request origin so Pipedream allows the Connect iframe to load
+    // from this host. Without allowedOrigins the iframe is rejected.
+    const hdrs = await headers()
+    const origin = hdrs.get("origin") ?? hdrs.get("referer")
+    const allowedOrigins: string[] = []
+    if (origin) {
+      try {
+        const url = new URL(origin)
+        allowedOrigins.push(url.origin)
+      } catch { /* ignore malformed */ }
+    }
+
+    // Parse any extra origins from the environment (JSON array or comma-separated)
+    const envOrigins = process.env.PIPEDREAM_ALLOWED_ORIGINS
+    if (envOrigins) {
+      try {
+        const parsed = JSON.parse(envOrigins)
+        if (Array.isArray(parsed)) allowedOrigins.push(...parsed)
+      } catch {
+        allowedOrigins.push(...envOrigins.split(",").map((s: string) => s.trim()))
+      }
+    }
+
+    const result = await pd.tokens.create({
+      externalUserId: userId,
+      ...(allowedOrigins.length > 0 && { allowedOrigins }),
+    })
+
+    return NextResponse.json({
+      token: result.token,
+      expiresAt: result.expiresAt,
+    })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error("Pipedream connect-token error:", msg)
