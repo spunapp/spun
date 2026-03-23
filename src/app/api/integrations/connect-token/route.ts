@@ -45,5 +45,5 @@ export async function POST() {
   }
 
   const data = await response.json()
-  return NextResponse.json({ token: data.token, expiresAt: data.expires_at })
+  return NextResponse.json({ token: data.token, expiresAt: data.expires_at, connectLinkUrl: data.connect_link_url })
 }
