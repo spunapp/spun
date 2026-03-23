@@ -241,5 +241,7 @@ export default defineSchema({
     ),
     platformAccountId: v.optional(v.string()),
     platformAccountName: v.optional(v.string()),
-  }).index("by_business", ["businessId"]),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_business_platform", ["businessId", "platform"]),
 })
