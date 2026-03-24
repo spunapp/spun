@@ -7,6 +7,7 @@ import { AnalyticsSummary } from "./messages/AnalyticsSummary"
 import { CreativeGallery } from "./messages/CreativeGallery"
 import { ApprovalRequest } from "./messages/ApprovalRequest"
 import { StatusUpdate } from "./messages/StatusUpdate"
+import { ConnectPrompt } from "./messages/ConnectPrompt"
 
 interface Message {
   _id: string
@@ -55,6 +56,8 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
           />
         ) : message.messageType === "status_update" && message.metadata ? (
           <StatusUpdate content={message.content} metadata={message.metadata} />
+        ) : message.messageType === "connect_prompt" && message.metadata ? (
+          <ConnectPrompt content={message.content} metadata={message.metadata} />
         ) : (
           <TextMessage content={message.content} isUser={isUser} />
         )}
