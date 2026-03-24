@@ -150,6 +150,9 @@ export const chat = action({
         } else if (toolName === "onboard_business") {
           messageType = "onboarding"
           metadata = toolResult as Record<string, unknown>
+        } else if (toolName === "connect_channel") {
+          messageType = "connect_prompt"
+          metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
         }
 
         const followUp = await callOpenRouter(
@@ -611,10 +614,25 @@ Return ONLY valid JSON:
     }
 
     case "connect_channel": {
+      const platformAppMap: Record<string, string> = {
+        meta: "facebook_pages",
+        google: "google_ads",
+        ga4: "google_analytics",
+        klaviyo: "klaviyo",
+        tiktok: "tiktok_ads",
+        linkedin: "linkedin_ads",
+        shopify: "shopify",
+        buffer: "buffer",
+      }
+      const pipedreamApp = platformAppMap[input.platform as string]
+      if (!pipedreamApp) {
+        return { error: `Platform "${input.platform}" is not yet supported for connection.` }
+      }
+
       return {
-        action: "redirect",
-        message: `To connect ${input.platform}, I'll redirect you to authorise access. Ready?`,
+        action: "connect",
         platform: input.platform,
+        pipedreamApp,
       }
     }
 
