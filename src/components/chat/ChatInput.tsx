@@ -27,7 +27,9 @@ export function ChatInput({
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
+      const needsScroll = textareaRef.current.scrollHeight > 160
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 160)}px`
+      textareaRef.current.style.overflowY = needsScroll ? "auto" : "hidden"
     }
   }, [input])
 
@@ -134,7 +136,7 @@ export function ChatInput({
             disabled={disabled}
             rows={1}
             className="flex-1 px-4 py-3 bg-white/5 rounded-xl text-white placeholder-slate-500 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 resize-none disabled:opacity-50"
-            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+            style={{ border: '1px solid rgba(255,255,255,0.1)', overflowY: 'hidden', scrollbarWidth: 'none' }}
           />
 
           <button
