@@ -105,7 +105,7 @@ export function ChatInput({
           </div>
         )}
 
-        <div className="flex items-end gap-2">
+        <div className="flex items-center gap-2">
           {/* Plus button for file upload */}
           <button
             onClick={() => fileInputRef.current?.click()}
@@ -133,7 +133,7 @@ export function ChatInput({
               placeholder={placeholder}
               disabled={disabled}
               rows={1}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none disabled:opacity-50"
+              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-0 focus:border-white/20 resize-none disabled:opacity-50"
             />
           </div>
           <button
