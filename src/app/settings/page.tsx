@@ -151,8 +151,13 @@ export default function SettingsPage() {
       await new Promise<void>((resolve, reject) => {
         client.connectAccount({
           app: pipedreamApp,
-          onSuccess: async ({ id: authProvisionId }) => {
+          onSuccess: async (result) => {
             try {
+              const authProvisionId = result?.id
+              console.log("[Pipedream] onSuccess result:", JSON.stringify(result))
+              if (!authProvisionId) {
+                throw new Error("No account ID returned from Pipedream")
+              }
               await upsertChannel({
                 businessId: business._id as Id<"businesses">,
                 platform: platformId,
