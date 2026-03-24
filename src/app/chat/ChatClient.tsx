@@ -45,6 +45,8 @@ export default function ChatClient() {
   const chat = useAction(api.ai.chat)
   const approveAction = useMutation(api.approvals.approve)
   const rejectAction = useMutation(api.approvals.reject)
+  const generateUploadUrl = useMutation(api.brandAssets.generateUploadUrl)
+  const saveBrandAsset = useMutation(api.brandAssets.save)
 
   // Auto-create first conversation if none exist
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function ChatClient() {
   }, [messages, business])
 
   const handleSend = useCallback(
-    async (message: string) => {
+    async (message: string, files?: File[]) => {
       if (!userId || !activeConversationId) return
 
       setIsLoading(true)
@@ -89,6 +91,38 @@ export default function ChatClient() {
       setError(null)
 
       try {
+        // Upload files to brand assets if provided
+        if (files && files.length > 0 && business?._id) {
+          const uploadedNames: string[] = []
+          for (const file of files) {
+            try {
+              const uploadUrl = await generateUploadUrl()
+              const res = await fetch(uploadUrl, {
+                method: "POST",
+                headers: { "Content-Type": file.type },
+                body: file,
+              })
+              const { storageId } = await res.json()
+              await saveBrandAsset({
+                businessId: business._id,
+                userId,
+                storageId,
+                name: file.name,
+                type: "images",
+                size: file.size,
+                mimeType: file.type,
+              })
+              uploadedNames.push(file.name)
+            } catch (err) {
+              console.error("Upload error:", err)
+            }
+          }
+          // Append upload info to the message so the AI knows
+          if (uploadedNames.length > 0) {
+            message = `${message}\n\n[User uploaded ${uploadedNames.length} image${uploadedNames.length > 1 ? "s" : ""} to brand assets: ${uploadedNames.join(", ")}]`
+          }
+        }
+
         await chat({ conversationId: activeConversationId, userMessage: message, userId })
       } catch (err) {
         console.error("Chat error:", err)
@@ -97,7 +131,7 @@ export default function ChatClient() {
         setIsLoading(false)
       }
     },
-    [userId, activeConversationId, chat]
+    [userId, activeConversationId, chat, business, generateUploadUrl, saveBrandAsset]
   )
 
   const handleApprove = useCallback(
