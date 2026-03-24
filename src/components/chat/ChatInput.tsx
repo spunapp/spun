@@ -82,7 +82,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="px-4 py-3">
+    <div className="border-t border-white/5 px-4 py-3">
       <div className="max-w-3xl mx-auto">
         {/* Pending file previews */}
         {pendingFiles.length > 0 && (
@@ -110,7 +110,8 @@ export function ChatInput({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex-shrink-0 w-10 bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
+            className="flex-shrink-0 w-10 bg-white/5 hover:bg-white/15 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
+            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
             title="Upload images"
           >
             <Plus className="w-5 h-5" />
@@ -132,13 +133,15 @@ export function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 focus:border-white/10 resize-none disabled:opacity-50"
+            className="flex-1 px-4 py-3 bg-white/5 rounded-xl text-white placeholder-slate-500 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 resize-none disabled:opacity-50"
+            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
           />
 
           <button
             onClick={handleSubmit}
             disabled={(!input.trim() && pendingFiles.length === 0) || disabled}
-            className="flex-shrink-0 w-10 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
+            className="flex-shrink-0 w-10 bg-white/15 hover:bg-white/25 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
+            style={{ border: '1px solid rgba(255,255,255,0.2)' }}
           >
             <ArrowUp className="w-5 h-5" />
           </button>
