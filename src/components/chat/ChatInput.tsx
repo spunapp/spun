@@ -105,12 +105,12 @@ export function ChatInput({
           </div>
         )}
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-stretch gap-2">
           {/* Plus button for file upload */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex-shrink-0 w-10 h-10 bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex-shrink-0 w-10 bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             title="Upload images"
           >
             <Plus className="w-5 h-5" />
@@ -124,22 +124,21 @@ export function ChatInput({
             className="hidden"
           />
 
-          <div className="flex-1 relative">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder={placeholder}
-              disabled={disabled}
-              rows={1}
-              className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-0 focus:border-white/20 resize-none disabled:opacity-50"
-            />
-          </div>
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder={placeholder}
+            disabled={disabled}
+            rows={1}
+            className="flex-1 px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-0 focus:border-white/10 resize-none disabled:opacity-50"
+          />
+
           <button
             onClick={handleSubmit}
             disabled={(!input.trim() && pendingFiles.length === 0) || disabled}
-            className="flex-shrink-0 w-10 h-10 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex-shrink-0 w-10 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <ArrowUp className="w-5 h-5" />
           </button>
