@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npx convex deploy --cmd 'next build'",
+    "build": "if [ -n \"$CONVEX_DEPLOY_KEY\" ]; then npx convex deploy --cmd \"npx next build\"; else npx next build; fi",
     "start": "next start",
     "lint": "eslint"
   },
