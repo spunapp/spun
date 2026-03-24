@@ -82,7 +82,7 @@ export function ChatInput({
   }
 
   return (
-    <div className="border-t border-white/5 px-4 py-3">
+    <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
       <div className="max-w-3xl mx-auto">
         {/* Pending file previews */}
         {pendingFiles.length > 0 && (
@@ -110,7 +110,7 @@ export function ChatInput({
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex-shrink-0 w-10 bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex-shrink-0 w-10 bg-white/5 hover:bg-white/15 border border-white/10 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
             title="Upload images"
           >
             <Plus className="w-5 h-5" />
@@ -138,7 +138,7 @@ export function ChatInput({
           <button
             onClick={handleSubmit}
             disabled={(!input.trim() && pendingFiles.length === 0) || disabled}
-            className="flex-shrink-0 w-10 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+            className="flex-shrink-0 w-10 bg-white/15 hover:bg-white/25 border border-white/20 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
           >
             <ArrowUp className="w-5 h-5" />
           </button>

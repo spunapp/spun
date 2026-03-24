@@ -16,6 +16,11 @@ body {
   box-sizing: border-box;
 }
 
+/* Kill Tailwind v4 / browser default focus-visible outlines globally */
+*:focus-visible {
+  outline: none !important;
+}
+
 /* Clerk sign-in overrides */
 .cl-card {
   background-color: #1F333B !important;
