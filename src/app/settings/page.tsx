@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
-import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
+// Using popup-based connect flow instead of SDK iframe to avoid "session expired" issues
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
@@ -116,72 +116,78 @@ export default function SettingsPage() {
   const [connectFeedback, setConnectFeedback] = useState<{ platform: string; success: boolean } | null>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
 
-  // Lazily initialise the Pipedream browser SDK client.
-  // The client caches the token and refreshes it automatically via tokenCallback.
-  const pdClientRef = useRef<FrontendClient | null>(null)
-
-  const fetchToken = useCallback(async (): Promise<{ token: string; expiresAt: Date; connectLinkUrl: string }> => {
-    const res = await fetch("/api/integrations/connect-token", { method: "POST" })
+  // Fetch a fresh connect token + connectLinkUrl from our backend
+  const fetchToken = useCallback(async (appSlug: string) => {
+    const res = await fetch("/api/integrations/connect-token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ app: appSlug }),
+    })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? "Failed to get connect token")
-    return {
-      token: data.token as string,
-      expiresAt: new Date(data.expiresAt),
-      connectLinkUrl: (data.connectLinkUrl as string) ?? "",
-    }
+    return data as { token: string; expiresAt: string; connectLinkUrl: string }
   }, [])
-
-  const getPdClient = useCallback(async () => {
-    if (pdClientRef.current) return pdClientRef.current
-    if (!userId) throw new Error("Not signed in")
-
-    const { createFrontendClient } = await import("@pipedream/sdk/browser")
-    const client = createFrontendClient({
-      externalUserId: userId,
-      // SDK calls this whenever it needs a fresh token (initial load + after each connection)
-      tokenCallback: () => fetchToken(),
-    })
-    pdClientRef.current = client
-    return client
-  }, [userId, fetchToken])
 
   async function handleConnect(platformId: string, pipedreamApp: string) {
     if (!business?._id || connectingPlatform || !userId) return
     setConnectingPlatform(platformId)
     setConnectError(null)
     try {
-      const client = await getPdClient()
+      // Get a fresh token each time (tokens are single-use)
+      const { token } = await fetchToken(pipedreamApp)
 
-      // connectAccount uses callbacks, not promise rejection, so we wrap in a
-      // promise to integrate with our try/catch flow.
-      await new Promise<void>((resolve, reject) => {
-        client.connectAccount({
-          app: pipedreamApp,
-          onSuccess: async ({ id: authProvisionId }) => {
-            try {
-              await upsertChannel({
-                businessId: business._id as Id<"businesses">,
-                platform: platformId,
-                oauthAccessToken: authProvisionId,
-              })
-              setConnectFeedback({ platform: platformId, success: true })
-              // Refresh token after use (tokens are single-use for creating accounts)
-              fetchToken().catch(() => {})
-              resolve()
-            } catch (err) {
-              reject(err)
-            }
-          },
-          onError: (err) => {
-            reject(err)
-          },
-          onClose: ({ successful, completed }) => {
-            if (!successful && !completed) {
-              reject(new Error("cancelled"))
-            }
-          },
-        })
+      // Open Pipedream Connect in a popup window instead of iframe
+      // This avoids cross-origin iframe issues that cause "session expired"
+      const connectUrl = `https://pipedream.com/_static/connect.html?token=${encodeURIComponent(token)}&app=${encodeURIComponent(pipedreamApp)}`
+      const w = 500
+      const h = 700
+      const left = window.screenX + (window.outerWidth - w) / 2
+      const top = window.screenY + (window.outerHeight - h) / 2
+      const popup = window.open(connectUrl, "pipedream-connect", `width=${w},height=${h},left=${left},top=${top}`)
+
+      if (!popup) {
+        throw new Error("Popup blocked — please allow popups for this site")
+      }
+
+      // Listen for the result via postMessage from the popup
+      const result = await new Promise<string>((resolve, reject) => {
+        const cleanup = () => {
+          window.removeEventListener("message", handler)
+          clearInterval(pollClose)
+        }
+
+        const handler = (event: MessageEvent) => {
+          // Accept messages from pipedream.com
+          if (!event.origin.includes("pipedream.com")) return
+          const msg = event.data
+          if (msg?.type === "connect:account:connected" || msg?.authProvisionId || msg?.id) {
+            cleanup()
+            resolve(msg.authProvisionId ?? msg.id ?? "")
+          } else if (msg?.type === "connect:error" || msg?.error) {
+            cleanup()
+            reject(new Error(msg.error ?? "Connection failed"))
+          }
+        }
+
+        // Also poll for popup close (user manually closed it)
+        const pollClose = setInterval(() => {
+          if (popup.closed) {
+            cleanup()
+            reject(new Error("cancelled"))
+          }
+        }, 500)
+
+        window.addEventListener("message", handler)
       })
+
+      if (result) {
+        await upsertChannel({
+          businessId: business._id as Id<"businesses">,
+          platform: platformId,
+          oauthAccessToken: result,
+        })
+        setConnectFeedback({ platform: platformId, success: true })
+      }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg === "cancelled" || msg.includes("closed")) return
