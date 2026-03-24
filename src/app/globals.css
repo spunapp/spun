@@ -73,6 +73,11 @@ body {
   color: #ffffff !important;
 }
 
+/* Hide scrollbar on chat textarea */
+textarea::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
