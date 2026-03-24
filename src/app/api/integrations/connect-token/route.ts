@@ -71,15 +71,34 @@ export async function POST() {
 
     const originsArray = [...allowedOrigins].filter(Boolean)
 
+    console.log("[Pipedream] Creating token:", {
+      projectId,
+      projectEnvironment,
+      externalUserId: userId,
+      allowedOrigins: originsArray,
+      clientIdPrefix: clientId.slice(0, 6) + "...",
+    })
+
     const result = await pd.tokens.create({
       externalUserId: userId,
       ...(originsArray.length > 0 && { allowedOrigins: originsArray }),
+    })
+
+    console.log("[Pipedream] Token created successfully:", {
+      tokenPrefix: result.token.slice(0, 10) + "...",
+      expiresAt: result.expiresAt,
+      connectLinkUrl: result.connectLinkUrl,
     })
 
     return NextResponse.json({
       token: result.token,
       expiresAt: result.expiresAt,
       connectLinkUrl: result.connectLinkUrl,
+      // Include debug info so we can diagnose in browser console
+      _debug: {
+        environment: projectEnvironment,
+        allowedOrigins: originsArray,
+      },
     })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
