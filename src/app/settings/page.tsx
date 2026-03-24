@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
-// Using popup-based connect flow instead of SDK iframe to avoid "session expired" issues
+import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_ads" },
@@ -116,78 +116,65 @@ export default function SettingsPage() {
   const [connectFeedback, setConnectFeedback] = useState<{ platform: string; success: boolean } | null>(null)
   const [connectError, setConnectError] = useState<string | null>(null)
 
-  // Fetch a fresh connect token + connectLinkUrl from our backend
-  const fetchToken = useCallback(async (appSlug: string) => {
-    const res = await fetch("/api/integrations/connect-token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ app: appSlug }),
-    })
+  // Fetch a fresh connect token from our backend
+  const fetchToken = useCallback(async () => {
+    const res = await fetch("/api/integrations/connect-token", { method: "POST" })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? "Failed to get connect token")
-    return data as { token: string; expiresAt: string; connectLinkUrl: string }
+    console.log("[Pipedream] Token response _debug:", data._debug)
+    return {
+      token: data.token as string,
+      expiresAt: new Date(data.expiresAt),
+      connectLinkUrl: (data.connectLinkUrl as string) ?? "",
+    }
   }, [])
+
+  // Create a NEW client for each connect attempt to avoid stale token issues.
+  // Tokens are single-use so we must not cache the client across attempts.
+  const createPdClient = useCallback(async () => {
+    if (!userId) throw new Error("Not signed in")
+    const { createFrontendClient } = await import("@pipedream/sdk/browser")
+    return createFrontendClient({
+      externalUserId: userId,
+      tokenCallback: () => fetchToken(),
+    })
+  }, [userId, fetchToken])
 
   async function handleConnect(platformId: string, pipedreamApp: string) {
     if (!business?._id || connectingPlatform || !userId) return
     setConnectingPlatform(platformId)
     setConnectError(null)
     try {
-      // Get a fresh token each time (tokens are single-use)
-      const { token } = await fetchToken(pipedreamApp)
+      // Create a fresh client each time to ensure a fresh token
+      const client = await createPdClient()
 
-      // Open Pipedream Connect in a popup window instead of iframe
-      // This avoids cross-origin iframe issues that cause "session expired"
-      const connectUrl = `https://pipedream.com/_static/connect.html?token=${encodeURIComponent(token)}&app=${encodeURIComponent(pipedreamApp)}`
-      const w = 500
-      const h = 700
-      const left = window.screenX + (window.outerWidth - w) / 2
-      const top = window.screenY + (window.outerHeight - h) / 2
-      const popup = window.open(connectUrl, "pipedream-connect", `width=${w},height=${h},left=${left},top=${top}`)
-
-      if (!popup) {
-        throw new Error("Popup blocked — please allow popups for this site")
-      }
-
-      // Listen for the result via postMessage from the popup
-      const result = await new Promise<string>((resolve, reject) => {
-        const cleanup = () => {
-          window.removeEventListener("message", handler)
-          clearInterval(pollClose)
-        }
-
-        const handler = (event: MessageEvent) => {
-          // Accept messages from pipedream.com
-          if (!event.origin.includes("pipedream.com")) return
-          const msg = event.data
-          if (msg?.type === "connect:account:connected" || msg?.authProvisionId || msg?.id) {
-            cleanup()
-            resolve(msg.authProvisionId ?? msg.id ?? "")
-          } else if (msg?.type === "connect:error" || msg?.error) {
-            cleanup()
-            reject(new Error(msg.error ?? "Connection failed"))
-          }
-        }
-
-        // Also poll for popup close (user manually closed it)
-        const pollClose = setInterval(() => {
-          if (popup.closed) {
-            cleanup()
-            reject(new Error("cancelled"))
-          }
-        }, 500)
-
-        window.addEventListener("message", handler)
-      })
-
-      if (result) {
-        await upsertChannel({
-          businessId: business._id as Id<"businesses">,
-          platform: platformId,
-          oauthAccessToken: result,
+      await new Promise<void>((resolve, reject) => {
+        client.connectAccount({
+          app: pipedreamApp,
+          onSuccess: async ({ id: authProvisionId }) => {
+            try {
+              await upsertChannel({
+                businessId: business._id as Id<"businesses">,
+                platform: platformId,
+                oauthAccessToken: authProvisionId,
+              })
+              setConnectFeedback({ platform: platformId, success: true })
+              resolve()
+            } catch (err) {
+              reject(err)
+            }
+          },
+          onError: (err) => {
+            console.error("[Pipedream] onError:", err)
+            reject(err)
+          },
+          onClose: ({ successful, completed }) => {
+            if (!successful && !completed) {
+              reject(new Error("cancelled"))
+            }
+          },
         })
-        setConnectFeedback({ platform: platformId, success: true })
-      }
+      })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg === "cancelled" || msg.includes("closed")) return
