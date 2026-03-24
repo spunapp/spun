@@ -10,7 +10,7 @@ import type { Id, Doc } from "../../../convex/_generated/dataModel"
 import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
 
 const PLATFORMS = [
-  { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_graph_api" },
+  { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages" },
   { id: "google", label: "Google Ads", pipedreamApp: "google_ads" },
   { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics" },
   { id: "klaviyo", label: "Klaviyo", pipedreamApp: "klaviyo" },
