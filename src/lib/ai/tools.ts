@@ -76,7 +76,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       properties: {
         phase: {
           type: "number",
-          description: "Campaign phase (1=initial, 2=optimize, 3=scale)",
+          description: "Campaign phase (1=initial, 2=optimise, 3=scale)",
         },
       },
     },
@@ -128,7 +128,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "analyze_performance",
     description:
-      "Pull and analyze performance data from connected channels and active campaigns.",
+      "Pull and analyse performance data from connected channels and active campaigns.",
     input_schema: {
       type: "object" as const,
       properties: {
