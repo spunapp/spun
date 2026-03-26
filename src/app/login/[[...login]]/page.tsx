@@ -1,6 +1,7 @@
 "use client"
 
 import { SignIn } from "@clerk/nextjs"
+import { dark } from "@clerk/themes"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect } from "react"
@@ -59,6 +60,7 @@ export default function LoginPage() {
           path="/login"
           forceRedirectUrl="/chat"
           appearance={{
+            baseTheme: dark,
             variables: {
               colorBackground: "#1F333B",
               colorPrimary: "#5B9BAA",
