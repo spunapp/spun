@@ -1,6 +1,7 @@
 "use client"
 
 import { ClerkProvider } from "@clerk/nextjs"
+import { dark } from "@clerk/themes"
 import { ConvexProvider, ConvexReactClient } from "convex/react"
 import { ReactNode } from "react"
 
@@ -38,7 +39,23 @@ function SetupMessage() {
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider signInForceRedirectUrl="/chat" signUpForceRedirectUrl="/chat">
+    <ClerkProvider
+      signInForceRedirectUrl="/chat"
+      signUpForceRedirectUrl="/chat"
+      appearance={{
+        baseTheme: dark,
+        variables: {
+          colorBackground: "#1F333B",
+          colorPrimary: "#5B9BAA",
+          colorText: "#f8fafc",
+          colorTextSecondary: "#cbd5e1",
+          colorInputBackground: "#273E47",
+          colorInputText: "#f8fafc",
+          colorNeutral: "#cbd5e1",
+          borderRadius: "0.75rem",
+        },
+      }}
+    >
       {convex ? (
         <ConvexProvider client={convex}>{children}</ConvexProvider>
       ) : (

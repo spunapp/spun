@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.5",
+    "@clerk/themes": "^2.4.57",
     "@pipedream/sdk": "^2.4.1",
     "convex": "^1.32.0",
     "lucide-react": "^0.577.0",
