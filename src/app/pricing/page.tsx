@@ -56,18 +56,20 @@ export default function PricingPage() {
         <Link href="/chat" className="inline-block">
           <Image
             src="/spun.gif"
-            alt="Spun"
+            alt=""
             width={64}
             height={64}
             className="mx-auto rounded-2xl"
             unoptimized
+            priority
           />
           <Image
             src="/logo.png"
-            alt="Spun"
+            alt=""
             width={160}
             height={45}
             className="mx-auto mt-4"
+            priority
           />
         </Link>
         <p className="text-slate-300 text-lg">Choose the plan that fits your business</p>
