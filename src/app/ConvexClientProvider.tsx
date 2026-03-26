@@ -38,7 +38,7 @@ function SetupMessage() {
 
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
-    <ClerkProvider signInForceRedirectUrl="/pricing" signUpForceRedirectUrl="/pricing">
+    <ClerkProvider signInForceRedirectUrl="/chat" signUpForceRedirectUrl="/chat">
       {convex ? (
         <ConvexProvider client={convex}>{children}</ConvexProvider>
       ) : (
