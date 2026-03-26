@@ -36,19 +36,21 @@ export default function LoginPage() {
           <Link href="/">
             <Image
               src="/spun.gif"
-              alt="Spun"
+              alt=""
               width={80}
               height={80}
               className="mx-auto mb-4 rounded-2xl cursor-pointer"
               unoptimized
+              priority
             />
           </Link>
           <Image
             src="/logo.png"
-            alt="Spun"
+            alt=""
             width={200}
             height={56}
             className="mx-auto"
+            priority
           />
           <p className="text-slate-300 mt-3">
             Your marketing department in a chat window.
