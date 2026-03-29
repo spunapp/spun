@@ -6,9 +6,9 @@
   --foreground: #f8fafc;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
+html, body {
+  background: #273E47 !important;
+  color: #f8fafc !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
