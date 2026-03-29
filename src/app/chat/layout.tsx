@@ -4,7 +4,6 @@ import { useState } from "react"
 import { Menu, X, Settings, LogOut, Palette } from "lucide-react"
 import { useClerk } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 
 export default function ChatLayout({
   children,
@@ -46,7 +45,7 @@ export default function ChatLayout({
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-white/5">
           <div className="flex items-center gap-2">
-            <Image src="/icon.png" alt="" width={28} height={28} className="rounded shrink-0 w-7 h-7 object-contain" priority />
+            <img src="/icon.png" alt="" width={28} height={28} className="rounded shrink-0 w-7 h-7 object-contain" />
             <span className="font-bold text-sm">Spun</span>
           </div>
           <button

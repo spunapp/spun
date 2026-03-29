@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className="antialiased font-sans">
+    <html lang="en" style={{ background: "#273E47" }}>
+      <body className="antialiased font-sans" style={{ background: "#273E47" }}>
         <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>

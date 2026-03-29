@@ -2,9 +2,9 @@
 
 import { SignIn } from "@clerk/nextjs"
 import { dark } from "@clerk/themes"
-import Image from "next/image"
 import Link from "next/link"
 import { useEffect } from "react"
+import { LOGO_SRC } from "@/lib/logo"
 
 function DimDevModeBanner() {
   useEffect(() => {
@@ -34,23 +34,19 @@ export default function LoginPage() {
       <div className="max-w-sm w-full space-y-8 text-center">
         <div>
           <Link href="/">
-            <Image
+            <img
               src="/spun.gif"
               alt=""
               width={80}
               height={80}
               className="mx-auto mb-4 rounded-2xl cursor-pointer"
-              unoptimized
-              priority
             />
           </Link>
-          <Image
-            src="/logo.png"
+          <img
+            src={LOGO_SRC}
             alt=""
-            width={200}
             height={56}
             className="mx-auto"
-            priority
           />
           <p className="text-slate-300 mt-3">
             Your marketing department in a chat window.

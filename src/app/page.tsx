@@ -1,8 +1,8 @@
 "use client"
 
-import Image from "next/image"
 import Link from "next/link"
 import { ArrowRight, Zap, Target, Megaphone, BarChart3, Lightbulb, Rocket } from "lucide-react"
+import { LOGO_SRC } from "@/lib/logo"
 
 const FEATURES = [
   {
@@ -44,8 +44,8 @@ export default function HomePage() {
       <nav className="border-b border-white/5 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Image src="/spun.gif" alt="" width={36} height={36} className="h-9 w-auto rounded-lg" unoptimized priority />
-            <Image src="/logo.png" alt="" width={120} height={34} className="h-9 w-auto" priority />
+            <img src="/spun.gif" alt="" width={36} height={36} className="h-9 w-auto rounded-lg" />
+            <img src={LOGO_SRC} alt="" height={34} className="h-9 w-auto" />
           </div>
           <div className="flex items-center gap-6">
             <Link href="/faq" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
