@@ -1,9 +1,9 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-import Image from "next/image"
 import Link from "next/link"
 import { Check } from "lucide-react"
+import { LOGO_SRC } from "@/lib/logo"
 
 const standardBenefits = [
   "Complete understanding of your business",
@@ -54,22 +54,18 @@ export default function PricingPage() {
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
         <Link href="/chat" className="inline-block">
-          <Image
+          <img
             src="/spun.gif"
             alt=""
             width={64}
             height={64}
             className="mx-auto rounded-2xl"
-            unoptimized
-            priority
           />
-          <Image
-            src="/logo.png"
+          <img
+            src={LOGO_SRC}
             alt=""
-            width={160}
             height={45}
             className="mx-auto mt-4"
-            priority
           />
         </Link>
         <p className="text-slate-300 text-lg">Choose the plan that fits your business</p>
