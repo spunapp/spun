@@ -48,19 +48,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     <ClerkProvider
       signInForceRedirectUrl="/chat"
       signUpForceRedirectUrl="/chat"
-      appearance={{
-        baseTheme: dark,
-        variables: {
-          colorBackground: "#1F333B",
-          colorPrimary: "#5B9BAA",
-          colorText: "#f8fafc",
-          colorTextSecondary: "#cbd5e1",
-          colorInputBackground: "#273E47",
-          colorInputText: "#f8fafc",
-          colorNeutral: "#cbd5e1",
-          borderRadius: "0.75rem",
-        },
-      }}
+      appearance={{ baseTheme: dark }}
     >
       {convex ? (
         <ConvexProvider client={convex}>{children}</ConvexProvider>
