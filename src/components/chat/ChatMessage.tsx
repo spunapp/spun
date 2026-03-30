@@ -29,7 +29,7 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
   return (
     <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       {!isUser && (
-        <img src="/icon.png" alt="Spun" className="w-8 h-8 rounded-lg flex-shrink-0 object-contain" />
+        <img src="/spun.gif" alt="Spun" className="w-8 h-8 rounded-lg flex-shrink-0 object-contain" />
       )}
 
       <div
