@@ -10,7 +10,7 @@ import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-const MODEL = "anthropic/claude-opus-4"
+const MODEL = "google/gemini-3.1"
 
 type OrMessage = {
   role: "system" | "user" | "assistant" | "tool"
