@@ -2,6 +2,10 @@ import type { Metadata } from "next"
 import { ConvexClientProvider } from "./ConvexClientProvider"
 import "./globals.css"
 
+// Force server-render on every request — prevents Vercel CDN from serving
+// stale static HTML from previous deployments (the "old code" flash).
+export const dynamic = "force-dynamic"
+
 export const metadata: Metadata = {
   title: "Spun — Your Marketing Department in a Chat Window",
   description:
@@ -19,7 +23,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" style={{ background: "#273E47" }}>
-      <body className="antialiased font-sans" style={{ background: "#273E47" }}>
+      <body className="antialiased font-sans" style={{ background: "#273E47", color: "#f8fafc" }}>
         <ConvexClientProvider>{children}</ConvexClientProvider>
       </body>
     </html>

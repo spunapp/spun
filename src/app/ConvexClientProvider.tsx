@@ -3,7 +3,7 @@
 import { ClerkProvider } from "@clerk/nextjs"
 import { dark } from "@clerk/themes"
 import { ConvexProvider, ConvexReactClient } from "convex/react"
-import { ReactNode, useEffect, useState } from "react"
+import { ReactNode } from "react"
 
 const CONVEX_URL = process.env.NEXT_PUBLIC_CONVEX_URL
 const isConfigured =
@@ -12,14 +12,8 @@ const isConfigured =
 const convex = isConfigured ? new ConvexReactClient(CONVEX_URL) : null
 
 function SetupMessage() {
-  // Only render after client-side mount to avoid baking into static HTML
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
-
-  if (!mounted) return <div className="h-screen" style={{ background: "#273E47" }} />
-
   return (
-    <div className="flex items-center justify-center h-screen bg-slate-950 p-8">
+    <div className="flex items-center justify-center h-screen" style={{ background: "#273E47" }}>
       <div className="max-w-md text-center space-y-4">
         <div className="w-12 h-12 mx-auto bg-red-500/10 rounded-full flex items-center justify-center">
           <span className="text-red-400 text-xl">!</span>

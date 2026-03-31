@@ -69,8 +69,9 @@ html, body {
 .cl-footerActionLink {
   color: #5B9BAA !important;
 }
+/* Hide Clerk development-mode banner (replaces JS DimDevModeBanner hack) */
 .cl-internal-b3fm6y {
-  color: #ffffff !important;
+  display: none !important;
 }
 
 /* Hide scrollbar on chat textarea */
