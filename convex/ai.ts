@@ -642,25 +642,26 @@ Return ONLY valid JSON:
     }
 
     case "connect_channel": {
-      const platformAppMap: Record<string, string> = {
-        meta: "facebook_pages",
-        google: "google_ads",
-        ga4: "google_analytics",
-        klaviyo: "klaviyo",
-        tiktok: "tiktok_ads",
-        linkedin: "linkedin_ads",
-        shopify: "shopify",
-        buffer: "buffer",
+      const platformAppMap: Record<string, { app: string; oauthAppId?: string }> = {
+        meta: { app: "facebook_pages", oauthAppId: "oa_K1i8YD" },
+        google: { app: "google_ads" },
+        ga4: { app: "google_analytics" },
+        klaviyo: { app: "klaviyo" },
+        tiktok: { app: "tiktok_ads" },
+        linkedin: { app: "linkedin_ads" },
+        shopify: { app: "shopify" },
+        buffer: { app: "buffer" },
       }
-      const pipedreamApp = platformAppMap[input.platform as string]
-      if (!pipedreamApp) {
+      const mapping = platformAppMap[input.platform as string]
+      if (!mapping) {
         return { error: `Platform "${input.platform}" is not yet supported for connection.` }
       }
 
       return {
         action: "connect",
         platform: input.platform,
-        pipedreamApp,
+        pipedreamApp: mapping.app,
+        ...(mapping.oauthAppId ? { oauthAppId: mapping.oauthAppId } : {}),
       }
     }
 
