@@ -10,14 +10,14 @@ import type { Id, Doc } from "../../../convex/_generated/dataModel"
 import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
 
 const PLATFORMS = [
-  { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages" },
-  { id: "google", label: "Google Ads", pipedreamApp: "google_ads" },
-  { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics" },
-  { id: "klaviyo", label: "Klaviyo", pipedreamApp: "klaviyo" },
-  { id: "tiktok", label: "TikTok Ads", pipedreamApp: null },
-  { id: "linkedin", label: "LinkedIn Ads", pipedreamApp: null },
-  { id: "shopify", label: "Shopify", pipedreamApp: null },
-  { id: "buffer", label: "Buffer", pipedreamApp: null },
+  { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages", oauthAppId: "oa_K1i8YD" },
+  { id: "google", label: "Google Ads", pipedreamApp: "google_ads", oauthAppId: undefined },
+  { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics", oauthAppId: undefined },
+  { id: "klaviyo", label: "Klaviyo", pipedreamApp: "klaviyo", oauthAppId: undefined },
+  { id: "tiktok", label: "TikTok Ads", pipedreamApp: null, oauthAppId: undefined },
+  { id: "linkedin", label: "LinkedIn Ads", pipedreamApp: null, oauthAppId: undefined },
+  { id: "shopify", label: "Shopify", pipedreamApp: null, oauthAppId: undefined },
+  { id: "buffer", label: "Buffer", pipedreamApp: null, oauthAppId: undefined },
 ]
 
 const CURRENCIES = [
@@ -140,7 +140,7 @@ export default function SettingsPage() {
     })
   }, [userId, fetchToken])
 
-  async function handleConnect(platformId: string, pipedreamApp: string) {
+  async function handleConnect(platformId: string, pipedreamApp: string, oauthAppId?: string) {
     if (!business?._id || connectingPlatform || !userId) return
     setConnectingPlatform(platformId)
     setConnectError(null)
@@ -151,6 +151,7 @@ export default function SettingsPage() {
       await new Promise<void>((resolve, reject) => {
         client.connectAccount({
           app: pipedreamApp,
+          ...(oauthAppId ? { oauthAppId } : {}),
           onSuccess: async (result) => {
             try {
               const authProvisionId = result?.id
@@ -304,7 +305,7 @@ export default function SettingsPage() {
                       </button>
                     ) : platform.pipedreamApp ? (
                       <button
-                        onClick={() => handleConnect(platform.id, platform.pipedreamApp!)}
+                        onClick={() => handleConnect(platform.id, platform.pipedreamApp!, platform.oauthAppId)}
                         disabled={connectingPlatform === platform.id}
                         className="flex items-center gap-1.5 text-xs text-[#5B9BAA] hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-[#5B9BAA]/10 disabled:opacity-50 disabled:cursor-not-allowed"
                       >

@@ -31,6 +31,7 @@ export function ConnectPrompt({ content, metadata }: ConnectPromptProps) {
 
   const platform = metadata.platform as string
   const pipedreamApp = metadata.pipedreamApp as string
+  const oauthAppId = metadata.oauthAppId as string | undefined
   const label = PLATFORM_LABELS[platform] ?? platform
 
   const [status, setStatus] = useState<"idle" | "connecting" | "success" | "error">("idle")
@@ -65,6 +66,7 @@ export function ConnectPrompt({ content, metadata }: ConnectPromptProps) {
       await new Promise<void>((resolve, reject) => {
         client.connectAccount({
           app: pipedreamApp,
+          ...(oauthAppId ? { oauthAppId } : {}),
           onSuccess: async (result) => {
             try {
               const authProvisionId = result?.id
