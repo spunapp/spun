@@ -51,8 +51,12 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
           <ApprovalRequest
             content={message.content}
             metadata={message.metadata}
-            onApprove={onApprove ? () => onApprove(message._id) : undefined}
-            onReject={onReject ? () => onReject(message._id) : undefined}
+            onApprove={onApprove ? () => onApprove(
+              (message.metadata as Record<string, unknown>)?.approvalId as string ?? message._id
+            ) : undefined}
+            onReject={onReject ? () => onReject(
+              (message.metadata as Record<string, unknown>)?.approvalId as string ?? message._id
+            ) : undefined}
           />
         ) : message.messageType === "status_update" && message.metadata ? (
           <StatusUpdate content={message.content} metadata={message.metadata} />
