@@ -137,12 +137,41 @@ export default function ChatClient() {
   const handleApprove = useCallback(
     async (approvalId: string) => {
       try {
-        await approveAction({ id: approvalId as Id<"approvalQueue"> })
+        // Find the message with this approval to get campaign details
+        const msg = (messages ?? []).find(
+          (m: { messageType: string; metadata?: Record<string, unknown> }) =>
+            m.messageType === "approval_request" && (m.metadata as Record<string, unknown>)?.approvalId === approvalId
+        )
+        const meta = msg?.metadata as Record<string, unknown> | undefined
+
+        if (meta?.campaignId && meta?.platform) {
+          // Execute the campaign on the ad platform first
+          const res = await fetch("/api/integrations/execute-campaign", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              approvalId,
+              campaignId: meta.campaignId,
+              platform: meta.platform,
+              budget: meta.budget,
+            }),
+          })
+
+          if (!res.ok) {
+            const err = await res.json()
+            setError(err.error ?? "Failed to launch campaign")
+            return
+          }
+        } else {
+          // Fallback: just approve the record directly
+          await approveAction({ id: approvalId as Id<"approvalQueue"> })
+        }
       } catch (err) {
         console.error("Approve error:", err)
+        setError("Something went wrong launching the campaign.")
       }
     },
-    [approveAction]
+    [approveAction, messages]
   )
 
   const handleReject = useCallback(

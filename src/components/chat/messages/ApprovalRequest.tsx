@@ -1,6 +1,7 @@
 "use client"
 
-import { Shield, Check, X, AlertTriangle } from "lucide-react"
+import { useState } from "react"
+import { Shield, Check, X, AlertTriangle, Loader2 } from "lucide-react"
 
 interface ApprovalRequestProps {
   content: string
@@ -15,11 +16,16 @@ export function ApprovalRequest({
   onApprove,
   onReject,
 }: ApprovalRequestProps) {
+  const [executing, setExecuting] = useState(false)
+  const [executed, setExecuted] = useState(false)
+
   const approval = metadata as {
     actionType?: string
     platform?: string
     budget?: number
     campaignTheme?: string
+    campaignId?: string
+    approvalId?: string
     status?: "pending" | "approved" | "rejected"
   }
 
@@ -67,14 +73,22 @@ export function ApprovalRequest({
           )}
         </div>
 
-        {(!approval.status || approval.status === "pending") && (
+        {(!approval.status || approval.status === "pending") && !executing && !executed && (
           <div className="flex gap-2">
             <button
-              onClick={onApprove}
+              onClick={async () => {
+                setExecuting(true)
+                try {
+                  await onApprove?.()
+                  setExecuted(true)
+                } finally {
+                  setExecuting(false)
+                }
+              }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-colors"
             >
               <Check className="w-3 h-3" />
-              Approve
+              Approve & Launch
             </button>
             <button
               onClick={onReject}
@@ -86,10 +100,17 @@ export function ApprovalRequest({
           </div>
         )}
 
-        {approval.status === "approved" && (
+        {executing && (
+          <div className="flex items-center gap-1.5 text-xs text-amber-400">
+            <Loader2 className="w-3 h-3 animate-spin" />
+            Launching on {approval.platform ?? "platform"}...
+          </div>
+        )}
+
+        {(approval.status === "approved" || executed) && (
           <div className="flex items-center gap-1.5 text-xs text-emerald-400">
             <Check className="w-3 h-3" />
-            Approved
+            Launched on {approval.platform ?? "platform"}
           </div>
         )}
 

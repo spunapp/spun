@@ -1,6 +1,13 @@
 import { query, mutation } from "./_generated/server"
 import { v } from "convex/values"
 
+export const get = query({
+  args: { id: v.id("approvalQueue") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id)
+  },
+})
+
 export const listPending = query({
   args: { businessId: v.id("businesses") },
   handler: async (ctx, args) => {

@@ -128,7 +128,8 @@ export const chat = action({
             toolName,
             toolInput,
             args.userId,
-            conversation.businessId
+            conversation.businessId,
+            args.conversationId
           )
         } catch (err) {
           responseText += `\n\nSomething went wrong while running ${toolName}. Please try again.`
@@ -463,7 +464,8 @@ async function executeToolCall(
   toolName: string,
   input: Record<string, unknown>,
   userId: string,
-  businessId?: Id<"businesses">
+  businessId?: Id<"businesses">,
+  conversationId?: Id<"conversations">
 ): Promise<unknown> {
   switch (toolName) {
     case "onboard_business": {
@@ -589,11 +591,37 @@ Return ONLY valid JSON:
     }
 
     case "launch_campaign": {
+      if (!businessId || !conversationId) return { error: "No business or conversation context" }
+
+      // Create a placeholder message ID for the approval record.
+      // The actual approval_request message is created after tool execution,
+      // so we store a temporary one and the frontend uses the approvalId directly.
+      const tempMessageId = await ctx.runMutation(api.messages.send, {
+        conversationId,
+        role: "system",
+        content: "",
+        messageType: "text",
+      })
+
+      const approvalId = await ctx.runMutation(api.approvals.create, {
+        businessId,
+        conversationId,
+        messageId: tempMessageId as Id<"messages">,
+        actionType: "launch_campaign",
+        payload: {
+          campaignId: input.campaignId,
+          platform: input.platform,
+          budget: input.budget,
+        },
+      })
+
       return {
+        approvalId: approvalId as string,
         campaignId: input.campaignId,
         platform: input.platform,
         budget: input.budget,
-        status: "queued_for_approval",
+        status: "pending",
+        actionType: "launch_campaign",
         message: `Campaign queued for launch on ${input.platform}. Review and approve to go live.`,
       }
     }
