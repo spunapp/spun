@@ -245,4 +245,25 @@ export default defineSchema({
   })
     .index("by_business", ["businessId"])
     .index("by_business_platform", ["businessId", "platform"]),
+
+  subscriptions: defineTable({
+    userId: v.string(),
+    businessId: v.optional(v.id("businesses")),
+    stripeCustomerId: v.string(),
+    stripeSubscriptionId: v.string(),
+    stripePriceId: v.string(),
+    tier: v.union(v.literal("standard"), v.literal("pro")),
+    status: v.union(
+      v.literal("active"),
+      v.literal("past_due"),
+      v.literal("canceled"),
+      v.literal("trialing"),
+      v.literal("incomplete")
+    ),
+    currentPeriodEnd: v.number(),
+    cancelAtPeriodEnd: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_stripe_customer", ["stripeCustomerId"])
+    .index("by_stripe_subscription", ["stripeSubscriptionId"]),
 })
