@@ -4,11 +4,15 @@ import { ConvexHttpClient } from "convex/browser"
 import { api } from "../../../../../convex/_generated/api"
 import { getTierByPriceId } from "@/lib/billing/tiers"
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-03-25.dahlia",
-})
+function getStripe() {
+  return new Stripe(process.env.STRIPE_SECRET_KEY!, {
+    apiVersion: "2026-03-25.dahlia",
+  })
+}
 
-const convex = new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+function getConvex() {
+  return new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!)
+}
 
 export async function POST(request: Request) {
   const body = await request.text()
@@ -17,6 +21,9 @@ export async function POST(request: Request) {
   if (!sig) {
     return NextResponse.json({ error: "Missing signature" }, { status: 400 })
   }
+
+  const stripe = getStripe()
+  const convex = getConvex()
 
   let event: Stripe.Event
   try {
@@ -37,13 +44,19 @@ export async function POST(request: Request) {
       const userId = session.client_reference_id ?? session.metadata?.userId
       if (!userId || !session.subscription) break
 
-      const subscription = await stripe.subscriptions.retrieve(
+      const subResponse = await stripe.subscriptions.retrieve(
         session.subscription as string
       )
+      // Stripe v22 Response<T> extends T — cast to access subscription fields
+      const subscription = subResponse as unknown as Stripe.Subscription
       const priceId = subscription.items.data[0]?.price.id
       const tier = getTierByPriceId(priceId ?? "")
 
       if (tier) {
+        const subAny = subscription as unknown as Record<string, unknown>
+        const periodEnd = subAny.current_period_end as number | undefined
+        const cancelAtEnd = subAny.cancel_at_period_end as boolean | undefined
+
         // Check if subscription already exists for this user
         const existing = await convex.query(api.subscriptions.getByUser, { userId })
         if (existing) {
@@ -52,11 +65,10 @@ export async function POST(request: Request) {
             stripePriceId: priceId,
             tier,
             status: mapStatus(subscription.status),
-            currentPeriodEnd: subscription.current_period_end * 1000,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            currentPeriodEnd: (periodEnd ?? 0) * 1000,
+            cancelAtPeriodEnd: cancelAtEnd ?? false,
           })
         } else {
-          // Look up businessId for this user
           const business = await convex.query(api.businesses.getByUser, { userId })
 
           await convex.mutation(api.subscriptions.create, {
@@ -67,8 +79,8 @@ export async function POST(request: Request) {
             stripePriceId: priceId,
             tier,
             status: mapStatus(subscription.status),
-            currentPeriodEnd: subscription.current_period_end * 1000,
-            cancelAtPeriodEnd: subscription.cancel_at_period_end,
+            currentPeriodEnd: (periodEnd ?? 0) * 1000,
+            cancelAtPeriodEnd: cancelAtEnd ?? false,
           })
         }
       }
@@ -76,25 +88,26 @@ export async function POST(request: Request) {
     }
 
     case "customer.subscription.updated": {
-      const subscription = event.data.object as Stripe.Subscription
-      const priceId = subscription.items.data[0]?.price.id
+      const sub = event.data.object as unknown as Record<string, unknown>
+      const items = sub.items as { data: { price: { id: string } }[] }
+      const priceId = items?.data?.[0]?.price.id
       const tier = getTierByPriceId(priceId ?? "")
 
       await convex.mutation(api.subscriptions.update, {
-        stripeSubscriptionId: subscription.id,
+        stripeSubscriptionId: sub.id as string,
         ...(priceId ? { stripePriceId: priceId } : {}),
         ...(tier ? { tier } : {}),
-        status: mapStatus(subscription.status),
-        currentPeriodEnd: subscription.current_period_end * 1000,
-        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        status: mapStatus(sub.status as string),
+        currentPeriodEnd: ((sub.current_period_end as number) ?? 0) * 1000,
+        cancelAtPeriodEnd: (sub.cancel_at_period_end as boolean) ?? false,
       })
       break
     }
 
     case "customer.subscription.deleted": {
-      const subscription = event.data.object as Stripe.Subscription
+      const deletedSub = event.data.object as unknown as Record<string, unknown>
       await convex.mutation(api.subscriptions.update, {
-        stripeSubscriptionId: subscription.id,
+        stripeSubscriptionId: deletedSub.id as string,
         status: "canceled",
         cancelAtPeriodEnd: false,
       })
@@ -102,7 +115,7 @@ export async function POST(request: Request) {
     }
 
     case "invoice.payment_failed": {
-      const invoice = event.data.object as Stripe.Invoice
+      const invoice = event.data.object as unknown as Record<string, unknown>
       if (invoice.subscription) {
         await convex.mutation(api.subscriptions.update, {
           stripeSubscriptionId: invoice.subscription as string,
