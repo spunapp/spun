@@ -83,7 +83,7 @@ export type MessageType =
 
 export type TrustMode = "draft" | "approve" | "auto"
 
-export type SubscriptionTier = "spark" | "growth" | "scale"
+export type SubscriptionTier = "standard" | "pro"
 
 export type PlatformType =
   | "meta"

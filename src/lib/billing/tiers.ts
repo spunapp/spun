@@ -1,8 +1,9 @@
-export type SubscriptionTier = "spark" | "growth" | "scale"
+export type SubscriptionTier = "standard" | "pro"
 
 export interface TierConfig {
   name: string
-  price: number // cents per month
+  priceId: string
+  price: number // pence per month
   channels: number
   campaigns: number
   creatives: number
@@ -11,13 +12,18 @@ export interface TierConfig {
   autoMode: boolean
   crossChannelAnalytics: boolean
   attribution: boolean
+  videoAds: boolean
+  blogArticles: boolean
+  podcasts: boolean
+  multiPlatform: boolean
 }
 
 export const TIERS: Record<SubscriptionTier, TierConfig> = {
-  spark: {
-    name: "Spark",
-    price: 4900,
-    channels: 2,
+  standard: {
+    name: "Standard",
+    priceId: "price_1TIy8N86WuAcuQwgw5p0rlzw",
+    price: 6999,
+    channels: 1,
     campaigns: 10,
     creatives: 30,
     brands: 1,
@@ -25,10 +31,15 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     autoMode: false,
     crossChannelAnalytics: false,
     attribution: false,
+    videoAds: false,
+    blogArticles: false,
+    podcasts: false,
+    multiPlatform: false,
   },
-  growth: {
-    name: "Growth",
-    price: 9900,
+  pro: {
+    name: "Pro",
+    priceId: "price_1TIy8l86WuAcuQwgpEXD3TsO",
+    price: 11999,
     channels: 5,
     campaigns: 50,
     creatives: 150,
@@ -36,21 +47,20 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     abTesting: "suggested",
     autoMode: false,
     crossChannelAnalytics: true,
-    attribution: false,
-  },
-  scale: {
-    name: "Scale",
-    price: 19900,
-    channels: Infinity,
-    campaigns: Infinity,
-    creatives: Infinity,
-    brands: 3,
-    abTesting: "auto",
-    autoMode: true,
-    crossChannelAnalytics: true,
     attribution: true,
+    videoAds: true,
+    blogArticles: true,
+    podcasts: true,
+    multiPlatform: true,
   },
 } as const
+
+export function getTierByPriceId(priceId: string): SubscriptionTier | null {
+  for (const [tier, config] of Object.entries(TIERS)) {
+    if (config.priceId === priceId) return tier as SubscriptionTier
+  }
+  return null
+}
 
 export function checkUsageLimit(
   tier: SubscriptionTier,
@@ -64,7 +74,7 @@ export function checkUsageLimit(
       limitType: "channels",
       current: usage.channelsConnected,
       limit: config.channels,
-      upgradeTier: tier === "spark" ? "growth" : tier === "growth" ? "scale" : undefined,
+      upgradeTier: tier === "standard" ? "pro" : undefined,
     }
   }
 
@@ -74,7 +84,7 @@ export function checkUsageLimit(
       limitType: "campaigns",
       current: usage.campaignsLaunched,
       limit: config.campaigns,
-      upgradeTier: tier === "spark" ? "growth" : tier === "growth" ? "scale" : undefined,
+      upgradeTier: tier === "standard" ? "pro" : undefined,
     }
   }
 
@@ -84,7 +94,7 @@ export function checkUsageLimit(
       limitType: "creatives",
       current: usage.creativesGenerated,
       limit: config.creatives,
-      upgradeTier: tier === "spark" ? "growth" : tier === "growth" ? "scale" : undefined,
+      upgradeTier: tier === "standard" ? "pro" : undefined,
     }
   }
 

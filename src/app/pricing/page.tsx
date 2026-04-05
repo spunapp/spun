@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { LOGO_SRC } from "@/lib/logo"
+import { TIERS } from "@/lib/billing/tiers"
 
 const standardBenefits = [
   "Complete understanding of your business",
@@ -48,6 +51,29 @@ function InheritedLabel({ from }: { from: string }) {
 
 export default function PricingPage() {
   const router = useRouter()
+  const { isSignedIn } = useUser()
+  const [loading, setLoading] = useState<string | null>(null)
+
+  async function handleCheckout(priceId: string) {
+    if (!isSignedIn) {
+      router.push("/login")
+      return
+    }
+    setLoading(priceId)
+    try {
+      const res = await fetch("/api/stripe/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId }),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      }
+    } finally {
+      setLoading(null)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-12">
@@ -85,10 +111,11 @@ export default function PricingPage() {
           </div>
 
           <button
-            onClick={() => router.push("/login")}
-            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8"
+            onClick={() => handleCheckout(TIERS.standard.priceId)}
+            disabled={loading === TIERS.standard.priceId}
+            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8 disabled:opacity-50"
           >
-            Start your 14 day free trial
+            {loading === TIERS.standard.priceId ? "Redirecting…" : "Start your 14 day free trial"}
           </button>
 
           <ul className="space-y-3">
@@ -115,10 +142,11 @@ export default function PricingPage() {
           </div>
 
           <button
-            onClick={() => router.push("/login")}
-            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8"
+            onClick={() => handleCheckout(TIERS.pro.priceId)}
+            disabled={loading === TIERS.pro.priceId}
+            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8 disabled:opacity-50"
           >
-            Start your 14 day free trial
+            {loading === TIERS.pro.priceId ? "Redirecting…" : "Start your 14 day free trial"}
           </button>
 
           <InheritedLabel from="Standard" />
