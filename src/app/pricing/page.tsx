@@ -76,22 +76,23 @@ export default function PricingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-12">
+    <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-6">
       {/* Header */}
-      <div className="text-center mb-12 space-y-4">
+      <div className="text-center mb-6 space-y-3">
         <Link href="/" className="inline-block">
           <img
             src="/spun.gif"
             alt=""
-            width={64}
-            height={64}
-            className="mx-auto rounded-2xl"
+            width={48}
+            height={48}
+            className="mx-auto rounded-xl"
           />
           <img
             src={LOGO_SRC}
             alt=""
-            height={45}
-            className="mx-auto mt-4"
+            height={28}
+            className="mx-auto mt-3"
+            style={{ height: 28 }}
           />
         </Link>
         <h1 className="text-white text-2xl font-semibold">Start Your 14 Day Free Trial</h1>
@@ -180,7 +181,7 @@ export default function PricingPage() {
           </div>
 
           <a
-            href="mailto:hello@spun.bot"
+            href="mailto:contact@spun.bot"
             className="w-full border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-3 rounded-xl transition-colors mb-8 text-center block"
           >
             Contact us
