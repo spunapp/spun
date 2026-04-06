@@ -1,19 +1,10 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server"
-import { NextResponse } from "next/server"
 
-const isProtectedRoute = createRouteMatcher(["/chat(.*)"])
+const isProtectedRoute = createRouteMatcher(["/chat(.*)", "/settings(.*)", "/brand-assets(.*)"])
 
 export default clerkMiddleware(async (auth, req) => {
   if (isProtectedRoute(req)) {
     await auth.protect()
-  }
-
-  // Redirect signed-in users away from the landing page directly to chat
-  if (req.nextUrl.pathname === "/") {
-    const { userId } = await auth()
-    if (userId) {
-      return NextResponse.redirect(new URL("/chat", req.url))
-    }
   }
 })
 
