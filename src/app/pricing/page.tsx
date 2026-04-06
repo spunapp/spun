@@ -83,16 +83,16 @@ export default function PricingPage() {
           <img
             src="/spun.gif"
             alt=""
-            width={48}
-            height={48}
-            className="mx-auto rounded-xl"
+            width={56}
+            height={56}
+            className="mx-auto rounded-2xl"
           />
           <img
             src={LOGO_SRC}
             alt=""
-            height={28}
+            height={36}
             className="mx-auto mt-3"
-            style={{ height: 28 }}
+            style={{ height: 36 }}
           />
         </Link>
         <h1 className="text-white text-2xl font-semibold">Start Your 14 Day Free Trial</h1>
