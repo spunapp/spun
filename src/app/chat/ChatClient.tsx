@@ -3,15 +3,22 @@
 import { useState, useCallback, useEffect } from "react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { useUser } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
 
+// Test accounts that bypass the subscription check
+const TEST_ACCOUNTS = new Set([
+  "user_3B7vr8q1wMtbFp1Gec4APgtUQFZ", // azahmed01@gmail.com
+])
+
 export default function ChatClient() {
   const { user } = useUser()
   const userId = user?.id ?? null
+  const router = useRouter()
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -27,6 +34,23 @@ export default function ChatClient() {
     api.businesses.getByUser,
     userId ? { userId } : "skip"
   )
+  const subscription = useQuery(
+    api.subscriptions.getByUser,
+    userId ? { userId } : "skip"
+  )
+
+  // Redirect to pricing if no active subscription (skip for test accounts)
+  const isTestAccount = userId ? TEST_ACCOUNTS.has(userId) : false
+  const hasActiveSubscription = subscription &&
+    (subscription.status === "active" || subscription.status === "trialing")
+  const subscriptionLoaded = subscription !== undefined
+
+  useEffect(() => {
+    if (!userId || !subscriptionLoaded || isTestAccount) return
+    if (!hasActiveSubscription) {
+      router.replace("/pricing")
+    }
+  }, [userId, subscriptionLoaded, hasActiveSubscription, isTestAccount, router])
 
   // Derive active conversation directly — no useEffect+setState round-trip
   const activeConversationId =

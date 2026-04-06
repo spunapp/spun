@@ -79,7 +79,7 @@ export default function PricingPage() {
     <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-12">
       {/* Header */}
       <div className="text-center mb-12 space-y-4">
-        <Link href="/chat" className="inline-block">
+        <Link href="/" className="inline-block">
           <img
             src="/spun.gif"
             alt=""
@@ -94,7 +94,10 @@ export default function PricingPage() {
             className="mx-auto mt-4"
           />
         </Link>
-        <p className="text-slate-300 text-lg">Choose the plan that fits your business</p>
+        <h1 className="text-white text-2xl font-semibold">Start Your 14 Day Free Trial</h1>
+        <p className="text-slate-300 text-base max-w-md mx-auto">
+          Cancel anytime before the 14 days are up. Credit card details required.
+        </p>
       </div>
 
       {/* Pricing columns */}

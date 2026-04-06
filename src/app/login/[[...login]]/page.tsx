@@ -33,7 +33,7 @@ export default function LoginPage() {
         <SignIn
           routing="path"
           path="/login"
-          forceRedirectUrl="/chat"
+          fallbackRedirectUrl="/chat"
           appearance={{ baseTheme: dark }}
         />
 
