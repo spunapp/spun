@@ -90,9 +90,8 @@ export default function PricingPage() {
           <img
             src={LOGO_SRC}
             alt=""
-            height={36}
             className="mx-auto mt-3"
-            style={{ height: 36 }}
+            style={{ height: 80 }}
           />
         </Link>
         <h1 className="text-white text-2xl font-semibold">Start Your 14 Day Free Trial</h1>
