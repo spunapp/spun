@@ -56,7 +56,7 @@ export default function PricingPage() {
 
   async function handleCheckout(priceId: string) {
     if (!isSignedIn) {
-      router.push("/login")
+      router.replace("/login")
       return
     }
     setLoading(priceId)
