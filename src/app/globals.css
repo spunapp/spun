@@ -70,16 +70,17 @@ html, body {
   color: #5B9BAA !important;
 }
 /* Style the "Secured by Clerk" footer to match site colors */
-.cl-footer,
-.cl-footerPages,
-.cl-card .cl-footer,
-[class*="cl-footer"] {
-  background: #0f1c24 !important;
-  background-color: #0f1c24 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+.cl-cardBox {
+  background: transparent !important;
 }
-[class*="cl-footer"] * {
+.cl-footer {
+  background: #0f1c24 !important;
+}
+.cl-footerItem {
   color: #64748b !important;
+}
+.cl-footerAction {
+  background: #0f1c24 !important;
 }
 /* Hide Clerk development-mode banner (replaces JS DimDevModeBanner hack) */
 .cl-internal-b3fm6y {

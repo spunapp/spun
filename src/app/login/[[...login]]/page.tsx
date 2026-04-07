@@ -37,9 +37,14 @@ export default function LoginPage() {
           appearance={{
             baseTheme: dark,
             elements: {
+              cardBox: {
+                background: "transparent",
+              },
               footer: {
                 background: "#0f1c24",
-                "& *": { color: "#64748b" },
+              },
+              footerItem: {
+                color: "#64748b",
               },
               footerAction: {
                 background: "#0f1c24",
