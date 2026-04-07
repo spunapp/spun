@@ -34,7 +34,18 @@ export default function LoginPage() {
           routing="path"
           path="/login"
           fallbackRedirectUrl="/chat"
-          appearance={{ baseTheme: dark }}
+          appearance={{
+            baseTheme: dark,
+            elements: {
+              footer: {
+                background: "#0f1c24",
+                "& *": { color: "#64748b" },
+              },
+              footerAction: {
+                background: "#0f1c24",
+              },
+            },
+          }}
         />
 
         <div className="text-sm text-slate-400 space-y-1">
