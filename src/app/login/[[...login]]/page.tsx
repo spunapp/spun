@@ -41,13 +41,13 @@ export default function LoginPage() {
                 background: "transparent",
               },
               footer: {
-                background: "#1a2e38",
+                background: "#1e3a47",
               },
               footerItem: {
-                color: "#94a3b8",
+                color: "#cbd5e1",
               },
               footerAction: {
-                background: "#1a2e38",
+                background: "#1e3a47",
               },
             },
           }}

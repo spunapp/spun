@@ -74,13 +74,17 @@ html, body {
   background: transparent !important;
 }
 .cl-footer {
-  background: #1a2e38 !important;
+  background: #1e3a47 !important;
 }
-.cl-footerItem {
-  color: #94a3b8 !important;
+.cl-footerItem,
+.cl-footer a,
+.cl-footer span,
+.cl-footer p,
+.cl-footer div {
+  color: #cbd5e1 !important;
 }
 .cl-footerAction {
-  background: #1a2e38 !important;
+  background: #1e3a47 !important;
 }
 /* Hide Clerk development-mode banner (replaces JS DimDevModeBanner hack) */
 .cl-internal-b3fm6y {
