@@ -33,7 +33,8 @@ export default function ChatLayout({
       await resetBusiness({ userId: user.id })
       setShowResetConfirm(false)
       setSidebarOpen(false)
-      router.push("/chat?new=true")
+      router.push("/chat")
+      router.refresh()
     } finally {
       setResetting(false)
     }
