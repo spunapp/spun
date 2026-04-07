@@ -15,6 +15,7 @@ const PLATFORMS = [
   { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics", oauthAppId: undefined },
   { id: "klaviyo", label: "Klaviyo", pipedreamApp: "klaviyo", oauthAppId: undefined },
   { id: "tiktok", label: "TikTok Ads", pipedreamApp: null, oauthAppId: undefined },
+  { id: "x", label: "X (Twitter) Ads", pipedreamApp: null, oauthAppId: undefined },
   { id: "linkedin", label: "LinkedIn Ads", pipedreamApp: null, oauthAppId: undefined },
   { id: "shopify", label: "Shopify", pipedreamApp: null, oauthAppId: undefined },
   { id: "buffer", label: "Buffer", pipedreamApp: null, oauthAppId: undefined },
