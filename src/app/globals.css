@@ -74,13 +74,13 @@ html, body {
   background: transparent !important;
 }
 .cl-footer {
-  background: #0f1c24 !important;
+  background: #1a2e38 !important;
 }
 .cl-footerItem {
-  color: #64748b !important;
+  color: #94a3b8 !important;
 }
 .cl-footerAction {
-  background: #0f1c24 !important;
+  background: #1a2e38 !important;
 }
 /* Hide Clerk development-mode banner (replaces JS DimDevModeBanner hack) */
 .cl-internal-b3fm6y {
