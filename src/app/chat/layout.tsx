@@ -4,8 +4,9 @@ import { useState } from "react"
 import { Menu, X, Settings, LogOut, Palette, RotateCcw, MessageSquare, Plus } from "lucide-react"
 import { useClerk, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { useMutation } from "convex/react"
+import { useMutation, useQuery } from "convex/react"
 import { api } from "../../../convex/_generated/api"
+import type { Id } from "../../../convex/_generated/dataModel"
 import { useChatSidebar } from "./ChatSidebarContext"
 
 export default function ChatLayout({
@@ -146,20 +147,29 @@ export default function ChatLayout({
 }
 
 function SidebarConversations({ onCloseMobile }: { onCloseMobile: () => void }) {
+  const { user } = useUser()
+  const userId = user?.id ?? null
+  const conversations = useQuery(api.conversations.list, userId ? { userId } : "skip")
+  const business = useQuery(api.businesses.getByUser, userId ? { userId } : "skip")
+  const createConversation = useMutation(api.conversations.create)
   const ctx = useChatSidebar()
 
-  if (!ctx || !ctx.conversations) {
-    return <div className="flex-1" />
+  async function handleNew() {
+    if (!userId) return
+    const id = await createConversation({
+      userId,
+      businessId: business?._id,
+      title: business ? "Marketing Strategy" : "Getting Started",
+    })
+    ctx?.onSelectConversation(id as string)
+    onCloseMobile()
   }
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       <div className="p-3">
         <button
-          onClick={() => {
-            ctx.onNewConversation()
-            onCloseMobile()
-          }}
+          onClick={handleNew}
           className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/5 border border-white/10 rounded-lg transition-all"
         >
           <Plus className="w-3.5 h-3.5" />
@@ -168,15 +178,15 @@ function SidebarConversations({ onCloseMobile }: { onCloseMobile: () => void }) 
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 space-y-1">
-        {ctx.conversations.map((conv) => (
+        {(conversations ?? []).map((conv: { _id: string; title?: string; _creationTime: number }) => (
           <button
             key={conv._id}
             onClick={() => {
-              ctx.onSelectConversation(conv._id)
+              ctx?.onSelectConversation(conv._id as string)
               onCloseMobile()
             }}
             className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-all text-left ${
-              ctx.activeConversationId === conv._id
+              ctx?.activeConversationId === conv._id
                 ? "bg-[#5B9BAA]/20 text-[#5B9BAA] border border-[#5B9BAA]/30"
                 : "text-slate-400 hover:text-white hover:bg-white/5"
             }`}
