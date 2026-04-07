@@ -9,6 +9,7 @@ import type { Id } from "../../../convex/_generated/dataModel"
 import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
+import { ChatSidebarProvider } from "./ChatSidebarContext"
 
 // Test accounts that bypass the subscription check (matched by email)
 const TEST_ACCOUNT_EMAILS = new Set([
@@ -225,7 +226,25 @@ export default function ChatClient() {
     [rejectAction]
   )
 
+  const handleNewConversation = useCallback(async () => {
+    if (!userId) return
+    const id = await createConversation({
+      userId,
+      businessId: business?._id,
+      title: business ? "Marketing Strategy" : "Getting Started",
+    })
+    setSelectedConversationId(id)
+  }, [userId, business, createConversation])
+
+  const sidebarValue = {
+    conversations: conversations as Array<{ _id: string; title?: string; _creationTime: number }> | undefined,
+    activeConversationId: activeConversationId as string | null,
+    onSelectConversation: (id: string) => setSelectedConversationId(id as Id<"conversations">),
+    onNewConversation: handleNewConversation,
+  }
+
   return (
+    <ChatSidebarProvider value={sidebarValue}>
     <div className="flex flex-col h-full">
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-3 border-b border-white/5 pl-14 lg:pl-4">
@@ -282,5 +301,6 @@ export default function ChatClient() {
         placeholder={business ? "Talk to Spun..." : "Tell me about your business..."}
       />
     </div>
+    </ChatSidebarProvider>
   )
 }
