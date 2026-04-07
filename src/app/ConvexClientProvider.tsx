@@ -41,7 +41,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
       signInForceRedirectUrl="/chat"
-      signUpForceRedirectUrl="/pricing"
+      signUpForceRedirectUrl="/chat"
       appearance={{ baseTheme: dark }}
     >
       {convex ? (
