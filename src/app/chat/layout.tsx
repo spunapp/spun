@@ -178,7 +178,7 @@ function SidebarConversations({ onCloseMobile }: { onCloseMobile: () => void }) 
       </div>
 
       <div className="flex-1 overflow-y-auto px-3 space-y-1">
-        {(conversations ?? []).map((conv) => (
+        {(conversations ?? []).map((conv: { _id: string; title?: string; _creationTime: number }) => (
           <button
             key={conv._id}
             onClick={() => {
