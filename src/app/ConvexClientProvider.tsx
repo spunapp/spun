@@ -40,8 +40,8 @@ function SetupMessage() {
 export function ConvexClientProvider({ children }: { children: ReactNode }) {
   return (
     <ClerkProvider
-      signInForceRedirectUrl="/chat"
-      signUpForceRedirectUrl="/chat"
+      signInFallbackRedirectUrl="/chat"
+      signUpFallbackRedirectUrl="/chat"
       appearance={{ baseTheme: dark }}
     >
       {convex ? (
