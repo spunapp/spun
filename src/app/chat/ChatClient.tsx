@@ -10,9 +10,9 @@ import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
 
-// Test accounts that bypass the subscription check
-const TEST_ACCOUNTS = new Set([
-  "user_3B7vr8q1wMtbFp1Gec4APgtUQFZ", // azahmed01@gmail.com
+// Test accounts that bypass the subscription check (matched by email)
+const TEST_ACCOUNT_EMAILS = new Set([
+  "azahmed01@gmail.com",
 ])
 
 export default function ChatClient() {
@@ -40,7 +40,8 @@ export default function ChatClient() {
   )
 
   // Redirect to pricing if no active subscription (skip for test accounts)
-  const isTestAccount = userId ? TEST_ACCOUNTS.has(userId) : false
+  const userEmail = user?.primaryEmailAddress?.emailAddress ?? null
+  const isTestAccount = userEmail ? TEST_ACCOUNT_EMAILS.has(userEmail) : false
   const hasActiveSubscription = subscription &&
     (subscription.status === "active" || subscription.status === "trialing")
   const subscriptionLoaded = subscription !== undefined
