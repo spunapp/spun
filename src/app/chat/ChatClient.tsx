@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { useUser } from "@clerk/nextjs"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
 import { ChatThread } from "@/components/chat/ChatThread"
@@ -19,6 +19,7 @@ export default function ChatClient() {
   const { user } = useUser()
   const userId = user?.id ?? null
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -85,6 +86,20 @@ export default function ChatClient() {
       })
     }
   }, [userId, conversations, business, createConversation])
+
+  // Handle ?new=true param to create a fresh conversation
+  useEffect(() => {
+    if (!userId || searchParams.get("new") !== "true") return
+    // Clear the param from the URL immediately
+    router.replace("/chat")
+    createConversation({
+      userId,
+      businessId: business?._id,
+      title: business ? "Marketing Strategy" : "Getting Started",
+    }).then((id) => {
+      setSelectedConversationId(id)
+    })
+  }, [userId, searchParams, business, createConversation, router])
 
   // Determine quick replies based on context
   useEffect(() => {
