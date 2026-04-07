@@ -1,11 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Menu, X, Settings, LogOut, Palette, Plus, RotateCcw } from "lucide-react"
+import { Menu, X, Settings, LogOut, Palette, RotateCcw, MessageSquare, Plus } from "lucide-react"
 import { useClerk, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { useMutation } from "convex/react"
 import { api } from "../../../convex/_generated/api"
+import { useChatSidebar } from "./ChatSidebarContext"
 
 export default function ChatLayout({
   children,
@@ -22,11 +23,6 @@ export default function ChatLayout({
 
   async function handleLogout() {
     await signOut({ redirectUrl: "/login" })
-  }
-
-  function handleNewChat() {
-    setSidebarOpen(false)
-    router.push("/chat?new=true")
   }
 
   async function handleStartOver() {
@@ -80,19 +76,8 @@ export default function ChatLayout({
           </button>
         </div>
 
-        {/* New Chat button */}
-        <div className="p-3 border-b border-white/5">
-          <button
-            onClick={handleNewChat}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/5 rounded-lg transition-all"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            New chat
-          </button>
-        </div>
-
-        {/* Conversations + Channels are rendered by the page */}
-        <div className="flex-1 overflow-hidden">{/* Slot for ConversationList + ChannelStatus */}</div>
+        {/* Conversation list */}
+        <SidebarConversations onCloseMobile={() => setSidebarOpen(false)} />
 
         {/* Footer */}
         <div className="border-t border-white/5 p-3 space-y-1">
@@ -156,6 +141,53 @@ export default function ChatLayout({
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function SidebarConversations({ onCloseMobile }: { onCloseMobile: () => void }) {
+  const ctx = useChatSidebar()
+
+  if (!ctx || !ctx.conversations) {
+    return <div className="flex-1" />
+  }
+
+  return (
+    <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="p-3">
+        <button
+          onClick={() => {
+            ctx.onNewConversation()
+            onCloseMobile()
+          }}
+          className="w-full flex items-center gap-2 px-3 py-2 text-xs text-slate-300 hover:text-white hover:bg-white/5 border border-white/10 rounded-lg transition-all"
+        >
+          <Plus className="w-3.5 h-3.5" />
+          New chat
+        </button>
+      </div>
+
+      <div className="flex-1 overflow-y-auto px-3 space-y-1">
+        {ctx.conversations.map((conv) => (
+          <button
+            key={conv._id}
+            onClick={() => {
+              ctx.onSelectConversation(conv._id)
+              onCloseMobile()
+            }}
+            className={`w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg transition-all text-left ${
+              ctx.activeConversationId === conv._id
+                ? "bg-[#5B9BAA]/20 text-[#5B9BAA] border border-[#5B9BAA]/30"
+                : "text-slate-400 hover:text-white hover:bg-white/5"
+            }`}
+          >
+            <MessageSquare className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="truncate">
+              {conv.title || "New conversation"}
+            </span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }

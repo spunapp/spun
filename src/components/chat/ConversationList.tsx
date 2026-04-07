@@ -40,7 +40,7 @@ export function ConversationList({
             onClick={() => onSelect(conv._id)}
             className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all text-left ${
               activeId === conv._id
-                ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                ? "bg-[#5B9BAA]/20 text-[#5B9BAA] border border-[#5B9BAA]/30"
                 : "text-slate-400 hover:text-white hover:bg-white/5"
             }`}
           >
