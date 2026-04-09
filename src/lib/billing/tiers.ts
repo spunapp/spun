@@ -8,14 +8,12 @@ export interface TierConfig {
   channels: number
   campaigns: number
   creatives: number
+  blogArticles: number
   brands: number
   abTesting: false | "suggested" | "auto"
   autoMode: boolean
   crossChannelAnalytics: boolean
   attribution: boolean
-  videoAds: boolean
-  blogArticles: boolean
-  podcasts: boolean
   multiPlatform: boolean
 }
 
@@ -28,14 +26,12 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     channels: 1,
     campaigns: 1,
     creatives: 10,
+    blogArticles: 0,
     brands: 1,
     abTesting: false,
     autoMode: false,
     crossChannelAnalytics: false,
     attribution: false,
-    videoAds: false,
-    blogArticles: false,
-    podcasts: false,
     multiPlatform: false,
   },
   pro: {
@@ -46,14 +42,12 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     channels: 3,
     campaigns: 3,
     creatives: 30,
+    blogArticles: 5,
     brands: 1,
     abTesting: "suggested",
     autoMode: false,
     crossChannelAnalytics: true,
     attribution: true,
-    videoAds: true,
-    blogArticles: true,
-    podcasts: true,
     multiPlatform: true,
   },
 } as const
