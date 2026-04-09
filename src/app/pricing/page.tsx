@@ -4,46 +4,57 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
-import { Check } from "lucide-react"
+import { Check, X } from "lucide-react"
 import { LOGO_SRC } from "@/lib/logo"
 import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 
-const standardBenefits = [
-  "Complete understanding of your business",
-  "Builds a campaign theme",
-  "Develops a Go To Market Strategy",
-  "Develops a Competitor strategy",
-  "Suggests most appropriate advertising channel based on information provided",
-  "Creates image ads",
-  "Connects to chosen ad platform and runs ad campaigns for you",
-  "Full ad reporting",
+type FeatureRow =
+  | { type: "limit"; label: string; standard: string; pro: string; enterprise: string }
+  | { type: "feature"; label: string; standard: boolean; pro: boolean; enterprise: boolean }
+  | { type: "divider" }
+
+const features: FeatureRow[] = [
+  // Limits
+  { type: "limit", label: "AI responses", standard: `${TIERS.standard.messages}/mo`, pro: `${TIERS.pro.messages}/mo`, enterprise: "Unlimited" },
+  { type: "limit", label: "Ad creatives", standard: `${TIERS.standard.creatives}/mo`, pro: `${TIERS.pro.creatives}/mo`, enterprise: "Unlimited" },
+  { type: "limit", label: "Campaigns", standard: `${TIERS.standard.campaigns}/mo`, pro: `${TIERS.pro.campaigns}/mo`, enterprise: "Unlimited" },
+  { type: "limit", label: "Ad channels", standard: `${TIERS.standard.channels}`, pro: `${TIERS.pro.channels}`, enterprise: "Unlimited" },
+  { type: "limit", label: "Blog articles", standard: "—", pro: `${TIERS.pro.blogArticles}/mo`, enterprise: "Unlimited" },
+  { type: "divider" },
+  // Features
+  { type: "feature", label: "Business understanding & strategy", standard: true, pro: true, enterprise: true },
+  { type: "feature", label: "Campaign themes & go-to-market plans", standard: true, pro: true, enterprise: true },
+  { type: "feature", label: "Competitor strategy", standard: true, pro: true, enterprise: true },
+  { type: "feature", label: "AI image ad creation", standard: true, pro: true, enterprise: true },
+  { type: "feature", label: "Connects & runs ads on your platform", standard: true, pro: true, enterprise: true },
+  { type: "feature", label: "Ad reporting", standard: true, pro: true, enterprise: true },
+  { type: "divider" },
+  { type: "feature", label: "Multiple ad platforms", standard: false, pro: true, enterprise: true },
+  { type: "feature", label: "Blog article writing", standard: false, pro: true, enterprise: true },
+  { type: "feature", label: "Cross-platform analytics", standard: false, pro: true, enterprise: true },
+  { type: "feature", label: "ROI calculations", standard: false, pro: true, enterprise: true },
+  { type: "feature", label: "A/B testing suggestions", standard: false, pro: true, enterprise: true },
+  { type: "divider" },
+  { type: "feature", label: "Multi-location support", standard: false, pro: false, enterprise: true },
+  { type: "feature", label: "Multiple brands", standard: false, pro: false, enterprise: true },
+  { type: "feature", label: "Custom integrations", standard: false, pro: false, enterprise: true },
 ]
 
-const proBenefits = [
-  "Writes blog articles",
-  "Advertises on multiple ad platforms",
-  "Multi platform and website traffic and blog article readership reporting",
-  "ROI Calculations",
-]
-
-const enterpriseBenefits = [
-  "Custom solutions for enterprise clients based on specific needs such as multi location or multiple brands under one umbrella organisation",
-]
-
-function BenefitItem({ text }: { text: string }) {
+function FeatureValue({ value }: { value: boolean | string }) {
+  if (typeof value === "string") {
+    return <span className="text-white text-sm font-medium">{value}</span>
+  }
+  if (value) {
+    return (
+      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15">
+        <Check className="w-3.5 h-3.5 text-[#5B9BAA]" />
+      </span>
+    )
+  }
   return (
-    <li className="flex items-start gap-3">
-      <Check className="w-4 h-4 text-[#5B9BAA] mt-0.5 shrink-0" />
-      <span className="text-slate-300 text-sm leading-snug">{text}</span>
-    </li>
-  )
-}
-
-function InheritedLabel({ from }: { from: string }) {
-  return (
-    <p className="text-xs font-semibold text-[#5B9BAA] uppercase tracking-wider mb-3">
-      Everything in {from}, plus:
-    </p>
+    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
+      <X className="w-3.5 h-3.5 text-slate-600" />
+    </span>
   )
 }
 
@@ -76,7 +87,7 @@ export default function PricingPage() {
   return (
     <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-6">
       {/* Header */}
-      <div className="text-center mb-6 space-y-3">
+      <div className="text-center mb-8 space-y-3">
         <Link href="/" className="inline-block">
           <img
             src="/spun.gif"
@@ -98,112 +109,98 @@ export default function PricingPage() {
         </p>
       </div>
 
-      {/* Pricing columns */}
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+      {/* Pricing table */}
+      <div className="w-full max-w-4xl">
+        <div className="bg-[var(--background)] border border-white/10 rounded-2xl overflow-hidden">
 
-        {/* Standard */}
-        <div className="bg-[var(--background)] border border-white/10 rounded-2xl p-8 flex flex-col">
-          <div className="mb-6">
-            <h2 className="text-white text-xl font-semibold mb-1">Standard</h2>
-            <div className="flex items-end gap-1 mt-3">
-              <span className="text-white text-4xl font-bold">£69.99</span>
-              <span className="text-slate-400 text-sm mb-1">/month</span>
+          {/* Tier headers */}
+          <div className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] border-b border-white/10">
+            {/* Empty label cell */}
+            <div className="p-6" />
+
+            {/* Standard */}
+            <div className="p-6 text-center border-l border-white/10">
+              <h2 className="text-white text-lg font-semibold">Standard</h2>
+              <div className="mt-2">
+                <span className="text-white text-3xl font-bold">£69.99</span>
+                <span className="text-slate-400 text-sm">/mo</span>
+              </div>
+              <button
+                onClick={() => handleCheckout(TIERS.standard.priceId)}
+                disabled={loading === TIERS.standard.priceId}
+                className="mt-4 w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-2.5 rounded-xl transition-colors text-sm disabled:opacity-50"
+              >
+                {loading === TIERS.standard.priceId ? "Redirecting…" : "Start free trial"}
+              </button>
             </div>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.messages} AI responses/mo</span>
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.creatives} creatives/mo</span>
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.channels} ad channel</span>
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.campaigns} campaign/mo</span>
+
+            {/* Pro */}
+            <div className="p-6 text-center border-l border-[#5B9BAA]/30 bg-[#5B9BAA]/5 relative">
+              <div className="absolute -top-0 left-1/2 -translate-x-1/2">
+                <span className="bg-[#5B9BAA] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-b-lg">
+                  Popular
+                </span>
+              </div>
+              <h2 className="text-white text-lg font-semibold mt-2">Pro</h2>
+              <div className="mt-2">
+                <span className="text-white text-3xl font-bold">£119.99</span>
+                <span className="text-slate-400 text-sm">/mo</span>
+              </div>
+              <button
+                onClick={() => handleCheckout(TIERS.pro.priceId)}
+                disabled={loading === TIERS.pro.priceId}
+                className="mt-4 w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-2.5 rounded-xl transition-colors text-sm disabled:opacity-50"
+              >
+                {loading === TIERS.pro.priceId ? "Redirecting…" : "Start free trial"}
+              </button>
             </div>
-          </div>
 
-          <button
-            onClick={() => handleCheckout(TIERS.standard.priceId)}
-            disabled={loading === TIERS.standard.priceId}
-            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8 disabled:opacity-50"
-          >
-            {loading === TIERS.standard.priceId ? "Redirecting…" : "Start your 14 day free trial"}
-          </button>
-
-          <ul className="space-y-3">
-            {standardBenefits.map((b) => (
-              <BenefitItem key={b} text={b} />
-            ))}
-          </ul>
-        </div>
-
-        {/* Pro — highlighted */}
-        <div className="bg-[var(--background)] border-2 border-[#5B9BAA] rounded-2xl p-8 flex flex-col shadow-[0_0_40px_rgba(91,155,170,0.15)] relative md:-mt-2">
-          <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-            <span className="bg-[#5B9BAA] text-white text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full">
-              Most Popular
-            </span>
-          </div>
-
-          <div className="mb-6">
-            <h2 className="text-white text-xl font-semibold mb-1">Pro</h2>
-            <div className="flex items-end gap-1 mt-3">
-              <span className="text-white text-4xl font-bold">£119.99</span>
-              <span className="text-slate-400 text-sm mb-1">/month</span>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.messages} AI responses/mo</span>
-              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.creatives} creatives/mo</span>
-              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.blogArticles} blog articles/mo</span>
-              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.channels} ad channels</span>
-              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.campaigns} campaigns/mo</span>
-            </div>
-          </div>
-
-          <button
-            onClick={() => handleCheckout(TIERS.pro.priceId)}
-            disabled={loading === TIERS.pro.priceId}
-            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors mb-8 disabled:opacity-50"
-          >
-            {loading === TIERS.pro.priceId ? "Redirecting…" : "Start your 14 day free trial"}
-          </button>
-
-          <InheritedLabel from="Standard" />
-          <ul className="space-y-3">
-            {proBenefits.map((b) => (
-              <BenefitItem key={b} text={b} />
-            ))}
-          </ul>
-        </div>
-
-        {/* Enterprise */}
-        <div className="bg-[var(--background)] border border-white/10 rounded-2xl p-8 flex flex-col">
-          <div className="mb-6">
-            <h2 className="text-white text-xl font-semibold mb-1">Enterprise</h2>
-            <div className="flex items-end gap-1 mt-3">
-              <span className="text-white text-4xl font-bold">POA</span>
-            </div>
-            <p className="text-slate-400 text-sm mt-1">Price on application</p>
-            <div className="flex flex-wrap gap-2 mt-3">
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">Unlimited responses</span>
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">Unlimited creatives</span>
-              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">Unlimited channels</span>
+            {/* Enterprise */}
+            <div className="p-6 text-center border-l border-white/10">
+              <h2 className="text-white text-lg font-semibold">Enterprise</h2>
+              <div className="mt-2">
+                <span className="text-white text-3xl font-bold">POA</span>
+              </div>
+              <a
+                href="mailto:contact@spun.bot"
+                className="mt-4 w-full border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-2.5 rounded-xl transition-colors text-sm text-center block"
+              >
+                Contact us
+              </a>
             </div>
           </div>
 
-          <a
-            href="mailto:contact@spun.bot"
-            className="w-full border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-3 rounded-xl transition-colors mb-8 text-center block"
-          >
-            Contact us
-          </a>
+          {/* Feature rows */}
+          {features.map((row, i) => {
+            if (row.type === "divider") {
+              return <div key={`div-${i}`} className="border-t border-white/10" />
+            }
 
-          <InheritedLabel from="Pro" />
-          <ul className="space-y-3">
-            {enterpriseBenefits.map((b) => (
-              <BenefitItem key={b} text={b} />
-            ))}
-          </ul>
+            return (
+              <div
+                key={row.label}
+                className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] border-b border-white/5 last:border-b-0 hover:bg-white/[0.02] transition-colors"
+              >
+                <div className="px-6 py-3 flex items-center">
+                  <span className="text-slate-300 text-sm">{row.label}</span>
+                </div>
+                <div className="px-6 py-3 flex items-center justify-center border-l border-white/5">
+                  <FeatureValue value={row.standard} />
+                </div>
+                <div className="px-6 py-3 flex items-center justify-center border-l border-[#5B9BAA]/10 bg-[#5B9BAA]/[0.02]">
+                  <FeatureValue value={row.pro} />
+                </div>
+                <div className="px-6 py-3 flex items-center justify-center border-l border-white/5">
+                  <FeatureValue value={row.enterprise} />
+                </div>
+              </div>
+            )
+          })}
         </div>
       </div>
 
       {/* Credit pack section */}
-      <div className="w-full max-w-5xl mt-10">
+      <div className="w-full max-w-4xl mt-10">
         <div className="bg-[var(--background)] border border-white/10 rounded-2xl p-8 text-center">
           <h3 className="text-white text-lg font-semibold mb-2">Need more?</h3>
           <p className="text-slate-300 text-sm mb-4">
