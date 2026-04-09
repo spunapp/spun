@@ -141,7 +141,7 @@ export default function PricingPage() {
                   Popular
                 </span>
               </div>
-              <h2 className="text-white text-lg font-semibold mt-2">Pro</h2>
+              <h2 className="text-white text-lg font-semibold">Pro</h2>
               <div className="mt-2">
                 <span className="text-white text-3xl font-bold">£119.99</span>
                 <span className="text-slate-400 text-sm">/mo</span>
