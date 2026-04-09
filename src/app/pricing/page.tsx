@@ -21,8 +21,6 @@ const standardBenefits = [
 
 const proBenefits = [
   "Writes blog articles",
-  "Creates video ads",
-  "Creates podcast episodes",
   "Advertises on multiple ad platforms",
   "Multi platform and website traffic and blog article readership reporting",
   "ROI Calculations",
@@ -151,6 +149,7 @@ export default function PricingPage() {
             <div className="flex flex-wrap gap-2 mt-3">
               <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.messages} AI responses/mo</span>
               <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.creatives} creatives/mo</span>
+              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.blogArticles} blog articles/mo</span>
               <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.channels} ad channels</span>
               <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.campaigns} campaigns/mo</span>
             </div>
