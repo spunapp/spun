@@ -112,7 +112,8 @@ export default defineSchema({
     headline: v.string(),
     copy: v.string(),
     cta: v.string(),
-    htmlContent: v.string(),
+    htmlContent: v.optional(v.string()),
+    imageStorageId: v.optional(v.id("_storage")),
   }).index("by_campaign", ["campaignId"]),
 
   prospects: defineTable({
@@ -209,6 +210,14 @@ export default defineSchema({
     campaignsLaunched: v.number(),
     creativesGenerated: v.number(),
     channelsConnected: v.number(),
+    aiResponsesSent: v.number(),
+  }).index("by_business", ["businessId"]),
+
+  creditBalances: defineTable({
+    businessId: v.id("businesses"),
+    messageCredits: v.number(),
+    creativeCredits: v.number(),
+    channelCredits: v.number(),
   }).index("by_business", ["businessId"]),
 
   brandAssets: defineTable({

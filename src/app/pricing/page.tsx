@@ -6,7 +6,7 @@ import { useUser } from "@clerk/nextjs"
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { LOGO_SRC } from "@/lib/logo"
-import { TIERS } from "@/lib/billing/tiers"
+import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 
 const standardBenefits = [
   "Complete understanding of your business",
@@ -111,6 +111,12 @@ export default function PricingPage() {
               <span className="text-white text-4xl font-bold">£69.99</span>
               <span className="text-slate-400 text-sm mb-1">/month</span>
             </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.messages} AI responses/mo</span>
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.creatives} creatives/mo</span>
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.channels} ad channel</span>
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">{TIERS.standard.campaigns} campaign/mo</span>
+            </div>
           </div>
 
           <button
@@ -141,6 +147,12 @@ export default function PricingPage() {
             <div className="flex items-end gap-1 mt-3">
               <span className="text-white text-4xl font-bold">£119.99</span>
               <span className="text-slate-400 text-sm mb-1">/month</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.messages} AI responses/mo</span>
+              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.creatives} creatives/mo</span>
+              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.channels} ad channels</span>
+              <span className="text-xs bg-[#5B9BAA]/10 text-[#5B9BAA] px-2 py-1 rounded-md">{TIERS.pro.campaigns} campaigns/mo</span>
             </div>
           </div>
 
@@ -177,6 +189,11 @@ export default function PricingPage() {
               <span className="text-white text-4xl font-bold">POA</span>
             </div>
             <p className="text-slate-400 text-sm mt-1">Price on application</p>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">Unlimited responses</span>
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">Unlimited creatives</span>
+              <span className="text-xs bg-white/5 text-slate-300 px-2 py-1 rounded-md">Unlimited channels</span>
+            </div>
           </div>
 
           <a
@@ -208,6 +225,33 @@ export default function PricingPage() {
               ))}
             </ul>
           </div>
+        </div>
+      </div>
+
+      {/* Credit pack section */}
+      <div className="w-full max-w-5xl mt-10">
+        <div className="bg-[var(--background)] border border-white/10 rounded-2xl p-8 text-center">
+          <h3 className="text-white text-lg font-semibold mb-2">Need more?</h3>
+          <p className="text-slate-300 text-sm mb-4">
+            Top up anytime with a credit pack. Credits never expire and stack with your monthly allowance.
+          </p>
+          <div className="flex justify-center gap-6 mb-4">
+            <div className="text-center">
+              <span className="text-white text-2xl font-bold">+{CREDIT_PACK.messageCredits}</span>
+              <p className="text-slate-400 text-xs mt-1">AI responses</p>
+            </div>
+            <div className="text-center">
+              <span className="text-white text-2xl font-bold">+{CREDIT_PACK.creativeCredits}</span>
+              <p className="text-slate-400 text-xs mt-1">creatives</p>
+            </div>
+            <div className="text-center">
+              <span className="text-white text-2xl font-bold">+{CREDIT_PACK.channelCredits}</span>
+              <p className="text-slate-400 text-xs mt-1">ad channel</p>
+            </div>
+          </div>
+          <p className="text-[#5B9BAA] text-xl font-bold">
+            £{(CREDIT_PACK.price / 100).toFixed(2)} <span className="text-slate-400 text-sm font-normal">one-time</span>
+          </p>
         </div>
       </div>
 

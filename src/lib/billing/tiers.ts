@@ -4,6 +4,7 @@ export interface TierConfig {
   name: string
   priceId: string
   price: number // pence per month
+  messages: number // AI responses per month
   channels: number
   campaigns: number
   creatives: number
@@ -23,9 +24,10 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     name: "Standard",
     priceId: "price_1TIy8N86WuAcuQwgw5p0rlzw",
     price: 6999,
+    messages: 100,
     channels: 1,
-    campaigns: 10,
-    creatives: 30,
+    campaigns: 1,
+    creatives: 10,
     brands: 1,
     abTesting: false,
     autoMode: false,
@@ -40,9 +42,10 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     name: "Pro",
     priceId: "price_1TIy8l86WuAcuQwgpEXD3TsO",
     price: 11999,
-    channels: 5,
-    campaigns: 50,
-    creatives: 150,
+    messages: 300,
+    channels: 3,
+    campaigns: 3,
+    creatives: 30,
     brands: 1,
     abTesting: "suggested",
     autoMode: false,
@@ -55,6 +58,14 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
   },
 } as const
 
+export const CREDIT_PACK = {
+  priceId: "price_credit_pack", // TODO: Replace with actual Stripe price ID
+  price: 999, // pence (£9.99)
+  messageCredits: 100,
+  creativeCredits: 10,
+  channelCredits: 1,
+} as const
+
 export function getTierByPriceId(priceId: string): SubscriptionTier | null {
   for (const [tier, config] of Object.entries(TIERS)) {
     if (config.priceId === priceId) return tier as SubscriptionTier
@@ -64,9 +75,19 @@ export function getTierByPriceId(priceId: string): SubscriptionTier | null {
 
 export function checkUsageLimit(
   tier: SubscriptionTier,
-  usage: { campaignsLaunched: number; creativesGenerated: number; channelsConnected: number }
+  usage: { campaignsLaunched: number; creativesGenerated: number; channelsConnected: number; aiResponsesSent: number }
 ): { allowed: boolean; limitType?: string; current?: number; limit?: number; upgradeTier?: SubscriptionTier } {
   const config = TIERS[tier]
+
+  if (usage.aiResponsesSent >= config.messages) {
+    return {
+      allowed: false,
+      limitType: "messages",
+      current: usage.aiResponsesSent,
+      limit: config.messages,
+      upgradeTier: tier === "standard" ? "pro" : undefined,
+    }
+  }
 
   if (usage.channelsConnected >= config.channels) {
     return {

@@ -21,9 +21,17 @@ export const create = mutation({
     headline: v.string(),
     copy: v.string(),
     cta: v.string(),
-    htmlContent: v.string(),
+    htmlContent: v.optional(v.string()),
+    imageStorageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("adCreatives", args)
+  },
+})
+
+export const getImageUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId)
   },
 })

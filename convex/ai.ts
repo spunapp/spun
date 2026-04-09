@@ -78,6 +78,33 @@ export const chat = action({
       ? await ctx.runQuery(api.businesses.get, { id: conversation.businessId })
       : null
 
+    // Check usage limits before calling AI
+    if (business) {
+      const usage = await ctx.runQuery(api.usage.getCurrentUsage, { businessId: business._id })
+      const subscription = await ctx.runQuery(api.subscriptions.getByUser, { userId: args.userId })
+      const tier = subscription?.tier ?? "standard"
+      const { checkUsageLimit } = await import("../src/lib/billing/tiers")
+      const limitCheck = checkUsageLimit(tier, usage)
+
+      if (!limitCheck.allowed && limitCheck.limitType === "messages") {
+        // Check if user has message credits
+        const credits = await ctx.runQuery(api.credits.getBalance, { businessId: business._id })
+        if (credits.messageCredits <= 0) {
+          const limitMsg = `You've used all ${limitCheck.limit} AI responses this month on your ${tier === "standard" ? "Standard" : "Pro"} plan. Buy a credit pack (£9.99) for 100 more responses, or upgrade your plan.`
+          await ctx.runMutation(api.messages.send, {
+            conversationId: args.conversationId,
+            role: "assistant",
+            content: limitMsg,
+            messageType: "text",
+            metadata: { limitReached: true, limitType: "messages" },
+          })
+          return { content: limitMsg, messageType: "text", metadata: { limitReached: true, limitType: "messages" } }
+        }
+        // Deduct from credits
+        await ctx.runMutation(api.credits.deductMessage, { businessId: business._id })
+      }
+    }
+
     const allMessages = await ctx.runQuery(api.conversations.getMessages, {
       conversationId: args.conversationId,
     })
@@ -178,6 +205,12 @@ export const chat = action({
       metadata,
     })
 
+    // Track this AI response (1 per user turn, regardless of tool calls)
+    if (business) {
+      const ledgerId = await ctx.runMutation(api.usage.getOrCreateLedger, { businessId: business._id })
+      await ctx.runMutation(api.usage.incrementAiResponses, { ledgerId })
+    }
+
     return { messageId, content: responseText, messageType, metadata }
   },
 })
@@ -259,6 +292,37 @@ Return ONLY valid JSON:
   },
 })
 
+async function generateImageWithImagen(prompt: string): Promise<Buffer | null> {
+  const apiKey = process.env.GOOGLE_AI_API_KEY
+  if (!apiKey) {
+    console.warn("GOOGLE_AI_API_KEY not set — skipping Imagen 4 generation")
+    return null
+  }
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        instances: [{ prompt }],
+        parameters: { sampleCount: 1, outputOptions: { mimeType: "image/png" } },
+      }),
+    }
+  )
+
+  if (!res.ok) {
+    console.error(`Imagen 4 error: ${res.status} ${await res.text()}`)
+    return null
+  }
+
+  const data = await res.json()
+  const b64 = data.predictions?.[0]?.bytesBase64Encoded
+  if (!b64) return null
+
+  return Buffer.from(b64, "base64")
+}
+
 export const generateCreatives = action({
   args: {
     campaignId: v.id("campaigns"),
@@ -294,7 +358,8 @@ export const generateCreatives = action({
     for (let variant = 1; variant <= 3; variant++) {
       const format = formats[args.funnelStage]?.[variant - 1] ?? "Social Square"
 
-      const prompt = `You are an expert ad creative designer. Create an HTML/CSS ad creative for:
+      // Step 1: Generate creative copy via Gemini
+      const copyPrompt = `You are an expert ad copywriter. Write ad copy for:
 
 BUSINESS: ${business.name}
 INDUSTRY: ${business.industry}
@@ -310,13 +375,12 @@ Return ONLY valid JSON:
   "headline": "Compelling headline (max 8 words)",
   "copy": "Body copy (max 20 words)",
   "cta": "CTA button text (max 4 words)",
-  "format": "${format}",
-  "html_content": "Complete self-contained HTML with inline CSS. Professional ad with gradient backgrounds, bold typography. Colors: primary #7C3AED, accent #EC4899."
+  "image_prompt": "A detailed prompt for generating an ad image. Describe the visual style, composition, colours, and mood. Do NOT include any text in the image — text will be overlaid separately. Make it professional, on-brand, and suitable for ${format}."
 }`
 
       let creativeText: string
       try {
-        const creativeResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 3000 })
+        const creativeResp = await callOpenRouter([{ role: "user", content: copyPrompt }], { maxTokens: 1500 })
         creativeText = creativeResp.choices[0].message.content ?? ""
       } catch {
         continue
@@ -325,6 +389,17 @@ Return ONLY valid JSON:
       try {
         const jsonMatch = creativeText.match(/\{[\s\S]*\}/)
         const creativeData = JSON.parse(jsonMatch?.[0] || creativeText)
+
+        // Step 2: Generate image via Imagen 4
+        let imageStorageId: Id<"_storage"> | undefined
+        const imagePrompt = creativeData.image_prompt as string | undefined
+        if (imagePrompt) {
+          const imageBuffer = await generateImageWithImagen(imagePrompt)
+          if (imageBuffer) {
+            const blob = new Blob([imageBuffer], { type: "image/png" })
+            imageStorageId = await ctx.storage.store(blob)
+          }
+        }
 
         const id = await ctx.runMutation(api.adCreatives.create, {
           campaignId: args.campaignId,
@@ -335,7 +410,7 @@ Return ONLY valid JSON:
           headline: creativeData.headline ?? "",
           copy: creativeData.copy ?? "",
           cta: creativeData.cta ?? "",
-          htmlContent: creativeData.html_content ?? "",
+          ...(imageStorageId ? { imageStorageId } : {}),
         })
         savedIds.push(id as string)
       } catch {

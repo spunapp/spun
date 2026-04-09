@@ -2,7 +2,8 @@ import { NextResponse } from "next/server"
 import Stripe from "stripe"
 import { ConvexHttpClient } from "convex/browser"
 import { api } from "../../../../../convex/_generated/api"
-import { getTierByPriceId } from "@/lib/billing/tiers"
+import type { Id } from "../../../../../convex/_generated/dataModel"
+import { getTierByPriceId, CREDIT_PACK } from "@/lib/billing/tiers"
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -42,7 +43,23 @@ export async function POST(request: Request) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session
       const userId = session.client_reference_id ?? session.metadata?.userId
-      if (!userId || !session.subscription) break
+      if (!userId) break
+
+      // Handle credit pack purchase (one-time payment, no subscription)
+      if (session.metadata?.type === "credit_pack") {
+        const businessId = session.metadata.businessId
+        if (businessId) {
+          await convex.mutation(api.credits.addCredits, {
+            businessId: businessId as Id<"businesses">,
+            messageCredits: CREDIT_PACK.messageCredits,
+            creativeCredits: CREDIT_PACK.creativeCredits,
+            channelCredits: CREDIT_PACK.channelCredits,
+          })
+        }
+        break
+      }
+
+      if (!session.subscription) break
 
       const subResponse = await stripe.subscriptions.retrieve(
         session.subscription as string

@@ -8,6 +8,7 @@ import { api } from "../../../convex/_generated/api"
 import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link2 } from "lucide-react"
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
 import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
+import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages", oauthAppId: "oa_K1i8YD" },
@@ -106,6 +107,14 @@ export default function SettingsPage() {
   )
   const usage = useQuery(
     api.usage.getCurrentUsage,
+    business?._id ? { businessId: business._id } : "skip"
+  )
+  const subscription = useQuery(
+    api.subscriptions.getByUser,
+    userId ? { userId } : "skip"
+  )
+  const creditBalance = useQuery(
+    api.credits.getBalance,
     business?._id ? { businessId: business._id } : "skip"
   )
 
@@ -327,38 +336,87 @@ export default function SettingsPage() {
         <section>
           <SectionHeading>Plan &amp; Usage</SectionHeading>
           <Card>
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <p className="text-sm font-medium text-white">Growth plan</p>
-                <p className="text-xs text-slate-400 mt-0.5">Resets on the 1st of each month</p>
-              </div>
-              <a
-                href="/pricing"
-                className="text-xs text-[#5B9BAA] hover:underline"
-              >
-                Upgrade
-              </a>
-            </div>
-            <div className="space-y-4">
-              {[
-                { label: "Campaigns", value: usage?.campaignsLaunched ?? 0, limit: 50 },
-                { label: "Creatives", value: usage?.creativesGenerated ?? 0, limit: 150 },
-                { label: "Channels", value: usage?.channelsConnected ?? 0, limit: 5 },
-              ].map(({ label, value, limit }) => (
-                <div key={label}>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="text-slate-300">{label}</span>
-                    <span className="text-slate-400">{value} / {limit}</span>
+            {(() => {
+              const tier = (subscription?.tier ?? "standard") as "standard" | "pro"
+              const config = TIERS[tier]
+              return (
+                <>
+                  <div className="flex items-center justify-between mb-5">
+                    <div>
+                      <p className="text-sm font-medium text-white">{config.name} plan</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Resets on the 1st of each month</p>
+                    </div>
+                    <a
+                      href="/pricing"
+                      className="text-xs text-[#5B9BAA] hover:underline"
+                    >
+                      {tier === "standard" ? "Upgrade" : "Manage"}
+                    </a>
                   </div>
-                  <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-[#5B9BAA] rounded-full transition-all"
-                      style={{ width: `${Math.min((value / limit) * 100, 100)}%` }}
-                    />
+                  <div className="space-y-4">
+                    {[
+                      { label: "AI Responses", value: usage?.aiResponsesSent ?? 0, limit: config.messages },
+                      { label: "Campaigns", value: usage?.campaignsLaunched ?? 0, limit: config.campaigns },
+                      { label: "Creatives", value: usage?.creativesGenerated ?? 0, limit: config.creatives },
+                      { label: "Channels", value: usage?.channelsConnected ?? 0, limit: config.channels },
+                    ].map(({ label, value, limit }) => (
+                      <div key={label}>
+                        <div className="flex justify-between text-xs mb-1.5">
+                          <span className="text-slate-300">{label}</span>
+                          <span className="text-slate-400">{value} / {limit}</span>
+                        </div>
+                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all"
+                            style={{
+                              width: `${Math.min((value / limit) * 100, 100)}%`,
+                              backgroundColor: value >= limit ? "#ef4444" : "#5B9BAA",
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
+
+                  {/* Credit balance */}
+                  {creditBalance && (creditBalance.messageCredits > 0 || creditBalance.creativeCredits > 0 || creditBalance.channelCredits > 0) && (
+                    <div className="mt-5 pt-4 border-t border-white/10">
+                      <p className="text-xs font-medium text-slate-300 mb-2">Credit Balance</p>
+                      <div className="flex gap-4 text-xs text-slate-400">
+                        {creditBalance.messageCredits > 0 && (
+                          <span>{creditBalance.messageCredits} responses</span>
+                        )}
+                        {creditBalance.creativeCredits > 0 && (
+                          <span>{creditBalance.creativeCredits} creatives</span>
+                        )}
+                        {creditBalance.channelCredits > 0 && (
+                          <span>+{creditBalance.channelCredits} channel{creditBalance.channelCredits > 1 ? "s" : ""}</span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Buy credits button */}
+                  <button
+                    onClick={async () => {
+                      if (!business?._id) return
+                      try {
+                        const res = await fetch("/api/stripe/credit-checkout", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({ businessId: business._id }),
+                        })
+                        const data = await res.json()
+                        if (data.url) window.location.href = data.url
+                      } catch {}
+                    }}
+                    className="mt-4 w-full text-xs text-[#5B9BAA] border border-[#5B9BAA]/30 hover:bg-[#5B9BAA]/10 py-2 rounded-lg transition-colors"
+                  >
+                    Buy credit pack — £{(CREDIT_PACK.price / 100).toFixed(2)}
+                  </button>
+                </>
+              )
+            })()}
           </Card>
         </section>
 
