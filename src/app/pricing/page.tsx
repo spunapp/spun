@@ -165,20 +165,11 @@ export default function PricingPage() {
           </button>
 
           <InheritedLabel from="Standard" />
-          <ul className="space-y-3 mb-6">
-            {standardBenefits.map((b) => (
+          <ul className="space-y-3">
+            {proBenefits.map((b) => (
               <BenefitItem key={b} text={b} />
             ))}
           </ul>
-
-          <div className="border-t border-white/10 pt-6">
-            <InheritedLabel from="Standard" />
-            <ul className="space-y-3">
-              {proBenefits.map((b) => (
-                <BenefitItem key={b} text={b} />
-              ))}
-            </ul>
-          </div>
         </div>
 
         {/* Enterprise */}
@@ -204,27 +195,11 @@ export default function PricingPage() {
           </a>
 
           <InheritedLabel from="Pro" />
-          <ul className="space-y-3 mb-6">
-            {standardBenefits.map((b) => (
+          <ul className="space-y-3">
+            {enterpriseBenefits.map((b) => (
               <BenefitItem key={b} text={b} />
             ))}
           </ul>
-
-          <div className="border-t border-white/10 pt-6">
-            <ul className="space-y-3 mb-6">
-              {proBenefits.map((b) => (
-                <BenefitItem key={b} text={b} />
-              ))}
-            </ul>
-          </div>
-
-          <div className="border-t border-white/10 pt-6">
-            <ul className="space-y-3">
-              {enterpriseBenefits.map((b) => (
-                <BenefitItem key={b} text={b} />
-              ))}
-            </ul>
-          </div>
         </div>
       </div>
 
