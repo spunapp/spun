@@ -6,6 +6,7 @@ import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { api } from "../../../convex/_generated/api"
 import type { Id } from "../../../convex/_generated/dataModel"
+import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
@@ -39,6 +40,21 @@ export default function ChatClient() {
     api.subscriptions.getByUser,
     userId ? { userId } : "skip"
   )
+  const usage = useQuery(
+    api.usage.getCurrentUsage,
+    business?._id ? { businessId: business._id } : "skip"
+  )
+  const creditBalance = useQuery(
+    api.credits.getBalance,
+    business?._id ? { businessId: business._id } : "skip"
+  )
+
+  // Check if user has hit their message limit
+  const tier = (subscription?.tier ?? "standard") as "standard" | "pro"
+  const tierConfig = TIERS[tier]
+  const aiResponsesSent = usage?.aiResponsesSent ?? 0
+  const messageCreditsLeft = creditBalance?.messageCredits ?? 0
+  const atMessageLimit = aiResponsesSent >= tierConfig.messages && messageCreditsLeft <= 0
 
   // Redirect to pricing if no active subscription (skip for test accounts)
   const userEmail = user?.primaryEmailAddress?.emailAddress ?? null
@@ -278,14 +294,46 @@ export default function ChatClient() {
         </div>
       )}
 
+      {/* Usage limit banner */}
+      {atMessageLimit && business && (
+        <div className="mx-4 mb-2 rounded-lg bg-amber-500/10 px-4 py-3 text-sm">
+          <p className="text-amber-300 font-medium mb-1">
+            You&apos;ve used all {tierConfig.messages} AI responses this month
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/stripe/credit-checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ businessId: business._id }),
+                  })
+                  const data = await res.json()
+                  if (data.url) window.location.href = data.url
+                } catch {}
+              }}
+              className="text-xs text-[#5B9BAA] hover:text-white transition-colors"
+            >
+              Buy credits (£{(CREDIT_PACK.price / 100).toFixed(2)})
+            </button>
+            {tier === "standard" && (
+              <a href="/pricing" className="text-xs text-slate-400 hover:text-white transition-colors">
+                Upgrade to Pro
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Quick replies */}
-      <QuickReplies replies={quickReplies} onSelect={handleSend} />
+      {!atMessageLimit && <QuickReplies replies={quickReplies} onSelect={handleSend} />}
 
       {/* Chat input */}
       <ChatInput
         onSend={handleSend}
-        disabled={isLoading || !activeConversationId}
-        placeholder={business ? "Talk to Spun..." : "Tell me about your business..."}
+        disabled={isLoading || !activeConversationId || atMessageLimit}
+        placeholder={atMessageLimit ? "Message limit reached — buy credits or upgrade" : business ? "Talk to Spun..." : "Tell me about your business..."}
       />
     </div>
     </ChatSidebarProvider>

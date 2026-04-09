@@ -15,6 +15,7 @@ export const getCurrentUsage = query({
         campaignsLaunched: 0,
         creativesGenerated: 0,
         channelsConnected: 0,
+        aiResponsesSent: 0,
       }
     }
 
@@ -22,6 +23,7 @@ export const getCurrentUsage = query({
       campaignsLaunched: ledger.campaignsLaunched,
       creativesGenerated: ledger.creativesGenerated,
       channelsConnected: ledger.channelsConnected,
+      aiResponsesSent: ledger.aiResponsesSent,
     }
   },
 })
@@ -48,6 +50,7 @@ export const getOrCreateLedger = mutation({
       campaignsLaunched: 0,
       creativesGenerated: 0,
       channelsConnected: 0,
+      aiResponsesSent: 0,
     })
   },
 })
@@ -81,6 +84,17 @@ export const incrementChannels = mutation({
     if (!ledger) return
     await ctx.db.patch(args.ledgerId, {
       channelsConnected: ledger.channelsConnected + 1,
+    })
+  },
+})
+
+export const incrementAiResponses = mutation({
+  args: { ledgerId: v.id("usageLedger") },
+  handler: async (ctx, args) => {
+    const ledger = await ctx.db.get(args.ledgerId)
+    if (!ledger) return
+    await ctx.db.patch(args.ledgerId, {
+      aiResponsesSent: ledger.aiResponsesSent + 1,
     })
   },
 })
