@@ -71,6 +71,19 @@ export const upsert = mutation({
       await ctx.db.patch(existing._id, { ...args, status: "active" })
       return existing._id
     }
+
+    // Track new channel connection in usage ledger
+    const now = new Date()
+    const cycleStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`
+    const ledger = await ctx.db
+      .query("usageLedger")
+      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
+      .order("desc")
+      .first()
+    if (ledger && ledger.billingCycleStart === cycleStart) {
+      await ctx.db.patch(ledger._id, { channelsConnected: ledger.channelsConnected + 1 })
+    }
+
     return await ctx.db.insert("connectedChannels", { ...args, status: "active" })
   },
 })

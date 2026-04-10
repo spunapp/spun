@@ -12,9 +12,9 @@ import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages", oauthAppId: "oa_K1i8YD" },
-  { id: "google", label: "Google Ads", pipedreamApp: "google_ads", oauthAppId: undefined },
+  { id: "google", label: "Google Ads", pipedreamApp: null, oauthAppId: undefined },
   { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics", oauthAppId: undefined },
-  { id: "klaviyo", label: "Klaviyo", pipedreamApp: "klaviyo", oauthAppId: undefined },
+  { id: "klaviyo", label: "Klaviyo", pipedreamApp: null, oauthAppId: undefined },
   { id: "tiktok", label: "TikTok Ads", pipedreamApp: null, oauthAppId: undefined },
   { id: "x", label: "X (Twitter) Ads", pipedreamApp: null, oauthAppId: undefined },
   { id: "linkedin", label: "LinkedIn Ads", pipedreamApp: null, oauthAppId: undefined },
@@ -346,12 +346,28 @@ export default function SettingsPage() {
                       <p className="text-sm font-medium text-white">{config.name} plan</p>
                       <p className="text-xs text-slate-400 mt-0.5">Resets on the 1st of each month</p>
                     </div>
-                    <a
-                      href="/pricing"
-                      className="text-xs text-[#5B9BAA] hover:underline"
-                    >
-                      {tier === "standard" ? "Upgrade" : "Manage"}
-                    </a>
+                    <div className="flex items-center gap-3">
+                      {subscription?.stripeCustomerId && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              const res = await fetch("/api/stripe/customer-portal", { method: "POST" })
+                              const data = await res.json()
+                              if (data.url) window.location.href = data.url
+                            } catch {}
+                          }}
+                          className="text-xs text-slate-400 hover:text-white hover:underline"
+                        >
+                          Manage billing
+                        </button>
+                      )}
+                      <a
+                        href="/pricing"
+                        className="text-xs text-[#5B9BAA] hover:underline"
+                      >
+                        {tier === "standard" ? "Upgrade" : "Change plan"}
+                      </a>
+                    </div>
                   </div>
                   <div className="space-y-4">
                     {[

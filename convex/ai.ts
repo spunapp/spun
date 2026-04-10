@@ -418,6 +418,12 @@ Return ONLY valid JSON:
       }
     }
 
+    // Track creatives generated in usage
+    if (savedIds.length > 0) {
+      const ledgerId = await ctx.runMutation(api.usage.getOrCreateLedger, { businessId: args.businessId })
+      await ctx.runMutation(api.usage.incrementCreatives, { ledgerId, count: savedIds.length })
+    }
+
     return { count: savedIds.length, campaignId: args.campaignId, funnelStage: args.funnelStage }
   },
 })
@@ -667,6 +673,10 @@ Return ONLY valid JSON:
 
     case "launch_campaign": {
       if (!businessId || !conversationId) return { error: "No business or conversation context" }
+
+      // Track campaign launch in usage
+      const campaignLedgerId = await ctx.runMutation(api.usage.getOrCreateLedger, { businessId })
+      await ctx.runMutation(api.usage.incrementCampaigns, { ledgerId: campaignLedgerId })
 
       // Create a placeholder message ID for the approval record.
       // The actual approval_request message is created after tool execution,
