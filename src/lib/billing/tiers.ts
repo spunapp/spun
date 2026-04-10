@@ -53,7 +53,7 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
 } as const
 
 export const CREDIT_PACK = {
-  priceId: "price_credit_pack", // TODO: Replace with actual Stripe price ID
+  priceId: "price_1TKgcJ86WuAcuQwgsr9PDiNs",
   price: 999, // pence (£9.99)
   messageCredits: 100,
   creativeCredits: 10,
