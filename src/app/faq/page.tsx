@@ -199,13 +199,30 @@ export default function FaqPage() {
 
       {/* Footer */}
       <footer className="border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 py-8 text-center">
-          <p className="text-sm text-slate-500 font-medium">
+        <div className="max-w-6xl mx-auto px-6 py-10">
+          <p className="text-sm text-slate-500 font-medium text-center">
             No sick days, no holidays, no overtime paid, no national insurance paid, no pension
             contributions, no stress, no fuss:{" "}
             <span className="text-white font-semibold">All Marketing, All the Time.</span>
           </p>
-          <p className="text-xs text-slate-600 mt-4">© {new Date().getFullYear()} Spun. All rights reserved.</p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+            <Link href="/dpa" className="hover:text-white transition-colors">DPA</Link>
+            <Link href="/subprocessors" className="hover:text-white transition-colors">Sub-processors</Link>
+            <button
+              type="button"
+              onClick={() => window.openCookieSettings?.()}
+              className="hover:text-white transition-colors"
+            >
+              Cookie settings
+            </button>
+          </div>
+          <p className="text-xs text-slate-600 mt-6 text-center">
+            © {new Date().getFullYear()} Spun App Ltd. Registered in England and Wales.
+            53 Langley Crescent, Brighton, BN2 6NL, United Kingdom.
+          </p>
         </div>
       </footer>
     </div>
