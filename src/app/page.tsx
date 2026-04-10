@@ -171,13 +171,20 @@ export default function HomePage() {
 
       {/* Footer */}
       <footer className="border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 py-8 text-center">
+        <div className="max-w-6xl mx-auto px-6 py-8 text-center space-y-4">
           <p className="text-sm text-slate-500 font-medium">
             No sick days, no holidays, no overtime paid, no national insurance paid, no pension
             contributions, no stress, no fuss:{" "}
             <span className="text-white font-semibold">All Marketing, All the Time.</span>
           </p>
-          <p className="text-xs text-slate-600 mt-4">© {new Date().getFullYear()} Spun. All rights reserved.</p>
+          <div className="flex items-center justify-center gap-5 text-xs text-slate-500">
+            <Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link>
+            <Link href="/faq" className="hover:text-white transition-colors">FAQ</Link>
+            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
+          </div>
+          <p className="text-xs text-slate-600">© {new Date().getFullYear()} Spun. All rights reserved.</p>
         </div>
       </footer>
     </div>
