@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { ConvexClientProvider } from "./ConvexClientProvider"
+import CookieConsent from "@/components/CookieConsent"
 import "./globals.css"
 
 // Force server-render on every request — prevents Vercel CDN from serving
@@ -79,6 +80,7 @@ export default function RootLayout({
     <html lang="en" style={{ background: "#273E47" }}>
       <body className="antialiased font-sans" style={{ background: "#273E47", color: "#f8fafc" }}>
         <ConvexClientProvider>{children}</ConvexClientProvider>
+        <CookieConsent />
       </body>
     </html>
   )
