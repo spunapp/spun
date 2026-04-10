@@ -22,7 +22,8 @@ export default function PrivacyPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        <strong>Spun App Ltd</strong> is a company registered in England and Wales.
+        <strong>Spun App Ltd</strong> is a company registered in England and Wales
+        under company number <strong>17136483</strong>.
       </p>
       <p>
         <strong>Registered address:</strong> 53 Langley Crescent, Brighton, BN2 6NL,
@@ -162,7 +163,7 @@ export default function PrivacyPage() {
         <a href="mailto:privacy@spun.bot">privacy@spun.bot</a> or write to:
       </p>
       <p>
-        Spun App Ltd<br />
+        Spun App Ltd (company no. 17136483)<br />
         53 Langley Crescent<br />
         Brighton, BN2 6NL<br />
         United Kingdom
