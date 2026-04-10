@@ -21,8 +21,9 @@ export default function TermsPage() {
       <h2>1. Who we are</h2>
       <p>
         The Spun service is operated by <strong>Spun App Ltd</strong>, a company
-        registered in England and Wales with its registered office at 53 Langley
-        Crescent, Brighton, BN2 6NL, United Kingdom.
+        registered in England and Wales under company number <strong>17136483</strong>,
+        with its registered office at 53 Langley Crescent, Brighton, BN2 6NL,
+        United Kingdom.
       </p>
 
       <h2>2. The service</h2>
@@ -181,7 +182,7 @@ export default function TermsPage() {
         Questions? Email <a href="mailto:hello@spun.bot">hello@spun.bot</a>, or write to:
       </p>
       <p>
-        Spun App Ltd<br />
+        Spun App Ltd (company no. 17136483)<br />
         53 Langley Crescent<br />
         Brighton, BN2 6NL<br />
         United Kingdom

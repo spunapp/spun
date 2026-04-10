@@ -192,8 +192,8 @@ export default function HomePage() {
             </button>
           </div>
           <p className="text-xs text-slate-600 mt-6 text-center">
-            © {new Date().getFullYear()} Spun App Ltd. Registered in England and Wales.
-            53 Langley Crescent, Brighton, BN2 6NL, United Kingdom.
+            © {new Date().getFullYear()} Spun App Ltd. Registered in England and Wales,
+            company no. 17136483. 53 Langley Crescent, Brighton, BN2 6NL, United Kingdom.
           </p>
         </div>
       </footer>

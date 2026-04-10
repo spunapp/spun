@@ -89,6 +89,7 @@ export default function LegalLayout({ title, lastUpdated, children }: LegalLayou
               <p className="text-xs font-semibold uppercase tracking-widest text-[#5B9BAA] mb-3">Company</p>
               <p className="text-slate-400 leading-relaxed">
                 Spun App Ltd<br />
+                Company no. 17136483<br />
                 53 Langley Crescent<br />
                 Brighton, BN2 6NL<br />
                 United Kingdom
