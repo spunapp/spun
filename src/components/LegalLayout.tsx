@@ -75,7 +75,6 @@ export default function LegalLayout({ title, lastUpdated, children }: LegalLayou
                 <li><Link href="/terms" className="text-slate-400 hover:text-white transition-colors">Terms of Service</Link></li>
                 <li><Link href="/cookies" className="text-slate-400 hover:text-white transition-colors">Cookie Policy</Link></li>
                 <li><Link href="/dpa" className="text-slate-400 hover:text-white transition-colors">DPA</Link></li>
-                <li><Link href="/subprocessors" className="text-slate-400 hover:text-white transition-colors">Sub-processors</Link></li>
               </ul>
             </div>
             <div>
