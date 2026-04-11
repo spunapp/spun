@@ -182,7 +182,6 @@ export default function HomePage() {
             <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
             <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
             <Link href="/dpa" className="hover:text-white transition-colors">DPA</Link>
-            <Link href="/subprocessors" className="hover:text-white transition-colors">Sub-processors</Link>
             <button
               type="button"
               onClick={() => window.openCookieSettings?.()}
