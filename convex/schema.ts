@@ -77,7 +77,8 @@ export default defineSchema({
       v.literal("approval_request"),
       v.literal("status_update"),
       v.literal("onboarding"),
-      v.literal("connect_prompt")
+      v.literal("connect_prompt"),
+      v.literal("meta_setup_guide")
     ),
     metadata: v.optional(v.any()),
     linkedActionId: v.optional(v.string()),

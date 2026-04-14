@@ -134,7 +134,9 @@ export const chat = action({
       | "creative_gallery"
       | "approval_request"
       | "status_update"
-      | "onboarding" = "text"
+      | "onboarding"
+      | "connect_prompt"
+      | "meta_setup_guide" = "text"
     let metadata: Record<string, unknown> | undefined
 
     if (responseMessage.tool_calls) {
@@ -180,6 +182,9 @@ export const chat = action({
           metadata = toolResult as Record<string, unknown>
         } else if (toolName === "connect_channel") {
           messageType = "connect_prompt"
+          metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        } else if (toolName === "show_meta_setup_guide") {
+          messageType = "meta_setup_guide"
           metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
         }
 
@@ -747,6 +752,17 @@ Return ONLY valid JSON:
         platform: input.platform,
         pipedreamApp: mapping.app,
         ...(mapping.oauthAppId ? { oauthAppId: mapping.oauthAppId } : {}),
+      }
+    }
+
+    case "show_meta_setup_guide": {
+      // The MetaSetupGuide component holds the step content, so the tool
+      // just returns the Pipedream connect config the final CTA uses.
+      return {
+        action: "show_meta_setup_guide",
+        platform: "meta",
+        pipedreamApp: "facebook_pages",
+        oauthAppId: "oa_K1i8YD",
       }
     }
 
