@@ -18,7 +18,9 @@ export const send = mutation({
       v.literal("creative_gallery"),
       v.literal("approval_request"),
       v.literal("status_update"),
-      v.literal("onboarding")
+      v.literal("onboarding"),
+      v.literal("connect_prompt"),
+      v.literal("meta_setup_guide")
     ),
     metadata: v.optional(v.any()),
     linkedActionId: v.optional(v.string()),

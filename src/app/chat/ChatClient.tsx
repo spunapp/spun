@@ -119,6 +119,12 @@ export default function ChatClient() {
           setQuickReplies(["Approve this", "Adjust budget", "Try different angle"])
         } else if (lastMsg.messageType === "strategy") {
           setQuickReplies(["Generate creatives", "Adjust targeting", "Launch this"])
+        } else if (lastMsg.messageType === "meta_setup_guide") {
+          setQuickReplies([
+            "I'm stuck on business verification",
+            "Which payment method should I pick?",
+            "I've finished — what's next?",
+          ])
         } else {
           setQuickReplies([])
         }

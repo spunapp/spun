@@ -218,6 +218,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
+    name: "show_meta_setup_guide",
+    description:
+      "Show a step-by-step guide for creating a Meta (Facebook/Instagram) ad account from scratch. Use this when the user tells you they don't yet have a Meta ad account, Business Manager, Business Portfolio, Facebook Page for their business, or needs help signing up for Meta advertising. Do NOT use this for users who already have an ad account — use connect_channel for them instead.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
+  {
     name: "check_usage",
     description:
       "Check the user's current usage against their subscription tier limits (campaigns launched, creatives generated, channels connected).",

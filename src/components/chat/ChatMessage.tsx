@@ -8,6 +8,7 @@ import { CreativeGallery } from "./messages/CreativeGallery"
 import { ApprovalRequest } from "./messages/ApprovalRequest"
 import { StatusUpdate } from "./messages/StatusUpdate"
 import { ConnectPrompt } from "./messages/ConnectPrompt"
+import { MetaSetupGuide } from "./messages/MetaSetupGuide"
 
 interface Message {
   _id: string
@@ -62,6 +63,8 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
           <StatusUpdate content={message.content} metadata={message.metadata} />
         ) : message.messageType === "connect_prompt" && message.metadata ? (
           <ConnectPrompt content={message.content} metadata={message.metadata} />
+        ) : message.messageType === "meta_setup_guide" ? (
+          <MetaSetupGuide content={message.content} metadata={message.metadata ?? {}} />
         ) : (
           <TextMessage content={message.content} isUser={isUser} />
         )}
