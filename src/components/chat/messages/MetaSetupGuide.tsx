@@ -85,28 +85,29 @@ const DEFAULT_STEPS: Step[] = [
       "Open the new ad account, click Add People, tick your own name, and give yourself Admin access. Without this you won't be able to launch or edit campaigns.",
   },
   {
-    title: "Add a payment method",
+    title: "Verify your identity and business",
     body:
-      "In Business Settings go to Payments → Payment methods → Add. Most small businesses start with direct debit or card. If you're expecting to spend heavily, apply for monthly invoicing — you'll need your legal business details and it can take a few days to approve.",
-    link: {
-      label: "Payment methods",
-      href: "https://business.facebook.com/billing_hub/payment_settings",
-    },
-    tip: "From March 2026 Meta is moving high-spend accounts off cards, so expect direct debit or invoicing if you scale.",
-  },
-  {
-    title: "Start business verification",
-    body:
-      "Under Security Center → Business verification, submit your company documents (Companies House extract, utility bill, or similar). Verification isn't required on day one, but it unlocks higher spend limits and extra ad accounts, so start it now.",
+      "Meta now blocks new ad accounts from adding a payment method until you've verified who you are. Go to Security Center → Business verification and upload a government-issued ID (passport or driving licence) plus a business document (Companies House extract, utility bill, or VAT certificate). Expect Meta to take anywhere from a few minutes to a couple of days to review.",
     link: {
       label: "Security Center",
       href: "https://business.facebook.com/settings/security",
     },
+    tip: "Do this BEFORE trying to add a card. If you skip it, Meta will throw an error when you try to add billing and you'll end up back here anyway.",
+  },
+  {
+    title: "Add a payment method",
+    body:
+      "Once verification clears, go to Billing → Payment methods → Add payment method. Most small businesses start with a debit/credit card or direct debit. If you're expecting to spend heavily, apply for monthly invoicing in the Credit Lines section — it can take a few days to approve.",
+    link: {
+      label: "Payment methods",
+      href: "https://business.facebook.com/billing_hub/payment_settings",
+    },
+    tip: "From March 2026 Meta is moving high-spend accounts off cards, so expect direct debit or invoicing once you scale.",
   },
   {
     title: "Come back and connect Meta to Spun",
     body:
-      "Once your ad account is live, hit the button below. You'll sign in with Facebook, pick the Business Portfolio and ad account you just created, and I'll take it from there.",
+      "Once your ad account is live and billing is set, hit the button below. You'll sign in with Facebook, pick the Business Portfolio and ad account you just created, and I'll take it from there.",
   },
 ]
 
