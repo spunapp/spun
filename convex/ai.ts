@@ -10,7 +10,12 @@ import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-const MODEL = "google/gemini-3.1-pro-preview"
+// Fast model for user-facing chat turns. Flash Lite TTFT ~6.8s and still
+// supports tool/function calling — used for every message the user sends.
+const CHAT_MODEL = "google/gemini-3.1-flash-lite-preview"
+// Reasoning model for heavy analytical work (strategy, creatives, tiering,
+// sales strategies). Pro Preview TTFT ~30s but higher quality output.
+const REASONING_MODEL = "google/gemini-3.1-pro-preview"
 
 type OrMessage = {
   role: "system" | "user" | "assistant" | "tool"
@@ -28,7 +33,7 @@ function toOrTools(tools: typeof TOOL_DEFINITIONS) {
 
 async function callOpenRouter(
   messages: OrMessage[],
-  options: { tools?: ReturnType<typeof toOrTools>; maxTokens?: number } = {}
+  options: { tools?: ReturnType<typeof toOrTools>; maxTokens?: number; model?: string } = {}
 ) {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error("OPENROUTER_API_KEY not set")
@@ -36,7 +41,7 @@ async function callOpenRouter(
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: MODEL,
+      model: options.model ?? REASONING_MODEL,
       max_tokens: options.maxTokens ?? 4096,
       messages,
       ...(options.tools ? { tools: options.tools } : {}),
@@ -122,7 +127,7 @@ export const chat = action({
         .map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
     ]
 
-    const response = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096 })
+    const response = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096, model: CHAT_MODEL })
     const responseMessage = response.choices[0].message
 
     let responseText = responseMessage.content ?? ""
@@ -194,7 +199,7 @@ export const chat = action({
             { role: "assistant", content: responseMessage.content ?? null, tool_calls: responseMessage.tool_calls },
             { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) },
           ],
-          { maxTokens: 2048 }
+          { maxTokens: 2048, model: CHAT_MODEL }
         )
         responseText += followUp.choices[0].message.content ?? ""
       }
