@@ -10,12 +10,20 @@ import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-// Fast model for user-facing chat turns. Flash Lite TTFT ~6.8s and still
-// supports tool/function calling — used for every message the user sends.
-const CHAT_MODEL = "google/gemini-3.1-flash-lite-preview"
-// Reasoning model for heavy analytical work (strategy, creatives, tiering,
-// sales strategies). Pro Preview TTFT ~30s but higher quality output.
-const REASONING_MODEL = "google/gemini-3.1-pro-preview"
+// Chat models for user-facing conversation turns. Flash Lite TTFT ~6.8s and
+// still supports tool/function calling. Claude Haiku 4.5 is the fallback if
+// Gemini is unreachable — OpenRouter auto-falls-back on 5xx/rate limits.
+const CHAT_MODELS = [
+  "google/gemini-3.1-flash-lite-preview",
+  "anthropic/claude-haiku-4-5",
+]
+// Reasoning models for heavy analytical work (strategy, creatives, tiering,
+// sales strategies). Pro Preview is higher quality but slower; Claude Sonnet
+// 4.6 is the fallback with comparable reasoning depth.
+const REASONING_MODELS = [
+  "google/gemini-3.1-pro-preview",
+  "anthropic/claude-sonnet-4-6",
+]
 
 type OrMessage = {
   role: "system" | "user" | "assistant" | "tool"
@@ -31,24 +39,55 @@ function toOrTools(tools: typeof TOOL_DEFINITIONS) {
   }))
 }
 
+// Retry transient failures with exponential backoff. 5xx responses and
+// network errors get three attempts; 4xx failures (auth, bad request) fail
+// fast because retrying won't change the outcome.
 async function callOpenRouter(
   messages: OrMessage[],
-  options: { tools?: ReturnType<typeof toOrTools>; maxTokens?: number; model?: string } = {}
+  options: { tools?: ReturnType<typeof toOrTools>; maxTokens?: number; models?: string[] } = {}
 ) {
   const apiKey = process.env.OPENROUTER_API_KEY
   if (!apiKey) throw new Error("OPENROUTER_API_KEY not set")
-  const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: options.model ?? REASONING_MODEL,
-      max_tokens: options.maxTokens ?? 4096,
-      messages,
-      ...(options.tools ? { tools: options.tools } : {}),
-    }),
+
+  const models = options.models ?? REASONING_MODELS
+  const body = JSON.stringify({
+    models,
+    max_tokens: options.maxTokens ?? 4096,
+    messages,
+    ...(options.tools ? { tools: options.tools } : {}),
   })
-  if (!res.ok) throw new Error(`OpenRouter error: ${res.status} ${await res.text()}`)
-  return res.json()
+
+  // Three attempts with ~500ms and ~1500ms backoff between them.
+  const MAX_ATTEMPTS = 3
+  const backoffs = [500, 1500]
+  let lastError: Error | null = null
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+        body,
+      })
+      if (res.ok) return res.json()
+
+      // 4xx = our fault (auth, bad request). Don't retry. 5xx = upstream, retry.
+      if (res.status >= 400 && res.status < 500) {
+        throw new Error(`OpenRouter error: ${res.status} ${await res.text()}`)
+      }
+      lastError = new Error(`OpenRouter error: ${res.status} ${await res.text()}`)
+    } catch (err) {
+      // Network errors (fetch TypeError) — retry. 4xx we threw above — re-throw.
+      if (err instanceof Error && err.message.startsWith("OpenRouter error: 4")) throw err
+      lastError = err instanceof Error ? err : new Error(String(err))
+    }
+
+    if (attempt < MAX_ATTEMPTS - 1) {
+      await new Promise((r) => setTimeout(r, backoffs[attempt]))
+    }
+  }
+
+  throw lastError ?? new Error("OpenRouter request failed after retries")
 }
 
 // Minimal ctx interface for the executeToolCall helper
@@ -114,8 +153,17 @@ export const chat = action({
       conversationId: args.conversationId,
     })
 
+    // `hasHistory` tells the persona whether this is a fresh conversation
+    // (greet the user) or an in-progress one (continue where left off).
+    // > 1 because the user's current message has already been saved above.
+    const hasHistory =
+      (allMessages as Array<{ role: string }>).filter(
+        (m) => m.role === "user" || m.role === "assistant"
+      ).length > 1
+
     const systemPrompt = buildSystemPrompt(
-      business as Parameters<typeof buildSystemPrompt>[0]
+      business as Parameters<typeof buildSystemPrompt>[0],
+      hasHistory
     )
     const orTools = toOrTools(TOOL_DEFINITIONS)
 
@@ -127,7 +175,34 @@ export const chat = action({
         .map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
     ]
 
-    const response = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096, model: CHAT_MODEL })
+    let response: any
+    try {
+      response = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+    } catch (err) {
+      // Every provider in the fallback chain failed (or we got an auth/4xx
+      // error). Save a retryable assistant message so the conversation isn't
+      // left in an orphan state after refresh.
+      console.error("Chat OpenRouter call failed after retries:", err)
+      const fallbackContent =
+        "I couldn't reach my AI backend — looks like multiple providers are having a wobble. Your message is saved; tap retry below and I'll pick up exactly where we left off."
+      const messageId = await ctx.runMutation(api.messages.send, {
+        conversationId: args.conversationId,
+        role: "assistant",
+        content: fallbackContent,
+        messageType: "text",
+        metadata: {
+          errorKind: "llm_unreachable",
+          retryable: true,
+          failedUserMessage: args.userMessage,
+        },
+      })
+      return {
+        messageId,
+        content: fallbackContent,
+        messageType: "text" as const,
+        metadata: { errorKind: "llm_unreachable", retryable: true, failedUserMessage: args.userMessage },
+      }
+    }
     const responseMessage = response.choices[0].message
 
     let responseText = responseMessage.content ?? ""
@@ -193,15 +268,27 @@ export const chat = action({
           metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
         }
 
-        const followUp = await callOpenRouter(
-          [
-            ...orMessages,
-            { role: "assistant", content: responseMessage.content ?? null, tool_calls: responseMessage.tool_calls },
-            { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) },
-          ],
-          { maxTokens: 2048, model: CHAT_MODEL }
-        )
-        responseText += followUp.choices[0].message.content ?? ""
+        try {
+          const followUp = await callOpenRouter(
+            [
+              ...orMessages,
+              { role: "assistant", content: responseMessage.content ?? null, tool_calls: responseMessage.tool_calls },
+              { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) },
+            ],
+            { maxTokens: 2048, models: CHAT_MODELS }
+          )
+          responseText += followUp.choices[0].message.content ?? ""
+        } catch (err) {
+          // Tool ran successfully but the narration call failed. The tool
+          // result is already persisted in messageType/metadata, so we can
+          // fall back to a short synthesised acknowledgement rather than
+          // throwing away the whole turn.
+          console.error("Follow-up OpenRouter call failed:", err)
+          if (!responseText) {
+            responseText =
+              "Done. (I couldn't reach my AI backend to write this up properly — the action above ran successfully.)"
+          }
+        }
       }
     }
 

@@ -177,11 +177,30 @@ export default function ChatClient() {
       } catch (err) {
         console.error("Chat error:", err)
         setError("Something went wrong. Please try again.")
+        // Re-throw so the ChatInput preserves the user's typed text instead
+        // of clearing it. LLM outages are handled server-side with a fallback
+        // assistant message — if we reach here it's a truly unexpected error
+        // (Convex network failure, etc.) and preserving input is correct.
+        throw err
       } finally {
         setIsLoading(false)
       }
     },
     [userId, activeConversationId, chat, business, generateUploadUrl, saveBrandAsset]
+  )
+
+  // Retry a user turn that previously failed because the AI backend was
+  // unreachable. The failed user text is stashed on the assistant fallback
+  // message's metadata, and the retry button passes it back up here.
+  const handleRetry = useCallback(
+    async (failedUserMessage: string) => {
+      try {
+        await handleSend(failedUserMessage)
+      } catch {
+        // handleSend already logged + set the error banner.
+      }
+    },
+    [handleSend]
   )
 
   const handleApprove = useCallback(
@@ -285,6 +304,7 @@ export default function ChatClient() {
         isInitializing={conversations === undefined || (activeConversationId !== null && messages === undefined)}
         onApprove={handleApprove}
         onReject={handleReject}
+        onRetry={handleRetry}
       />
 
       {/* Error banner */}
