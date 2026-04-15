@@ -35,6 +35,8 @@ export default function ChatLayout({
       setSidebarOpen(false)
       router.push("/chat")
       router.refresh()
+    } catch (err) {
+      console.error("Start over failed:", err)
     } finally {
       setResetting(false)
     }
