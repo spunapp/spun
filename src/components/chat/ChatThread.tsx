@@ -19,6 +19,7 @@ interface ChatThreadProps {
   isInitializing?: boolean
   onApprove?: (approvalId: string) => void
   onReject?: (approvalId: string) => void
+  onRetry?: (failedUserMessage: string) => void
 }
 
 export function ChatThread({
@@ -27,6 +28,7 @@ export function ChatThread({
   isInitializing = false,
   onApprove,
   onReject,
+  onRetry,
 }: ChatThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -58,6 +60,7 @@ export function ChatThread({
           message={message}
           onApprove={onApprove}
           onReject={onReject}
+          onRetry={onRetry}
         />
       ))}
 

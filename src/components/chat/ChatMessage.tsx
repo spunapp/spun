@@ -1,5 +1,6 @@
 "use client"
 
+import { RotateCcw } from "lucide-react"
 import { TextMessage } from "./messages/TextMessage"
 import { StrategyDocument } from "./messages/StrategyDocument"
 import { CampaignPreview } from "./messages/CampaignPreview"
@@ -22,10 +23,17 @@ interface ChatMessageProps {
   message: Message
   onApprove?: (approvalId: string) => void
   onReject?: (approvalId: string) => void
+  onRetry?: (failedUserMessage: string) => void
 }
 
-export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) {
+export function ChatMessage({ message, onApprove, onReject, onRetry }: ChatMessageProps) {
   const isUser = message.role === "user"
+  const meta = message.metadata as Record<string, unknown> | undefined
+  const isRetryableError =
+    !isUser &&
+    meta?.errorKind === "llm_unreachable" &&
+    meta?.retryable === true &&
+    typeof meta?.failedUserMessage === "string"
 
   return (
     <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
@@ -37,7 +45,9 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
         className={`max-w-[80%] ${
           isUser
             ? "bg-white/10 border border-white/20 rounded-2xl rounded-tr-sm"
-            : "bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm"
+            : isRetryableError
+              ? "bg-amber-500/10 border border-amber-500/30 rounded-2xl rounded-tl-sm"
+              : "bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm"
         } px-4 py-3`}
       >
         {message.messageType === "strategy" && message.metadata ? (
@@ -67,6 +77,16 @@ export function ChatMessage({ message, onApprove, onReject }: ChatMessageProps) 
           <MetaSetupGuide content={message.content} metadata={message.metadata ?? {}} />
         ) : (
           <TextMessage content={message.content} isUser={isUser} />
+        )}
+
+        {isRetryableError && onRetry && (
+          <button
+            onClick={() => onRetry(meta!.failedUserMessage as string)}
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg transition-colors"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Retry
+          </button>
         )}
       </div>
     </div>

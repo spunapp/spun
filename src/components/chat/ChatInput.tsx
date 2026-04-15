@@ -9,7 +9,7 @@ interface PendingFile {
 }
 
 interface ChatInputProps {
-  onSend: (message: string, files?: File[]) => void
+  onSend: (message: string, files?: File[]) => void | Promise<void>
   disabled?: boolean
   placeholder?: string
 }
@@ -40,12 +40,23 @@ export function ChatInput({
     }
   }, [pendingFiles])
 
-  function handleSubmit() {
+  async function handleSubmit() {
     const trimmed = input.trim()
     if ((!trimmed && pendingFiles.length === 0) || disabled) return
-    onSend(trimmed || "I've uploaded some images for you.", pendingFiles.length > 0 ? pendingFiles.map((pf) => pf.file) : undefined)
+    const filesToSend = pendingFiles.length > 0 ? pendingFiles.map((pf) => pf.file) : undefined
+    const messageToSend = trimmed || "I've uploaded some images for you."
+    // Snapshot the previews up front so we can revoke them on success without
+    // racing against setPendingFiles.
+    const previewsToRevoke = pendingFiles.map((pf) => pf.preview)
+    try {
+      await onSend(messageToSend, filesToSend)
+    } catch {
+      // onSend failed (e.g. Convex network error). Keep the input and files
+      // so the user can retry without retyping.
+      return
+    }
     setInput("")
-    pendingFiles.forEach((pf) => URL.revokeObjectURL(pf.preview))
+    previewsToRevoke.forEach((p) => URL.revokeObjectURL(p))
     setPendingFiles([])
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
@@ -55,7 +66,7 @@ export function ChatInput({
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      handleSubmit()
+      void handleSubmit()
     }
   }
 
