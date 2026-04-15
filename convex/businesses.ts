@@ -202,22 +202,18 @@ export const deleteAccount = mutation({
 
     const businessId = business._id
 
-    // Delete all business-linked records
-    const tables = [
+    // Tables with a `by_business` index — straightforward delete.
+    const byBusinessTables = [
       "campaigns",
-      "adCreatives",
       "prospects",
-      "leadScoreEvents",
-      "salesStrategies",
       "customers",
       "roiRecords",
-      "approvalQueue",
       "usageLedger",
+      "creditBalances",
+      "brandAssets",
       "connectedChannels",
-      "conversations",
     ] as const
-
-    for (const table of tables) {
+    for (const table of byBusinessTables) {
       const rows = await ctx.db
         .query(table as any)
         .withIndex("by_business" as any, (q: any) => q.eq("businessId", businessId))
@@ -225,7 +221,25 @@ export const deleteAccount = mutation({
       for (const row of rows) await ctx.db.delete(row._id)
     }
 
-    // Delete messages for any conversations
+    // adCreatives, leadScoreEvents, salesStrategies have a businessId field but
+    // are indexed by campaignId / prospectId — filter scan is the only option.
+    const filterTables = ["adCreatives", "leadScoreEvents", "salesStrategies"] as const
+    for (const table of filterTables) {
+      const rows = await ctx.db
+        .query(table as any)
+        .filter((q: any) => q.eq(q.field("businessId"), businessId))
+        .collect()
+      for (const row of rows) await ctx.db.delete(row._id)
+    }
+
+    // approvalQueue is indexed by [businessId, status] — use the prefix.
+    const approvals = await ctx.db
+      .query("approvalQueue")
+      .withIndex("by_business_pending", (q) => q.eq("businessId", businessId))
+      .collect()
+    for (const row of approvals) await ctx.db.delete(row._id)
+
+    // Delete messages for any conversations belonging to this user
     const convos = await ctx.db
       .query("conversations")
       .withIndex("by_user", (q) => q.eq("userId", args.userId))
@@ -262,27 +276,41 @@ export const resetBusiness = mutation({
     if (business) {
       const businessId = business._id
 
-      // Delete all business-linked records EXCEPT connectedChannels
-      const tables = [
+      // Tables with a `by_business` index — straightforward delete.
+      // Note: connectedChannels is intentionally excluded so OAuth survives the reset.
+      const byBusinessTables = [
         "campaigns",
-        "adCreatives",
         "prospects",
-        "leadScoreEvents",
-        "salesStrategies",
         "customers",
         "roiRecords",
-        "approvalQueue",
         "usageLedger",
         "brandAssets",
       ] as const
-
-      for (const table of tables) {
+      for (const table of byBusinessTables) {
         const rows = await ctx.db
           .query(table as any)
           .withIndex("by_business" as any, (q: any) => q.eq("businessId", businessId))
           .collect()
         for (const row of rows) await ctx.db.delete(row._id)
       }
+
+      // adCreatives, leadScoreEvents, salesStrategies have a businessId field but
+      // are indexed by campaignId / prospectId — filter scan is the only option.
+      const filterTables = ["adCreatives", "leadScoreEvents", "salesStrategies"] as const
+      for (const table of filterTables) {
+        const rows = await ctx.db
+          .query(table as any)
+          .filter((q: any) => q.eq(q.field("businessId"), businessId))
+          .collect()
+        for (const row of rows) await ctx.db.delete(row._id)
+      }
+
+      // approvalQueue is indexed by [businessId, status] — use the prefix.
+      const approvals = await ctx.db
+        .query("approvalQueue")
+        .withIndex("by_business_pending", (q) => q.eq("businessId", businessId))
+        .collect()
+      for (const row of approvals) await ctx.db.delete(row._id)
 
       // Delete the organisation
       if (business.organisationId) {
