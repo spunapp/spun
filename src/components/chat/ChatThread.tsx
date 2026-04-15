@@ -66,7 +66,7 @@ export function ChatThread({
 
       {isLoading && (
         <div className="flex items-start gap-3">
-          <img src="/spun.gif" alt="Spun is thinking" className="w-8 h-8 rounded-lg flex-shrink-0" />
+          <img src="/spun.gif" alt="Spun is thinking" className="w-8 h-8 rounded-lg flex-shrink-0 object-contain" />
           <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
             <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
           </div>
