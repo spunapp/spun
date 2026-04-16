@@ -25,9 +25,10 @@ interface ChatMessageProps {
   onApprove?: (approvalId: string) => void
   onReject?: (approvalId: string) => void
   onRetry?: (failedUserMessage: string) => void
+  onSend?: (message: string) => void
 }
 
-export function ChatMessage({ message, onApprove, onReject, onRetry }: ChatMessageProps) {
+export function ChatMessage({ message, onApprove, onReject, onRetry, onSend }: ChatMessageProps) {
   const isUser = message.role === "user"
   const meta = message.metadata as Record<string, unknown> | undefined
   const isRetryableError =
@@ -73,11 +74,11 @@ export function ChatMessage({ message, onApprove, onReject, onRetry }: ChatMessa
         ) : message.messageType === "status_update" && message.metadata ? (
           <StatusUpdate content={message.content} metadata={message.metadata} />
         ) : message.messageType === "connect_prompt" && message.metadata ? (
-          <ConnectPrompt content={message.content} metadata={message.metadata} />
+          <ConnectPrompt content={message.content} metadata={message.metadata} onSend={onSend} />
         ) : message.messageType === "meta_setup_guide" ? (
-          <MetaSetupGuide content={message.content} metadata={message.metadata ?? {}} />
+          <MetaSetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
         ) : message.messageType === "google_ads_setup_guide" ? (
-          <GoogleAdsSetupGuide content={message.content} metadata={message.metadata ?? {}} />
+          <GoogleAdsSetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
         ) : (
           <TextMessage content={message.content} isUser={isUser} />
         )}

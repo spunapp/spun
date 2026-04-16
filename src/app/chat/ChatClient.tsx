@@ -311,6 +311,7 @@ export default function ChatClient() {
         onApprove={handleApprove}
         onReject={handleReject}
         onRetry={handleRetry}
+        onSend={handleSend}
       />
 
       {/* Error banner */}

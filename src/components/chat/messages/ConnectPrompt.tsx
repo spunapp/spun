@@ -22,9 +22,10 @@ const PLATFORM_LABELS: Record<string, string> = {
 interface ConnectPromptProps {
   content: string
   metadata: Record<string, unknown>
+  onSend?: (message: string) => void
 }
 
-export function ConnectPrompt({ content, metadata }: ConnectPromptProps) {
+export function ConnectPrompt({ content, metadata, onSend }: ConnectPromptProps) {
   const { user } = useUser()
   const userId = user?.id
   const upsertChannel = useMutation(api.channels.upsert)
@@ -79,6 +80,7 @@ export function ConnectPrompt({ content, metadata }: ConnectPromptProps) {
                 })
               }
               setStatus("success")
+              onSend?.(`I've connected ${label} — what's next?`)
               resolve()
             } catch (err) {
               reject(err)

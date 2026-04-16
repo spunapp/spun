@@ -26,6 +26,7 @@ type Step = {
 interface MetaSetupGuideProps {
   content: string
   metadata: Record<string, unknown>
+  onSend?: (message: string) => void
 }
 
 // Default step content — rendered if the AI doesn't pass custom steps in metadata.
@@ -111,7 +112,7 @@ const DEFAULT_STEPS: Step[] = [
   },
 ]
 
-export function MetaSetupGuide({ content, metadata }: MetaSetupGuideProps) {
+export function MetaSetupGuide({ content, metadata, onSend }: MetaSetupGuideProps) {
   const { user } = useUser()
   const userId = user?.id
   const upsertChannel = useMutation(api.channels.upsert)
@@ -179,6 +180,7 @@ export function MetaSetupGuide({ content, metadata }: MetaSetupGuideProps) {
                 })
               }
               setStatus("success")
+              onSend?.("I've connected Meta — what's next?")
               resolve()
             } catch (err) {
               reject(err)

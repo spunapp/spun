@@ -26,6 +26,7 @@ type Step = {
 interface GoogleAdsSetupGuideProps {
   content: string
   metadata: Record<string, unknown>
+  onSend?: (message: string) => void
 }
 
 // Default step content — rendered if the AI doesn't pass custom steps in metadata.
@@ -102,7 +103,7 @@ const DEFAULT_STEPS: Step[] = [
   },
 ]
 
-export function GoogleAdsSetupGuide({ content, metadata }: GoogleAdsSetupGuideProps) {
+export function GoogleAdsSetupGuide({ content, metadata, onSend }: GoogleAdsSetupGuideProps) {
   const { user } = useUser()
   const userId = user?.id
   const upsertChannel = useMutation(api.channels.upsert)
@@ -170,6 +171,7 @@ export function GoogleAdsSetupGuide({ content, metadata }: GoogleAdsSetupGuidePr
                 })
               }
               setStatus("success")
+              onSend?.("I've connected Google Ads — what's next?")
               resolve()
             } catch (err) {
               reject(err)
