@@ -297,12 +297,16 @@ export const chat = action({
     }
 
     if (!responseText) {
-      // The model returned empty content with no tool calls. Retry once —
-      // this can happen when the conversation history contains unusual
-      // message patterns (e.g. tool-call turns with short content).
-      console.warn("Empty response from primary call, retrying once...")
+      // Gemini Flash Lite sometimes returns empty content for short or
+      // contextual messages. Retry with Claude Haiku directly — don't hit
+      // the same model that just failed.
+      console.warn("Empty response from primary model, retrying with fallback model...")
       try {
-        const retryResponse = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+        const retryResponse = await callOpenRouter(orMessages, {
+          tools: orTools,
+          maxTokens: 4096,
+          models: ["anthropic/claude-haiku-4-5"],
+        })
         responseText = retryResponse.choices[0].message.content ?? ""
       } catch {
         // Retry also failed — fall through to fallback
