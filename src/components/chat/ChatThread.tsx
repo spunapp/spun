@@ -20,6 +20,7 @@ interface ChatThreadProps {
   onApprove?: (approvalId: string) => void
   onReject?: (approvalId: string) => void
   onRetry?: (failedUserMessage: string) => void
+  onSend?: (message: string) => void
 }
 
 export function ChatThread({
@@ -29,6 +30,7 @@ export function ChatThread({
   onApprove,
   onReject,
   onRetry,
+  onSend,
 }: ChatThreadProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -61,6 +63,7 @@ export function ChatThread({
           onApprove={onApprove}
           onReject={onReject}
           onRetry={onRetry}
+          onSend={onSend}
         />
       ))}
 
