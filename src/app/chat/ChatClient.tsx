@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { useQuery, useMutation, useAction } from "convex/react"
 import { useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
@@ -138,9 +138,11 @@ export default function ChatClient() {
     }
   }, [messages, business])
 
+  const sendingRef = useRef(false)
   const handleSend = useCallback(
     async (message: string, files?: File[]) => {
-      if (!userId || !activeConversationId) return
+      if (!userId || !activeConversationId || sendingRef.current) return
+      sendingRef.current = true
 
       setIsLoading(true)
       setQuickReplies([])
@@ -189,6 +191,7 @@ export default function ChatClient() {
         // (Convex network failure, etc.) and preserving input is correct.
         throw err
       } finally {
+        sendingRef.current = false
         setIsLoading(false)
       }
     },
