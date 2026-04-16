@@ -16,10 +16,10 @@ export const metadata: Metadata = {
     template: "%s — Spun",
   },
   description:
-    "AI-powered CMO for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+    "AI-powered marketing team for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
   keywords: [
     "AI marketing",
-    "AI CMO",
+    "AI marketing team",
     "marketing automation",
     "ad creatives",
     "campaign launch",
@@ -42,7 +42,7 @@ export const metadata: Metadata = {
     siteName: "Spun",
     title: "Spun — Your Marketing Department in a Chat Window",
     description:
-      "AI-powered CMO for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+      "AI-powered marketing team for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
     images: [
       {
         url: "/spun_facebook_cover.png",
@@ -56,7 +56,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Spun — Your Marketing Department in a Chat Window",
     description:
-      "AI-powered CMO for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+      "AI-powered marketing team for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
     images: ["/spun_facebook_cover.png"],
   },
   robots: {
