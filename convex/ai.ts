@@ -10,11 +10,12 @@ import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-// Chat models for user-facing conversation turns. Flash Lite TTFT ~6.8s and
-// still supports tool/function calling. Claude Haiku 4.5 is the fallback if
-// Gemini is unreachable — OpenRouter auto-falls-back on 5xx/rate limits.
+// Chat models for user-facing conversation turns. Gemini 2.5 Flash is stable
+// and handles tool calling in multi-turn conversations reliably (the 3.1 Flash
+// Lite preview had known issues with empty responses). Claude Haiku 4.5 is
+// the fallback — OpenRouter auto-falls-back on 5xx/rate limits.
 const CHAT_MODELS = [
-  "google/gemini-3.1-flash-lite-preview",
+  "google/gemini-2.5-flash",
   "anthropic/claude-haiku-4-5",
 ]
 // Reasoning models for heavy analytical work (strategy, creatives, tiering,
