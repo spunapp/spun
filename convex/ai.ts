@@ -282,7 +282,10 @@ export const chat = action({
             ],
             { maxTokens: 2048, models: CHAT_MODELS }
           )
-          responseText += followUp.choices[0].message.content ?? ""
+          const followUpText = followUp.choices[0].message.content ?? ""
+          if (followUpText) {
+            responseText = responseText ? `${responseText}\n\n${followUpText}` : followUpText
+          }
         } catch (err) {
           // Tool ran successfully but the narration call failed. The tool
           // result is already persisted in messageType/metadata, so we can

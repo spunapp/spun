@@ -80,7 +80,7 @@ export function ConnectPrompt({ content, metadata, onSend }: ConnectPromptProps)
                 })
               }
               setStatus("success")
-              onSend?.(`I've connected ${label} — what's next?`)
+              setTimeout(() => onSend?.(`I've connected ${label} — what's next?`), 1500)
               resolve()
             } catch (err) {
               reject(err)

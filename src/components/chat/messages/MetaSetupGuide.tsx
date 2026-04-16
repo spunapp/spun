@@ -184,7 +184,7 @@ export function MetaSetupGuide({ content, metadata, onSend }: MetaSetupGuideProp
                 })
               }
               setStatus("success")
-              onSend?.("I've connected Meta — what's next?")
+              setTimeout(() => onSend?.("I've connected Meta — what's next?"), 1500)
               resolve()
             } catch (err) {
               reject(err)
