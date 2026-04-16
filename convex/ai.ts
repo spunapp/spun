@@ -296,7 +296,9 @@ export const chat = action({
       }
     }
 
-    if (!responseText) responseText = "Something went wrong — please try again."
+    if (!responseText) {
+      responseText = "Sorry, I drew a blank on that one. Could you say that again or rephrase?"
+    }
 
     const messageId = await ctx.runMutation(api.messages.send, {
       conversationId: args.conversationId,
