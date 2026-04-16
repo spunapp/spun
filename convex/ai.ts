@@ -170,7 +170,7 @@ export const chat = action({
     const orMessages: OrMessage[] = [
       { role: "system", content: systemPrompt },
       ...(allMessages as Array<{ role: string; content: string }>)
-        .filter((m) => m.role === "user" || m.role === "assistant")
+        .filter((m) => (m.role === "user" || m.role === "assistant") && m.content)
         .slice(-50)
         .map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
     ]
@@ -293,6 +293,19 @@ export const chat = action({
               "Done. (I couldn't reach my AI backend to write this up properly — the action above ran successfully.)"
           }
         }
+      }
+    }
+
+    if (!responseText) {
+      // The model returned empty content with no tool calls. Retry once —
+      // this can happen when the conversation history contains unusual
+      // message patterns (e.g. tool-call turns with short content).
+      console.warn("Empty response from primary call, retrying once...")
+      try {
+        const retryResponse = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+        responseText = retryResponse.choices[0].message.content ?? ""
+      } catch {
+        // Retry also failed — fall through to fallback
       }
     }
 
