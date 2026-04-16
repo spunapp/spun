@@ -227,6 +227,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
+    name: "show_google_ads_setup_guide",
+    description:
+      "Show a step-by-step guide for creating a Google Ads account from scratch. Use this when the user tells you they don't yet have a Google Ads account, need help signing up for Google PPC, or ask how to set up Google Ads. Do NOT use this for users who already have a Google Ads account — use connect_channel with platform 'google' for them instead.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
+  {
     name: "check_usage",
     description:
       "Check the user's current usage against their subscription tier limits (campaigns launched, creatives generated, channels connected).",

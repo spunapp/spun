@@ -125,6 +125,12 @@ export default function ChatClient() {
             "Which payment method should I pick?",
             "I've finished — what's next?",
           ])
+        } else if (lastMsg.messageType === "google_ads_setup_guide") {
+          setQuickReplies([
+            "I'm stuck on billing setup",
+            "How do I set up conversion tracking?",
+            "I've finished — what's next?",
+          ])
         } else {
           setQuickReplies([])
         }
