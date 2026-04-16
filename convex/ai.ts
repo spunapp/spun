@@ -216,7 +216,8 @@ export const chat = action({
       | "status_update"
       | "onboarding"
       | "connect_prompt"
-      | "meta_setup_guide" = "text"
+      | "meta_setup_guide"
+      | "google_ads_setup_guide" = "text"
     let metadata: Record<string, unknown> | undefined
 
     if (responseMessage.tool_calls) {
@@ -265,6 +266,9 @@ export const chat = action({
           metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
         } else if (toolName === "show_meta_setup_guide") {
           messageType = "meta_setup_guide"
+          metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        } else if (toolName === "show_google_ads_setup_guide") {
+          messageType = "google_ads_setup_guide"
           metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
         }
 
@@ -855,6 +859,16 @@ Return ONLY valid JSON:
         platform: "meta",
         pipedreamApp: "facebook_pages",
         oauthAppId: "oa_K1i8YD",
+      }
+    }
+
+    case "show_google_ads_setup_guide": {
+      // The GoogleAdsSetupGuide component holds the step content, so the
+      // tool just returns the Pipedream connect config the final CTA uses.
+      return {
+        action: "show_google_ads_setup_guide",
+        platform: "google",
+        pipedreamApp: "google_ads",
       }
     }
 

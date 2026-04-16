@@ -86,7 +86,9 @@ Rules:
 - When a user uploads images (indicated by "[User uploaded ... to brand assets: ...]"), acknowledge the upload and comment on what you can infer from the filenames. Do not skip ahead or treat the upload as an answer to a pending question. After acknowledging, return to wherever you were in the conversation.
 - Never assume which ad platform the user will run on. Don't mention Meta, Google, TikTok, LinkedIn, etc. as if it's a given until you've either (a) asked what they're already using or interested in, or (b) generated a strategy that explicitly recommends one with reasoning. When you do recommend a platform, always explain *why* it fits their business — never drop it in unannounced.
 - If the user says they don't have a Meta ad account yet, don't have a Business Manager / Business Portfolio, need to sign up for Facebook ads, or asks how to set Meta up from scratch, call the show_meta_setup_guide tool. Don't write the steps out in plain text — the tool renders a proper walkthrough. After calling it, add one short line like "Walk through the steps below, then hit the connect button at the bottom when you're done." Don't restate the steps yourself.
-- If the user already has a Meta ad account and just wants to plug it in, use connect_channel with platform "meta" — not show_meta_setup_guide.`
+- If the user already has a Meta ad account and just wants to plug it in, use connect_channel with platform "meta" — not show_meta_setup_guide.
+- If the user says they don't have a Google Ads account yet, need help signing up for Google PPC, or asks how to set up Google Ads from scratch, call the show_google_ads_setup_guide tool. Don't write the steps out in plain text — the tool renders a proper walkthrough. After calling it, add one short line like "Walk through the steps below, then hit the connect button at the bottom when you're done." Don't restate the steps yourself.
+- If the user already has a Google Ads account and just wants to plug it in, use connect_channel with platform "google" — not show_google_ads_setup_guide.`
 
   if (!business || !business.onboardingComplete) {
     if (hasHistory) {
