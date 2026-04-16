@@ -175,7 +175,7 @@ export function GoogleAdsSetupGuide({ content, metadata, onSend }: GoogleAdsSetu
                 })
               }
               setStatus("success")
-              onSend?.("I've connected Google Ads — what's next?")
+              setTimeout(() => onSend?.("I've connected Google Ads — what's next?"), 1500)
               resolve()
             } catch (err) {
               reject(err)
