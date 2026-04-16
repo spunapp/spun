@@ -10,11 +10,12 @@ import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-// Chat models for user-facing conversation turns. Flash Lite TTFT ~6.8s and
-// still supports tool/function calling. Claude Haiku 4.5 is the fallback if
-// Gemini is unreachable — OpenRouter auto-falls-back on 5xx/rate limits.
+// Chat models for user-facing conversation turns. Gemini 2.5 Flash is stable
+// and handles tool calling in multi-turn conversations reliably (the 3.1 Flash
+// Lite preview had known issues with empty responses). Claude Haiku 4.5 is
+// the fallback — OpenRouter auto-falls-back on 5xx/rate limits.
 const CHAT_MODELS = [
-  "google/gemini-3.1-flash-lite-preview",
+  "google/gemini-2.5-flash",
   "anthropic/claude-haiku-4-5",
 ]
 // Reasoning models for heavy analytical work (strategy, creatives, tiering,
@@ -297,12 +298,16 @@ export const chat = action({
     }
 
     if (!responseText) {
-      // The model returned empty content with no tool calls. Retry once —
-      // this can happen when the conversation history contains unusual
-      // message patterns (e.g. tool-call turns with short content).
-      console.warn("Empty response from primary call, retrying once...")
+      // Gemini Flash Lite sometimes returns empty content for short or
+      // contextual messages. Retry with Claude Haiku directly — don't hit
+      // the same model that just failed.
+      console.warn("Empty response from primary model, retrying with fallback model...")
       try {
-        const retryResponse = await callOpenRouter(orMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+        const retryResponse = await callOpenRouter(orMessages, {
+          tools: orTools,
+          maxTokens: 4096,
+          models: ["anthropic/claude-haiku-4-5"],
+        })
         responseText = retryResponse.choices[0].message.content ?? ""
       } catch {
         // Retry also failed — fall through to fallback
