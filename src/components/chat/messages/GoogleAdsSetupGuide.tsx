@@ -126,8 +126,12 @@ export function GoogleAdsSetupGuide({ content, metadata, onSend }: GoogleAdsSetu
   const toggleChecked = (i: number) => {
     setCheckedSteps((prev) => {
       const next = new Set(prev)
-      if (next.has(i)) next.delete(i)
-      else next.add(i)
+      if (next.has(i)) {
+        next.delete(i)
+      } else {
+        next.add(i)
+        if (i + 1 < steps.length) setOpenStep(i + 1)
+      }
       return next
     })
   }
