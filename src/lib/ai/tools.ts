@@ -84,7 +84,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "generate_creatives",
     description:
-      "Generate 3 HTML/CSS ad creative variants for a specific funnel stage of a campaign.",
+      "Generate 3 ad creative variants for a specific funnel stage of a campaign. Call this to create new creatives OR to regenerate them with different instructions (e.g. different tone, different imagery style). Always call this tool rather than describing what you would do.",
     input_schema: {
       type: "object" as const,
       properties: {
@@ -96,6 +96,10 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           type: "string",
           enum: ["tof", "mof", "bof"],
           description: "Funnel stage: tof (awareness), mof (consideration), bof (conversion)",
+        },
+        customInstructions: {
+          type: "string",
+          description: "Optional instructions to guide the creative direction, e.g. 'use warmer colours', 'focus on time-saving benefit', 'professional corporate style'. Passed to both copy and image generation.",
         },
       },
       required: ["campaignId", "funnelStage"],
