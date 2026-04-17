@@ -533,6 +533,7 @@ export const generateCreatives = action({
     campaignId: v.id("campaigns"),
     businessId: v.id("businesses"),
     funnelStage: v.string(),
+    customInstructions: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const [campaign, business] = await Promise.all([
@@ -571,6 +572,8 @@ export const generateCreatives = action({
     for (let variant = 1; variant <= 3; variant++) {
       const format = formats[args.funnelStage]?.[variant - 1] ?? "Social Square"
 
+      const customNote = args.customInstructions ? `\nADDITIONAL INSTRUCTIONS: ${args.customInstructions}` : ""
+
       const copyPrompt = `You are an expert ad copywriter. Write ad copy for:
 
 BUSINESS: ${business.name}
@@ -580,7 +583,7 @@ FUNNEL STAGE: ${stageMap[args.funnelStage]} (Variant ${variant})
 FORMAT: ${format}
 OBJECTIVE: ${stageData?.objective ?? ""}
 MESSAGING: ${stageData?.messaging ?? ""}
-CREATIVE IDEA: ${stageData?.creative_ideas?.[variant - 1] ?? ""}
+CREATIVE IDEA: ${stageData?.creative_ideas?.[variant - 1] ?? ""}${customNote}
 
 Return ONLY valid JSON:
 {
@@ -808,6 +811,7 @@ async function executeToolCall(
         campaignId: input.campaignId as Id<"campaigns">,
         businessId,
         funnelStage: input.funnelStage as string,
+        customInstructions: (input.customInstructions as string) ?? undefined,
       })
     }
 
