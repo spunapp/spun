@@ -8,6 +8,23 @@ interface StrategyDocumentProps {
   metadata: Record<string, unknown>
 }
 
+function formatCurrency(value: unknown): string {
+  if (typeof value === "string") return value
+  if (typeof value === "number") return `£${value.toLocaleString()}`
+  return String(value ?? "")
+}
+
+function renderInlineBold(text: string) {
+  const parts = text.split(/(\*\*.*?\*\*)/g)
+  if (parts.length === 1) return text
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
+}
+
 export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
   const [expanded, setExpanded] = useState(false)
 
@@ -15,7 +32,7 @@ export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
     theme?: string
     audience_breakdown?: Record<string, unknown>
     suggested_channels?: Array<{ channel: string; reason: string }>
-    budget_breakdown?: { monthly_total: number; channel_split: Array<{ channel: string; percentage: number; amount: number }> }
+    budget_breakdown?: { monthly_total: unknown; channel_split: Array<{ channel: string; percentage: number; amount: unknown }> }
   }
 
   return (
@@ -23,7 +40,7 @@ export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
       <div className="text-sm text-slate-200 leading-relaxed">
         {content.split("\n").map((line, i) => (
           <p key={i} className={line ? "" : "h-3"}>
-            {line}
+            {renderInlineBold(line)}
           </p>
         ))}
       </div>
@@ -47,7 +64,7 @@ export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
         <div className="mt-2 p-3 bg-white/5 rounded-lg border border-white/5 text-xs space-y-3">
           <div>
             <span className="text-slate-500 uppercase tracking-wider">Theme</span>
-            <p className="text-slate-200 mt-1">{strategy.theme}</p>
+            <p className="text-slate-200 mt-1">{renderInlineBold(strategy.theme)}</p>
           </div>
 
           {strategy.suggested_channels && (
@@ -56,7 +73,7 @@ export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
               <div className="mt-1 space-y-1">
                 {strategy.suggested_channels.map((ch, i) => (
                   <div key={i} className="text-slate-300">
-                    <span className="font-medium">{ch.channel}</span> — {ch.reason}
+                    <span className="font-medium">{ch.channel}</span> — {renderInlineBold(ch.reason)}
                   </div>
                 ))}
               </div>
@@ -67,11 +84,11 @@ export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
             <div>
               <span className="text-slate-500 uppercase tracking-wider">Budget</span>
               <p className="text-slate-200 mt-1">
-                ${strategy.budget_breakdown.monthly_total?.toLocaleString()}/mo
+                {formatCurrency(strategy.budget_breakdown.monthly_total)}/mo
               </p>
               {strategy.budget_breakdown.channel_split?.map((split, i) => (
                 <div key={i} className="text-slate-400">
-                  {split.channel}: {split.percentage}% (${split.amount?.toLocaleString()})
+                  {split.channel}: {split.percentage}% ({formatCurrency(split.amount)})
                 </div>
               ))}
             </div>
