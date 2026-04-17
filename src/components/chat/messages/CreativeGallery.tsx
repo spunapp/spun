@@ -5,6 +5,7 @@ import { useQuery } from "convex/react"
 import { api } from "../../../../convex/_generated/api"
 import type { Id } from "../../../../convex/_generated/dataModel"
 import { X } from "lucide-react"
+import { renderContent } from "./renderContent"
 
 type Creative = {
   headline: string
@@ -20,17 +21,6 @@ type Creative = {
 interface CreativeGalleryProps {
   content: string
   metadata: Record<string, unknown>
-}
-
-function renderInlineBold(text: string) {
-  const parts = text.split(/(\*\*.*?\*\*)/g)
-  if (parts.length === 1) return text
-  return parts.map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) {
-      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>
-    }
-    return part
-  })
 }
 
 function CreativeImage({ storageId }: { storageId: Id<"_storage"> }) {
@@ -79,11 +69,7 @@ export function CreativeGallery({ content, metadata }: CreativeGalleryProps) {
   return (
     <div className="space-y-3">
       <div className="text-sm text-slate-200 leading-relaxed">
-        {content.split("\n").map((line, i) => (
-          <p key={i} className={line ? "" : "h-3"}>
-            {renderInlineBold(line)}
-          </p>
-        ))}
+        {renderContent(content)}
       </div>
 
       {creatives.length > 0 && (
