@@ -69,9 +69,16 @@ export function ChatThread({
 
       {isLoading && (
         <div className="flex items-start gap-3">
-          <img src="/spun.gif" alt="Spun is thinking" className="w-8 h-8 rounded-lg flex-shrink-0 object-contain" />
-          <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
-            <Loader2 className="w-4 h-4 text-white/50 animate-spin" />
+          <img
+            src="/spun.gif"
+            alt="Spun is thinking"
+            className="w-8 h-8 rounded-lg flex-shrink-0 object-contain animate-pulse"
+          />
+          <div className="bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3 flex items-center gap-2.5">
+            <Loader2 className="w-4 h-4 text-teal-400 animate-spin" />
+            <span className="text-sm text-slate-400 animate-pulse">
+              Working on it&hellip;
+            </span>
           </div>
         </div>
       )}
