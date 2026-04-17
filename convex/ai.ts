@@ -306,10 +306,81 @@ export const chat = action({
       }
     }
 
+    // Detect when the AI narrates an action ("I'll build your profile now")
+    // without actually calling a tool. Retry once with a nudge to call the tool.
+    if (
+      !responseMessage.tool_calls &&
+      responseText &&
+      /\bI('ll| will| am going to)\b.*(build|create|generate|launch|set up|put together|search for|revise|update|regenerate|do that|get that done)/i.test(responseText)
+    ) {
+      console.warn("AI narrated an action without calling a tool — retrying with nudge")
+      try {
+        const nudgeResponse = await callOpenRouter(
+          [
+            ...orMessages,
+            { role: "assistant", content: responseText },
+            { role: "user", content: "You said you would take an action but didn't call the tool. Please call the appropriate tool now." },
+          ],
+          { tools: orTools, maxTokens: 4096, models: CHAT_MODELS }
+        )
+        const nudgeMsg = nudgeResponse.choices[0].message
+        if (nudgeMsg.tool_calls) {
+          for (const tc of nudgeMsg.tool_calls) {
+            let toolInput: Record<string, unknown>
+            try { toolInput = JSON.parse(tc.function.arguments) } catch { continue }
+            let toolResult: unknown
+            try {
+              toolResult = await executeToolCall(
+                ctx as unknown as ToolCtx, tc.function.name, toolInput,
+                args.userId, conversation.businessId, args.conversationId
+              )
+            } catch { continue }
+
+            if (tc.function.name === "onboard_business") {
+              messageType = "onboarding"
+              metadata = toolResult as Record<string, unknown>
+            } else if (tc.function.name === "generate_campaign") {
+              messageType = "strategy"
+              metadata = toolResult as Record<string, unknown>
+            } else if (tc.function.name === "generate_creatives") {
+              messageType = "creative_gallery"
+              metadata = toolResult as Record<string, unknown>
+            } else if (tc.function.name === "connect_channel") {
+              messageType = "connect_prompt"
+              metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+            } else if (tc.function.name === "show_meta_setup_guide") {
+              messageType = "meta_setup_guide"
+              metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+            } else if (tc.function.name === "show_google_ads_setup_guide") {
+              messageType = "google_ads_setup_guide"
+              metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+            }
+
+            try {
+              const followUp = await callOpenRouter(
+                [
+                  ...orMessages,
+                  { role: "assistant", content: responseText },
+                  { role: "assistant", content: nudgeMsg.content ?? null, tool_calls: nudgeMsg.tool_calls },
+                  { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) },
+                ],
+                { maxTokens: 2048, models: CHAT_MODELS }
+              )
+              const followUpText = followUp.choices[0].message.content ?? ""
+              if (followUpText) {
+                responseText = followUpText
+              }
+            } catch {
+              // Tool ran but follow-up narration failed — keep original text
+            }
+          }
+        }
+      } catch {
+        // Nudge retry failed — keep original response
+      }
+    }
+
     if (!responseText) {
-      // Gemini Flash Lite sometimes returns empty content for short or
-      // contextual messages. Retry with Claude Haiku directly — don't hit
-      // the same model that just failed.
       console.warn("Empty response from primary model, retrying with fallback model...")
       try {
         const retryResponse = await callOpenRouter(orMessages, {
