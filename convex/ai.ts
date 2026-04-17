@@ -440,6 +440,45 @@ Return ONLY valid JSON:
       throw new Error("Failed to parse campaign data from AI response. Please try again.")
     }
 
+    // The AI sometimes ignores the channel restriction and adds platforms
+    // the user hasn't connected. Programmatically enforce the constraint.
+    if (connectedPlatforms.length > 0) {
+      const platformKeywords: Record<string, string[]> = {
+        meta: ["meta", "facebook", "instagram"],
+        google: ["google"],
+        ga4: ["analytics", "ga4"],
+        linkedin: ["linkedin"],
+        tiktok: ["tiktok"],
+        klaviyo: ["klaviyo"],
+        shopify: ["shopify"],
+        buffer: ["buffer"],
+      }
+      const allowedKeywords = connectedPlatforms.flatMap((p) => platformKeywords[p] ?? [p])
+      const matchesConnected = (name: string) => {
+        const lower = name.toLowerCase()
+        return allowedKeywords.some((kw) => lower.includes(kw))
+      }
+
+      const channels = campaignData.suggested_channels as Array<{ channel: string; reason: string }> | undefined
+      if (Array.isArray(channels)) {
+        const filtered = channels.filter((ch) => matchesConnected(ch.channel))
+        campaignData.suggested_channels = filtered.length > 0 ? filtered : connectedLabels.map((l) => ({ channel: l, reason: "Connected platform" }))
+      }
+
+      const budget = campaignData.budget_breakdown as { monthly_total: unknown; channel_split?: Array<{ channel: string; percentage: number; amount: unknown }> } | undefined
+      if (budget?.channel_split) {
+        const filtered = budget.channel_split.filter((s) => matchesConnected(s.channel))
+        const finalChannels = filtered.length > 0 ? filtered : connectedLabels.map((l) => ({ channel: l, percentage: 0, amount: "" as unknown }))
+        const totalNum = parseFloat(String(budget.monthly_total).replace(/[^0-9.]/g, "")) || 0
+        const perChannelPct = Math.round(100 / finalChannels.length)
+        budget.channel_split = finalChannels.map((ch, idx) => ({
+          channel: filtered.length > 0 ? ch.channel : connectedLabels[idx] ?? ch.channel,
+          percentage: idx === finalChannels.length - 1 ? 100 - perChannelPct * (finalChannels.length - 1) : perChannelPct,
+          amount: `${currency.symbol}${Math.round((totalNum * (idx === finalChannels.length - 1 ? 100 - perChannelPct * (finalChannels.length - 1) : perChannelPct)) / 100).toLocaleString()}`,
+        }))
+      }
+    }
+
     const campaignId = await ctx.runMutation(api.campaigns.create, {
       businessId: args.businessId,
       phase: args.phase ?? 1,
