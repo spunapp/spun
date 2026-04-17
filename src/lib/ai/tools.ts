@@ -119,7 +119,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         },
         budget: {
           type: "number",
-          description: "Daily budget in dollars",
+          description: "Daily budget in the user's local currency",
         },
       },
       required: ["campaignId", "platform"],

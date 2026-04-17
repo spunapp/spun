@@ -170,10 +170,16 @@ export const chat = action({
 
     const orMessages: OrMessage[] = [
       { role: "system", content: systemPrompt },
-      ...(allMessages as Array<{ role: string; content: string }>)
+      ...(allMessages as Array<{ role: string; content: string; messageType?: string; metadata?: Record<string, unknown> }>)
         .filter((m) => (m.role === "user" || m.role === "assistant") && m.content)
         .slice(-50)
-        .map((m) => ({ role: m.role as "user" | "assistant", content: m.content })),
+        .map((m) => {
+          let content = m.content
+          if (m.messageType === "strategy" && m.metadata?.campaignId) {
+            content += `\n[Campaign ID: ${m.metadata.campaignId}]`
+          }
+          return { role: m.role as "user" | "assistant", content }
+        }),
     ]
 
     let response: any
@@ -339,6 +345,15 @@ export const chat = action({
   },
 })
 
+function currencyForLocations(locations: string[] | undefined): { symbol: string; code: string } {
+  const loc = (locations ?? []).join(" ").toLowerCase()
+  if (/\b(us|usa|united states|america|new york|california|texas|florida|chicago|los angeles)\b/.test(loc)) return { symbol: "$", code: "USD" }
+  if (/\b(eu|europe|germany|france|spain|italy|netherlands|belgium|austria|ireland|portugal|finland|greece)\b/.test(loc)) return { symbol: "€", code: "EUR" }
+  if (/\b(australia|sydney|melbourne)\b/.test(loc)) return { symbol: "A$", code: "AUD" }
+  if (/\b(canada|toronto|vancouver)\b/.test(loc)) return { symbol: "C$", code: "CAD" }
+  return { symbol: "£", code: "GBP" }
+}
+
 export const generateCampaign = action({
   args: {
     businessId: v.id("businesses"),
@@ -355,9 +370,11 @@ export const generateCampaign = action({
       ? `The user has connected: ${connectedPlatforms.join(", ")}. Only suggest channels they have connected — do NOT add platforms they haven't set up.`
       : "No ad platforms are connected yet. Suggest which platform(s) would work best and why."
 
+    const currency = currencyForLocations(business.locations)
+
     const prompt = `You are an expert marketing strategist. Create a comprehensive marketing campaign plan for this business.
 
-All monetary values MUST be in GBP (£). Do not use dollars or any other currency.
+All monetary values MUST be in ${currency.code} (${currency.symbol}). Do not use any other currency symbol or code.
 
 BUSINESS PROFILE:
 - Name: ${business.name}
@@ -385,10 +402,10 @@ Return ONLY valid JSON:
     { "channel": "Channel name", "reason": "Why this channel", "estimated_reach": "Potential reach" }
   ],
   "budget_breakdown": {
-    "monthly_total": "£X,XXX",
-    "daily_budget": "£XX",
+    "monthly_total": "${currency.symbol}X,XXX",
+    "daily_budget": "${currency.symbol}XX",
     "channel_split": [
-      {"channel": "Channel name", "percentage": 100, "amount": "£X,XXX"}
+      {"channel": "Channel name", "percentage": 100, "amount": "${currency.symbol}X,XXX"}
     ]
   },
   "funnel": {
@@ -425,27 +442,27 @@ Return ONLY valid JSON:
   },
 })
 
-async function generateImageWithImagen(prompt: string): Promise<Buffer | null> {
+async function generateImage(prompt: string): Promise<Buffer | null> {
   const apiKey = process.env.GOOGLE_AI_API_KEY
   if (!apiKey) {
-    console.warn("GOOGLE_AI_API_KEY not set — skipping Imagen 4 generation")
+    console.warn("GOOGLE_AI_API_KEY not set — skipping image generation")
     return null
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateContent?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageSizeOptions: { aspectRatio: "1:1" } },
+        contents: [{ parts: [{ text: `Generate a professional advertising image: ${prompt}` }] }],
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"] },
       }),
     }
   )
 
   if (!res.ok) {
-    console.error(`Imagen error: ${res.status} ${await res.text()}`)
+    console.error(`Image generation error: ${res.status} ${await res.text()}`)
     return null
   }
 
@@ -488,12 +505,19 @@ export const generateCreatives = action({
       bof: ["Remarketing Banner (160x600)", "Email Header (600x200)", "Social Feed Ad (1200x628)"],
     }
 
-    const savedIds: string[] = []
+    const savedCreatives: Array<{
+      headline: string
+      copy: string
+      cta: string
+      format: string
+      variant: number
+      funnelStage: string
+      imageStorageId?: string
+    }> = []
 
     for (let variant = 1; variant <= 3; variant++) {
       const format = formats[args.funnelStage]?.[variant - 1] ?? "Social Square"
 
-      // Step 1: Generate creative copy via Gemini
       const copyPrompt = `You are an expert ad copywriter. Write ad copy for:
 
 BUSINESS: ${business.name}
@@ -525,41 +549,51 @@ Return ONLY valid JSON:
         const jsonMatch = creativeText.match(/\{[\s\S]*\}/)
         const creativeData = JSON.parse(jsonMatch?.[0] || creativeText)
 
-        // Step 2: Generate image via Imagen 4
         let imageStorageId: Id<"_storage"> | undefined
         const imagePrompt = creativeData.image_prompt as string | undefined
         if (imagePrompt) {
-          const imageBuffer = await generateImageWithImagen(imagePrompt)
+          const imageBuffer = await generateImage(imagePrompt)
           if (imageBuffer) {
             const blob = new Blob([imageBuffer], { type: "image/png" })
             imageStorageId = await ctx.storage.store(blob)
           }
         }
 
-        const id = await ctx.runMutation(api.adCreatives.create, {
+        const headline = creativeData.headline ?? ""
+        const copy = creativeData.copy ?? ""
+        const cta = creativeData.cta ?? ""
+
+        await ctx.runMutation(api.adCreatives.create, {
           campaignId: args.campaignId,
           businessId: args.businessId,
           funnelStage: args.funnelStage as "tof" | "mof" | "bof",
           variant,
           format,
-          headline: creativeData.headline ?? "",
-          copy: creativeData.copy ?? "",
-          cta: creativeData.cta ?? "",
+          headline,
+          copy,
+          cta,
           ...(imageStorageId ? { imageStorageId } : {}),
         })
-        savedIds.push(id as string)
+        savedCreatives.push({
+          headline,
+          copy,
+          cta,
+          format,
+          variant,
+          funnelStage: args.funnelStage,
+          ...(imageStorageId ? { imageStorageId: imageStorageId as string } : {}),
+        })
       } catch {
         continue
       }
     }
 
-    // Track creatives generated in usage
-    if (savedIds.length > 0) {
+    if (savedCreatives.length > 0) {
       const ledgerId = await ctx.runMutation(api.usage.getOrCreateLedger, { businessId: args.businessId })
-      await ctx.runMutation(api.usage.incrementCreatives, { ledgerId, count: savedIds.length })
+      await ctx.runMutation(api.usage.incrementCreatives, { ledgerId, count: savedCreatives.length })
     }
 
-    return { count: savedIds.length, campaignId: args.campaignId, funnelStage: args.funnelStage }
+    return { count: savedCreatives.length, campaignId: args.campaignId, funnelStage: args.funnelStage, creatives: savedCreatives }
   },
 })
 
