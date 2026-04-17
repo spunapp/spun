@@ -40,27 +40,19 @@ export function ChatInput({
     }
   }, [pendingFiles])
 
-  async function handleSubmit() {
+  function handleSubmit() {
     const trimmed = input.trim()
     if ((!trimmed && pendingFiles.length === 0) || disabled) return
     const filesToSend = pendingFiles.length > 0 ? pendingFiles.map((pf) => pf.file) : undefined
     const messageToSend = trimmed || "I've uploaded some images for you."
-    // Snapshot the previews up front so we can revoke them on success without
-    // racing against setPendingFiles.
     const previewsToRevoke = pendingFiles.map((pf) => pf.preview)
-    try {
-      await onSend(messageToSend, filesToSend)
-    } catch {
-      // onSend failed (e.g. Convex network error). Keep the input and files
-      // so the user can retry without retyping.
-      return
-    }
     setInput("")
     previewsToRevoke.forEach((p) => URL.revokeObjectURL(p))
     setPendingFiles([])
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto"
     }
+    onSend(messageToSend, filesToSend)
   }
 
   function handleKeyDown(e: React.KeyboardEvent) {

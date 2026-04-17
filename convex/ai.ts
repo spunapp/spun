@@ -366,8 +366,22 @@ export const generateCampaign = action({
     const connectedChannels = await ctx.runQuery(api.channels.listByBusiness, { businessId: args.businessId })
     const connectedPlatforms = (connectedChannels as Array<{ platform: string }>)
       .map((c) => c.platform)
+
+    const platformLabels: Record<string, string> = {
+      meta: "Meta Ads (Instagram & Facebook)",
+      google: "Google Search Ads",
+      ga4: "Google Analytics 4",
+      klaviyo: "Klaviyo",
+      tiktok: "TikTok Ads",
+      linkedin: "LinkedIn Ads",
+      shopify: "Shopify",
+      buffer: "Buffer",
+    }
+    const connectedLabels = connectedPlatforms.map((p) => platformLabels[p] ?? p)
+
     const channelsNote = connectedPlatforms.length > 0
-      ? `The user has connected: ${connectedPlatforms.join(", ")}. Only suggest channels they have connected — do NOT add platforms they haven't set up.`
+      ? `CONNECTED CHANNELS (use ONLY these): ${connectedLabels.join(", ")}.
+STRICT RULE: The suggested_channels array and budget_breakdown.channel_split array MUST only contain channels from the list above. Do NOT add LinkedIn, Google, TikTok, or any other platform that is not listed. If only one channel is connected, put 100% of the budget on that single channel.`
       : "No ad platforms are connected yet. Suggest which platform(s) would work best and why."
 
     const currency = currencyForLocations(business.locations)
