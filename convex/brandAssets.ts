@@ -55,6 +55,23 @@ export const list = query({
   },
 })
 
+export const listRaw = query({
+  args: { businessId: v.id("businesses") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("brandAssets")
+      .withIndex("by_business", (q) => q.eq("businessId", args.businessId))
+      .collect()
+  },
+})
+
+export const getStorageUrl = query({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId)
+  },
+})
+
 export const remove = mutation({
   args: { id: v.id("brandAssets"), storageId: v.id("_storage") },
   handler: async (ctx, args) => {

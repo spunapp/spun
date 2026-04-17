@@ -495,6 +495,44 @@ Return ONLY valid JSON:
   },
 })
 
+async function fetchStockImage(query: string): Promise<Buffer | null> {
+  const apiKey = process.env.PEXELS_API_KEY
+  if (!apiKey) return null
+
+  try {
+    const res = await fetch(
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=square`,
+      { headers: { Authorization: apiKey } }
+    )
+    if (!res.ok) return null
+    const data = await res.json()
+    const url = data.photos?.[0]?.src?.large
+    if (!url) return null
+
+    const imgRes = await fetch(url)
+    if (!imgRes.ok) return null
+    return Buffer.from(await imgRes.arrayBuffer())
+  } catch {
+    return null
+  }
+}
+
+async function overlayLogo(baseBuffer: Buffer, logoBuffer: Buffer): Promise<Buffer> {
+  const Jimp = (await import("jimp")).default
+  const base = await Jimp.read(baseBuffer)
+  const logo = await Jimp.read(logoBuffer)
+
+  const logoWidth = Math.round(base.getWidth() * 0.15)
+  logo.resize(logoWidth, Jimp.AUTO)
+  logo.opacity(0.85)
+
+  const x = base.getWidth() - logo.getWidth() - 16
+  const y = base.getHeight() - logo.getHeight() - 16
+  base.composite(logo, x, y)
+
+  return base.getBufferAsync(Jimp.MIME_PNG)
+}
+
 async function generateImage(prompt: string): Promise<Buffer | null> {
   const apiKey = process.env.GOOGLE_AI_API_KEY
   if (!apiKey) {
@@ -541,6 +579,24 @@ export const generateCreatives = action({
       ctx.runQuery(api.businesses.get, { id: args.businessId }),
     ])
     if (!campaign || !business) throw new Error("Not found")
+
+    // Find logo from brand assets
+    const brandAssets = await ctx.runQuery(api.brandAssets.listRaw, { businessId: args.businessId }) as Array<{ storageId: Id<"_storage">; name: string; type: string }>
+    const logoAsset = brandAssets.find((a) =>
+      a.type === "images" && /logo/i.test(a.name)
+    )
+    let logoBuffer: Buffer | null = null
+    if (logoAsset) {
+      try {
+        const logoUrl = await ctx.runQuery(api.brandAssets.getStorageUrl, { storageId: logoAsset.storageId })
+        if (logoUrl) {
+          const res = await fetch(logoUrl)
+          if (res.ok) logoBuffer = Buffer.from(await res.arrayBuffer())
+        }
+      } catch {
+        // Logo fetch failed — proceed without it
+      }
+    }
 
     const stageMap: Record<string, string> = {
       tof: "Top of Funnel",
@@ -590,7 +646,8 @@ Return ONLY valid JSON:
   "headline": "Compelling headline (max 8 words)",
   "copy": "Body copy (max 20 words)",
   "cta": "CTA button text (max 4 words)",
-  "image_prompt": "A detailed prompt for generating an ad image. Describe the visual style, composition, colours, and mood. Do NOT include any text in the image — text will be overlaid separately. Make it professional, on-brand, and suitable for ${format}."
+  "image_prompt": "A detailed prompt for generating an ad image. Describe the visual style, composition, colours, and mood. Do NOT include any text in the image — text will be overlaid separately. Make it professional, on-brand, and suitable for ${format}.",
+  "stock_search_query": "A short search query (2-4 words) to find a suitable stock photo on Pexels for this ad. Focus on the visual subject, e.g. 'business founder laptop' or 'team meeting office'."
 }`
 
       let creativeText: string
@@ -605,14 +662,33 @@ Return ONLY valid JSON:
         const jsonMatch = creativeText.match(/\{[\s\S]*\}/)
         const creativeData = JSON.parse(jsonMatch?.[0] || creativeText)
 
-        let imageStorageId: Id<"_storage"> | undefined
-        const imagePrompt = creativeData.image_prompt as string | undefined
-        if (imagePrompt) {
-          const imageBuffer = await generateImage(imagePrompt)
-          if (imageBuffer) {
-            const blob = new Blob([imageBuffer], { type: "image/png" })
-            imageStorageId = await ctx.storage.store(blob)
+        let imageBuffer: Buffer | null = null
+
+        // Try stock image first (faster, real photos), fall back to AI generation
+        const stockQuery = creativeData.stock_search_query as string | undefined
+        if (stockQuery) {
+          imageBuffer = await fetchStockImage(stockQuery)
+        }
+        if (!imageBuffer) {
+          const imagePrompt = creativeData.image_prompt as string | undefined
+          if (imagePrompt) {
+            imageBuffer = await generateImage(imagePrompt)
           }
+        }
+
+        // Overlay logo if available
+        if (imageBuffer && logoBuffer) {
+          try {
+            imageBuffer = await overlayLogo(imageBuffer, logoBuffer)
+          } catch (err) {
+            console.warn("Logo overlay failed, using image without logo:", err)
+          }
+        }
+
+        let imageStorageId: Id<"_storage"> | undefined
+        if (imageBuffer) {
+          const blob = new Blob([imageBuffer], { type: "image/png" })
+          imageStorageId = await ctx.storage.store(blob)
         }
 
         const headline = creativeData.headline ?? ""
