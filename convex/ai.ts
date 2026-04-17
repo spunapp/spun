@@ -348,7 +348,16 @@ export const generateCampaign = action({
     const business = await ctx.runQuery(api.businesses.get, { id: args.businessId })
     if (!business) throw new Error("Business not found")
 
+    const connectedChannels = await ctx.runQuery(api.channels.listByBusiness, { businessId: args.businessId })
+    const connectedPlatforms = (connectedChannels as Array<{ platform: string }>)
+      .map((c) => c.platform)
+    const channelsNote = connectedPlatforms.length > 0
+      ? `The user has connected: ${connectedPlatforms.join(", ")}. Only suggest channels they have connected — do NOT add platforms they haven't set up.`
+      : "No ad platforms are connected yet. Suggest which platform(s) would work best and why."
+
     const prompt = `You are an expert marketing strategist. Create a comprehensive marketing campaign plan for this business.
+
+All monetary values MUST be in GBP (£). Do not use dollars or any other currency.
 
 BUSINESS PROFILE:
 - Name: ${business.name}
@@ -361,6 +370,8 @@ BUSINESS PROFILE:
 - Locations: ${business.locations?.join(", ")}
 - Competitors: ${business.competitors?.join(", ")}
 
+CONNECTED CHANNELS: ${channelsNote}
+
 Return ONLY valid JSON:
 {
   "theme": "A compelling campaign theme/concept",
@@ -371,15 +382,13 @@ Return ONLY valid JSON:
     "key_characteristics": ["trait 1", "trait 2", "trait 3", "trait 4", "trait 5"]
   },
   "suggested_channels": [
-    { "channel": "Primary channel", "reason": "Why this channel", "estimated_reach": "Potential reach" },
-    { "channel": "Secondary channel", "reason": "Why this supports primary", "estimated_reach": "Potential reach" }
+    { "channel": "Channel name", "reason": "Why this channel", "estimated_reach": "Potential reach" }
   ],
   "budget_breakdown": {
-    "monthly_total": 2000,
-    "daily_budget": 66,
+    "monthly_total": "£X,XXX",
+    "daily_budget": "£XX",
     "channel_split": [
-      {"channel": "Channel name", "percentage": 60, "amount": 1200},
-      {"channel": "Channel name", "percentage": 40, "amount": 800}
+      {"channel": "Channel name", "percentage": 100, "amount": "£X,XXX"}
     ]
   },
   "funnel": {
@@ -424,27 +433,29 @@ async function generateImageWithImagen(prompt: string): Promise<Buffer | null> {
   }
 
   const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/imagen-4.0-generate-001:predict?key=${apiKey}`,
+    `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:generateContent?key=${apiKey}`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        instances: [{ prompt }],
-        parameters: { sampleCount: 1, outputOptions: { mimeType: "image/png" } },
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ["IMAGE", "TEXT"], imageSizeOptions: { aspectRatio: "1:1" } },
       }),
     }
   )
 
   if (!res.ok) {
-    console.error(`Imagen 4 error: ${res.status} ${await res.text()}`)
+    console.error(`Imagen error: ${res.status} ${await res.text()}`)
     return null
   }
 
   const data = await res.json()
-  const b64 = data.predictions?.[0]?.bytesBase64Encoded
-  if (!b64) return null
+  const parts = data.candidates?.[0]?.content?.parts
+  if (!parts) return null
+  const imagePart = parts.find((p: { inlineData?: { data: string } }) => p.inlineData?.data)
+  if (!imagePart) return null
 
-  return Buffer.from(b64, "base64")
+  return Buffer.from(imagePart.inlineData.data, "base64")
 }
 
 export const generateCreatives = action({
