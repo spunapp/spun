@@ -227,82 +227,134 @@ export const chat = action({
       | "google_ads_setup_guide" = "text"
     let metadata: Record<string, unknown> | undefined
 
-    if (responseMessage.tool_calls) {
-      for (const tc of responseMessage.tool_calls) {
+    // Multi-round tool-calling loop: process tool calls, send results back,
+    // and let the AI chain further calls (e.g. campaign → creatives in one turn).
+    let currentMsg = responseMessage
+    let accMessages: any[] = [...orMessages]
+    let toolRounds = 0
+    const MAX_TOOL_ROUNDS = 3
+
+    const applyToolType = (toolName: string, toolResult: unknown) => {
+      if (toolName === "generate_strategy" || toolName === "generate_campaign") {
+        messageType = "strategy"
+        metadata = toolResult as Record<string, unknown>
+      } else if (toolName === "generate_creatives") {
+        messageType = "creative_gallery"
+        metadata = toolResult as Record<string, unknown>
+      } else if (toolName === "analyze_performance" || toolName === "calculate_roi") {
+        messageType = "analytics"
+        metadata = toolResult as Record<string, unknown>
+      } else if (toolName === "launch_campaign") {
+        messageType = "approval_request"
+        metadata = toolResult as Record<string, unknown>
+      } else if (toolName === "onboard_business") {
+        messageType = "onboarding"
+        metadata = toolResult as Record<string, unknown>
+      } else if (toolName === "connect_channel") {
+        messageType = "connect_prompt"
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+      } else if (toolName === "show_meta_setup_guide") {
+        messageType = "meta_setup_guide"
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+      } else if (toolName === "show_google_ads_setup_guide") {
+        messageType = "google_ads_setup_guide"
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+      }
+    }
+
+    while (currentMsg.tool_calls && toolRounds < MAX_TOOL_ROUNDS) {
+      toolRounds++
+
+      accMessages.push({
+        role: "assistant",
+        content: currentMsg.content ?? null,
+        tool_calls: currentMsg.tool_calls,
+      })
+
+      for (const tc of currentMsg.tool_calls) {
         const toolName = tc.function.name
         let toolInput: Record<string, unknown>
         try {
           toolInput = JSON.parse(tc.function.arguments)
         } catch {
-          responseText += `\n\nSorry, I had trouble processing the ${toolName} action. Please try again.`
+          accMessages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ error: "Invalid arguments" }) })
           continue
         }
 
         let toolResult: unknown
         try {
           toolResult = await executeToolCall(
-            ctx as unknown as ToolCtx,
-            toolName,
-            toolInput,
-            args.userId,
-            conversation.businessId,
-            args.conversationId
+            ctx as unknown as ToolCtx, toolName, toolInput,
+            args.userId, conversation.businessId, args.conversationId
           )
         } catch (err) {
-          responseText += `\n\nSomething went wrong while running ${toolName}. Please try again.`
+          accMessages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ error: String(err) }) })
           continue
         }
 
-        if (toolName === "generate_strategy" || toolName === "generate_campaign") {
-          messageType = "strategy"
-          metadata = toolResult as Record<string, unknown>
-        } else if (toolName === "generate_creatives") {
-          messageType = "creative_gallery"
-          metadata = toolResult as Record<string, unknown>
-        } else if (toolName === "analyze_performance" || toolName === "calculate_roi") {
-          messageType = "analytics"
-          metadata = toolResult as Record<string, unknown>
-        } else if (toolName === "launch_campaign") {
-          messageType = "approval_request"
-          metadata = toolResult as Record<string, unknown>
-        } else if (toolName === "onboard_business") {
-          messageType = "onboarding"
-          metadata = toolResult as Record<string, unknown>
-        } else if (toolName === "connect_channel") {
-          messageType = "connect_prompt"
-          metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
-        } else if (toolName === "show_meta_setup_guide") {
-          messageType = "meta_setup_guide"
-          metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
-        } else if (toolName === "show_google_ads_setup_guide") {
-          messageType = "google_ads_setup_guide"
-          metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
-        }
+        applyToolType(toolName, toolResult)
+        accMessages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) })
+      }
 
-        try {
-          const followUp = await callOpenRouter(
-            [
-              ...orMessages,
-              { role: "assistant", content: responseMessage.content ?? null, tool_calls: responseMessage.tool_calls },
-              { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) },
-            ],
-            { maxTokens: 2048, models: CHAT_MODELS }
-          )
-          const followUpText = followUp.choices[0].message.content ?? ""
-          if (followUpText) {
-            responseText = responseText ? `${responseText}\n\n${followUpText}` : followUpText
-          }
-        } catch (err) {
-          // Tool ran successfully but the narration call failed. The tool
-          // result is already persisted in messageType/metadata, so we can
-          // fall back to a short synthesised acknowledgement rather than
-          // throwing away the whole turn.
-          console.error("Follow-up OpenRouter call failed:", err)
-          if (!responseText) {
-            responseText =
-              "Done. (I couldn't reach my AI backend to write this up properly — the action above ran successfully.)"
+      try {
+        const nextResponse = await callOpenRouter(accMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+        currentMsg = nextResponse.choices[0].message
+        if (currentMsg.content) {
+          responseText = currentMsg.content
+        }
+      } catch (err) {
+        console.error("Tool follow-up call failed:", err)
+        if (!responseText) {
+          responseText = "Done. (I couldn't reach my AI backend to write this up properly — the action above ran successfully.)"
+        }
+        break
+      }
+    }
+
+    // Narration detector: if the final AI message narrates an action without
+    // calling a tool, nudge it once to actually invoke the tool.
+    if (
+      !currentMsg.tool_calls &&
+      responseText &&
+      /\bI('ll| will| am going to)\b.*(build|create|generate|launch|set up|put together|search for|revise|update|regenerate|do that|get that done)/i.test(responseText)
+    ) {
+      console.warn("AI narrated an action without calling a tool — retrying with nudge")
+      try {
+        const nudgeMessages = [
+          ...accMessages,
+          ...(toolRounds === 0 ? [{ role: "assistant", content: responseText }] : []),
+          { role: "user", content: "You said you would take an action but didn't call the tool. Please call the appropriate tool now." },
+        ]
+        const nudgeResponse = await callOpenRouter(nudgeMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+        const nudgeMsg = nudgeResponse.choices[0].message
+        if (nudgeMsg.tool_calls) {
+          for (const tc of nudgeMsg.tool_calls) {
+            let toolInput: Record<string, unknown>
+            try { toolInput = JSON.parse(tc.function.arguments) } catch { continue }
+            let toolResult: unknown
+            try {
+              toolResult = await executeToolCall(
+                ctx as unknown as ToolCtx, tc.function.name, toolInput,
+                args.userId, conversation.businessId, args.conversationId
+              )
+            } catch { continue }
+            applyToolType(tc.function.name, toolResult)
+
+            try {
+              const followUp = await callOpenRouter(
+                [...nudgeMessages, { role: "assistant", content: nudgeMsg.content ?? null, tool_calls: nudgeMsg.tool_calls }, { role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) }],
+                { maxTokens: 2048, models: CHAT_MODELS }
+              )
+              if (followUp.choices[0].message.content) {
+                responseText = followUp.choices[0].message.content
+              }
+            } catch {
+              // Tool ran but follow-up narration failed — keep original text
+            }
           }
         }
+      } catch {
+        // Nudge retry failed — keep original response
       }
     }
 
@@ -429,6 +481,7 @@ export const generateCampaign = action({
   args: {
     businessId: v.id("businesses"),
     phase: v.optional(v.number()),
+    channels: v.optional(v.array(v.string())),
   },
   handler: async (ctx, args) => {
     const business = await ctx.runQuery(api.businesses.get, { id: args.businessId })
@@ -448,11 +501,14 @@ export const generateCampaign = action({
       shopify: "Shopify",
       buffer: "Buffer",
     }
-    const connectedLabels = connectedPlatforms.map((p) => platformLabels[p] ?? p)
 
-    const channelsNote = connectedPlatforms.length > 0
-      ? `CONNECTED CHANNELS (use ONLY these): ${connectedLabels.join(", ")}.
-STRICT RULE: The suggested_channels array and budget_breakdown.channel_split array MUST only contain channels from the list above. Do NOT add LinkedIn, Google, TikTok, or any other platform that is not listed. If only one channel is connected, put 100% of the budget on that single channel.`
+    // Use explicitly specified channels if provided, otherwise fall back to connected channels
+    const activePlatforms = args.channels?.length ? args.channels : connectedPlatforms
+    const activeLabels = activePlatforms.map((p) => platformLabels[p] ?? p)
+
+    const channelsNote = activePlatforms.length > 0
+      ? `ALLOWED CHANNELS (use ONLY these, no others): ${activeLabels.join(", ")}.
+STRICT RULE: The suggested_channels array and budget_breakdown.channel_split array MUST only contain channels from the list above. Do NOT add LinkedIn, Google, TikTok, or any other platform that is not listed. If only one channel is allowed, put 100% of the budget on that single channel.`
       : "No ad platforms are connected yet. Suggest which platform(s) would work best and why."
 
     const currency = currencyForLocations(business.locations)
@@ -511,9 +567,9 @@ Return ONLY valid JSON:
       throw new Error("Failed to parse campaign data from AI response. Please try again.")
     }
 
-    // The AI sometimes ignores the channel restriction and adds platforms
-    // the user hasn't connected. Programmatically enforce the constraint.
-    if (connectedPlatforms.length > 0) {
+    // Programmatically enforce channel restrictions — the AI often ignores
+    // the prompt-level constraint and adds platforms the user didn't ask for.
+    if (activePlatforms.length > 0) {
       const platformKeywords: Record<string, string[]> = {
         meta: ["meta", "facebook", "instagram"],
         google: ["google"],
@@ -524,26 +580,26 @@ Return ONLY valid JSON:
         shopify: ["shopify"],
         buffer: ["buffer"],
       }
-      const allowedKeywords = connectedPlatforms.flatMap((p) => platformKeywords[p] ?? [p])
-      const matchesConnected = (name: string) => {
+      const allowedKeywords = activePlatforms.flatMap((p) => platformKeywords[p] ?? [p])
+      const matchesAllowed = (name: string) => {
         const lower = name.toLowerCase()
         return allowedKeywords.some((kw) => lower.includes(kw))
       }
 
       const channels = campaignData.suggested_channels as Array<{ channel: string; reason: string }> | undefined
       if (Array.isArray(channels)) {
-        const filtered = channels.filter((ch) => matchesConnected(ch.channel))
-        campaignData.suggested_channels = filtered.length > 0 ? filtered : connectedLabels.map((l) => ({ channel: l, reason: "Connected platform" }))
+        const filtered = channels.filter((ch) => matchesAllowed(ch.channel))
+        campaignData.suggested_channels = filtered.length > 0 ? filtered : activeLabels.map((l) => ({ channel: l, reason: "Selected platform" }))
       }
 
       const budget = campaignData.budget_breakdown as { monthly_total: unknown; channel_split?: Array<{ channel: string; percentage: number; amount: unknown }> } | undefined
       if (budget?.channel_split) {
-        const filtered = budget.channel_split.filter((s) => matchesConnected(s.channel))
-        const finalChannels = filtered.length > 0 ? filtered : connectedLabels.map((l) => ({ channel: l, percentage: 0, amount: "" as unknown }))
+        const filtered = budget.channel_split.filter((s) => matchesAllowed(s.channel))
+        const finalChannels = filtered.length > 0 ? filtered : activeLabels.map((l) => ({ channel: l, percentage: 0, amount: "" as unknown }))
         const totalNum = parseFloat(String(budget.monthly_total).replace(/[^0-9.]/g, "")) || 0
         const perChannelPct = Math.round(100 / finalChannels.length)
         budget.channel_split = finalChannels.map((ch, idx) => ({
-          channel: filtered.length > 0 ? ch.channel : connectedLabels[idx] ?? ch.channel,
+          channel: filtered.length > 0 ? ch.channel : activeLabels[idx] ?? ch.channel,
           percentage: idx === finalChannels.length - 1 ? 100 - perChannelPct * (finalChannels.length - 1) : perChannelPct,
           amount: `${currency.symbol}${Math.round((totalNum * (idx === finalChannels.length - 1 ? 100 - perChannelPct * (finalChannels.length - 1) : perChannelPct)) / 100).toLocaleString()}`,
         }))
@@ -949,6 +1005,7 @@ async function executeToolCall(
       return await ctx.runAction(api.ai.generateCampaign, {
         businessId,
         phase: input.phase as number | undefined,
+        channels: (input.channels as string[]) ?? undefined,
       })
     }
 

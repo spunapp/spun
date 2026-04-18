@@ -78,6 +78,11 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
           type: "number",
           description: "Campaign phase (1=initial, 2=optimise, 3=scale)",
         },
+        channels: {
+          type: "array",
+          items: { type: "string" },
+          description: "Restrict the campaign to ONLY these ad platforms. Use platform keys: meta, google, linkedin, tiktok. Always pass this based on what the user has asked for or what you know they want.",
+        },
       },
     },
   },
