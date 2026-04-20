@@ -480,7 +480,7 @@ Return ONLY valid JSON:
   }
 }`
 
-    const campaignResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 4000 })
+    const campaignResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 4000, models: CHAT_MODELS })
     const campaignText = campaignResp.choices[0].message.content ?? ""
 
     const jsonMatch = campaignText.match(/\{[\s\S]*\}/)
@@ -703,7 +703,7 @@ Return ONLY valid JSON:
 
       let creativeText: string
       try {
-        const creativeResp = await callOpenRouter([{ role: "user", content: copyPrompt }], { maxTokens: 1500 })
+        const creativeResp = await callOpenRouter([{ role: "user", content: copyPrompt }], { maxTokens: 1500, models: CHAT_MODELS })
         creativeText = creativeResp.choices[0].message.content ?? ""
       } catch {
         return null
