@@ -23,7 +23,7 @@ export default function ChatClient() {
   const router = useRouter()
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [pendingSend, setPendingSend] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [quickReplies, setQuickReplies] = useState<string[]>([])
 
@@ -81,6 +81,11 @@ export default function ChatClient() {
     api.conversations.getMessages,
     activeConversationId ? { conversationId: activeConversationId } : "skip"
   )
+
+  // Loading state: true when we've sent a message and the assistant hasn't
+  // replied yet (last message in the thread is from the user).
+  const lastMessage = messages && messages.length > 0 ? messages[messages.length - 1] : null
+  const isLoading = pendingSend || (lastMessage?.role === "user" && messages !== undefined)
 
   // Mutations & Actions
   const createConversation = useMutation(api.conversations.create)
@@ -144,7 +149,7 @@ export default function ChatClient() {
       if (!userId || !activeConversationId || sendingRef.current) return
       sendingRef.current = true
 
-      setIsLoading(true)
+      setPendingSend(true)
       setQuickReplies([])
       setError(null)
 
@@ -181,18 +186,24 @@ export default function ChatClient() {
           }
         }
 
-        await chat({ conversationId: activeConversationId, userMessage: message, userId })
+        // Fire-and-forget: the action saves messages to the DB, and our
+        // Convex subscription picks them up in real-time. No need to block
+        // the UI waiting for the full AI response.
+        chat({ conversationId: activeConversationId, userMessage: message, userId })
+          .catch((err) => {
+            console.error("Chat error:", err)
+            setError("Something went wrong. Please try again.")
+          })
+          .finally(() => {
+            sendingRef.current = false
+            setPendingSend(false)
+          })
       } catch (err) {
         console.error("Chat error:", err)
         setError("Something went wrong. Please try again.")
-        // Re-throw so the ChatInput preserves the user's typed text instead
-        // of clearing it. LLM outages are handled server-side with a fallback
-        // assistant message — if we reach here it's a truly unexpected error
-        // (Convex network failure, etc.) and preserving input is correct.
-        throw err
-      } finally {
         sendingRef.current = false
-        setIsLoading(false)
+        setPendingSend(false)
+        throw err
       }
     },
     [userId, activeConversationId, chat, business, generateUploadUrl, saveBrandAsset]
