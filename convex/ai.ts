@@ -373,6 +373,9 @@ export const chat = action({
       responseText = "Sorry, I drew a blank on that one. Could you say that again or rephrase?"
     }
 
+    // Strip internal markers the AI sometimes echoes back to the user
+    responseText = responseText.replace(/\s*\[Campaign ID: [^\]]+\]/g, "")
+
     const messageId = await ctx.runMutation(api.messages.send, {
       conversationId: args.conversationId,
       role: "assistant",
@@ -454,17 +457,17 @@ BUSINESS PROFILE:
 
 CONNECTED CHANNELS: ${channelsNote}
 
-Return ONLY valid JSON:
+Return ONLY valid JSON, keep values concise:
 {
-  "theme": "A compelling campaign theme/concept",
+  "theme": "Campaign theme (max 10 words)",
   "audience_breakdown": {
     "total_addressable_market": "Estimated TAM",
-    "serviceable_market": "Realistic reachable market",
-    "target_segment": "Specific segment to target first",
-    "key_characteristics": ["trait 1", "trait 2", "trait 3", "trait 4", "trait 5"]
+    "serviceable_market": "Reachable market",
+    "target_segment": "First segment to target",
+    "key_characteristics": ["trait 1", "trait 2", "trait 3"]
   },
   "suggested_channels": [
-    { "channel": "Channel name", "reason": "Why this channel", "estimated_reach": "Potential reach" }
+    { "channel": "Channel name", "reason": "Why (1 sentence)", "estimated_reach": "Reach" }
   ],
   "budget_breakdown": {
     "monthly_total": "${currency.symbol}X,XXX",
@@ -474,13 +477,13 @@ Return ONLY valid JSON:
     ]
   },
   "funnel": {
-    "tof": { "objective": "", "audience": "", "messaging": "", "creative_ideas": ["", "", ""], "kpis": ["", "", ""] },
-    "mof": { "objective": "", "audience": "", "messaging": "", "creative_ideas": ["", "", ""], "kpis": ["", "", ""] },
-    "bof": { "objective": "", "audience": "", "messaging": "", "creative_ideas": ["", "", ""], "kpis": ["", "", ""] }
+    "tof": { "objective": "", "messaging": "", "creative_ideas": ["", "", ""] },
+    "mof": { "objective": "", "messaging": "", "creative_ideas": ["", "", ""] },
+    "bof": { "objective": "", "messaging": "", "creative_ideas": ["", "", ""] }
   }
 }`
 
-    const campaignResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 4000, models: CHAT_MODELS })
+    const campaignResp = await callOpenRouter([{ role: "user", content: prompt }], { maxTokens: 2500, models: CHAT_MODELS })
     const campaignText = campaignResp.choices[0].message.content ?? ""
 
     const jsonMatch = campaignText.match(/\{[\s\S]*\}/)
