@@ -1127,6 +1127,43 @@ Return ONLY valid JSON:
       }
     }
 
+    case "search_web": {
+      const query = input.query as string
+      if (!query) return { error: "No search query provided" }
+
+      const tavilyKey = process.env.TAVILY_API_KEY
+      if (!tavilyKey) return { error: "Web search is not configured yet. Ask the user to add their Tavily API key." }
+
+      try {
+        const res = await fetch("https://api.tavily.com/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            api_key: tavilyKey,
+            query,
+            search_depth: (input.searchDepth as string) ?? "basic",
+            max_results: 5,
+            include_answer: true,
+          }),
+        })
+        if (!res.ok) {
+          const errText = await res.text()
+          return { error: `Search failed: ${res.status} ${errText}` }
+        }
+        const data = await res.json()
+        return {
+          answer: data.answer ?? null,
+          results: (data.results ?? []).map((r: any) => ({
+            title: r.title,
+            url: r.url,
+            content: r.content,
+          })),
+        }
+      } catch (err) {
+        return { error: `Search failed: ${err instanceof Error ? err.message : String(err)}` }
+      }
+    }
+
     default:
       return { error: `Unknown tool: ${toolName}` }
   }
