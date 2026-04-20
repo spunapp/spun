@@ -549,18 +549,19 @@ Return ONLY valid JSON, keep values concise:
   },
 })
 
-async function fetchStockImage(query: string): Promise<Buffer | null> {
+async function fetchStockImage(query: string, index: number = 0): Promise<Buffer | null> {
   const apiKey = process.env.PEXELS_API_KEY
   if (!apiKey) return null
 
   try {
     const res = await fetch(
-      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=1&orientation=square`,
+      `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&per_page=5&orientation=square`,
       { headers: { Authorization: apiKey } }
     )
     if (!res.ok) return null
     const data = await res.json()
-    const url = data.photos?.[0]?.src?.large
+    const photo = data.photos?.[index % (data.photos?.length || 1)]
+    const url = photo?.src?.large
     if (!url) return null
 
     const imgRes = await fetch(url)
@@ -679,61 +680,69 @@ export const generateCreatives = action({
       imageStorageId?: string
     }> = []
 
-    // Generate all variants in parallel for speed
-    const variantPromises = [1, 2, 3].map(async (variant) => {
-      const format = formats[args.funnelStage]?.[variant - 1] ?? "Social Square"
-      const customNote = args.customInstructions ? `\nADDITIONAL INSTRUCTIONS: ${args.customInstructions}` : ""
+    const allFormats = [1, 2, 3].map((v) => formats[args.funnelStage]?.[v - 1] ?? "Social Square")
+    const customNote = args.customInstructions ? `\nADDITIONAL INSTRUCTIONS: ${args.customInstructions}` : ""
 
-      const copyPrompt = `You are an expert ad copywriter. Write ad copy for:
+    // Single AI call generates all 3 variants — faster and ensures distinct copy/imagery
+    const batchPrompt = `You are an expert ad copywriter. Write 3 distinct ad variants for:
 
 BUSINESS: ${business.name}
 INDUSTRY: ${business.industry}
 CAMPAIGN THEME: ${campaign.theme}
-FUNNEL STAGE: ${stageMap[args.funnelStage]} (Variant ${variant})
-FORMAT: ${format}
+FUNNEL STAGE: ${stageMap[args.funnelStage]}
 OBJECTIVE: ${stageData?.objective ?? ""}
 MESSAGING: ${stageData?.messaging ?? ""}
-CREATIVE IDEA: ${stageData?.creative_ideas?.[variant - 1] ?? ""}${customNote}
+CREATIVE IDEAS: ${(stageData?.creative_ideas ?? []).join("; ")}${customNote}
+
+Formats: Variant 1 = ${allFormats[0]}, Variant 2 = ${allFormats[1]}, Variant 3 = ${allFormats[2]}
+
+IMPORTANT: Each variant must have a DIFFERENT angle and DIFFERENT stock_search_query. Do NOT reuse the same visual concept — vary the subject matter (e.g. one person working, one team meeting, one data dashboard). The stock queries must each find a DIFFERENT type of image.
 
 Return ONLY valid JSON:
 {
-  "headline": "Compelling headline (max 8 words)",
-  "copy": "Body copy (max 20 words)",
-  "cta": "CTA button text (max 4 words)",
-  "image_prompt": "A detailed prompt for generating an ad image. Describe the visual style, composition, colours, and mood. Do NOT include any text in the image — text will be overlaid separately. Make it professional, on-brand, and suitable for ${format}.",
-  "stock_search_query": "A short search query (2-4 words) to find a suitable stock photo on Pexels for this ad. Focus on the visual subject, e.g. 'business founder laptop' or 'team meeting office'."
+  "variants": [
+    {
+      "headline": "Max 8 words",
+      "copy": "Max 20 words",
+      "cta": "Max 4 words",
+      "stock_search_query": "2-4 word Pexels search query for a UNIQUE image for this variant"
+    },
+    { "headline": "", "copy": "", "cta": "", "stock_search_query": "" },
+    { "headline": "", "copy": "", "cta": "", "stock_search_query": "" }
+  ]
 }`
 
-      let creativeText: string
-      try {
-        const creativeResp = await callOpenRouter([{ role: "user", content: copyPrompt }], { maxTokens: 1500, models: CHAT_MODELS })
-        creativeText = creativeResp.choices[0].message.content ?? ""
-      } catch {
-        return null
-      }
+    let variantsData: Array<{ headline: string; copy: string; cta: string; stock_search_query?: string }> = []
+    try {
+      const copyResp = await callOpenRouter([{ role: "user", content: batchPrompt }], { maxTokens: 1500, models: CHAT_MODELS })
+      const copyText = copyResp.choices[0].message.content ?? ""
+      const jsonMatch = copyText.match(/\{[\s\S]*\}/)
+      const parsed = JSON.parse(jsonMatch?.[0] || copyText)
+      variantsData = parsed.variants ?? []
+    } catch {
+      // If batch fails, bail out
+      return { count: 0, campaignId: args.campaignId, funnelStage: args.funnelStage, creatives: [] }
+    }
 
+    // Fetch images and save all variants in parallel
+    const imagePromises = variantsData.map(async (vd, idx) => {
+      const variant = idx + 1
+      const format = allFormats[idx]
       try {
-        const jsonMatch = creativeText.match(/\{[\s\S]*\}/)
-        const creativeData = JSON.parse(jsonMatch?.[0] || creativeText)
-
         let imageBuffer: Buffer | null = null
-
-        const stockQuery = creativeData.stock_search_query as string | undefined
+        const stockQuery = vd.stock_search_query
         if (stockQuery) {
-          imageBuffer = await fetchStockImage(stockQuery)
+          imageBuffer = await fetchStockImage(stockQuery, idx)
         }
         if (!imageBuffer) {
-          const imagePrompt = creativeData.image_prompt as string | undefined
-          if (imagePrompt) {
-            imageBuffer = await generateImage(imagePrompt)
-          }
+          imageBuffer = await generateImage(`Professional ad image for ${business.name}: ${vd.headline}`)
         }
 
         if (imageBuffer && logoBuffer) {
           try {
             imageBuffer = await overlayLogo(imageBuffer, logoBuffer)
           } catch (err) {
-            console.warn("Logo overlay failed, using image without logo:", err)
+            console.warn("Logo overlay failed:", err)
           }
         }
 
@@ -743,28 +752,28 @@ Return ONLY valid JSON:
           imageStorageId = await ctx.storage.store(blob)
         }
 
-        const headline = creativeData.headline ?? ""
-        const copy = creativeData.copy ?? ""
-        const cta = creativeData.cta ?? ""
-
         await ctx.runMutation(api.adCreatives.create, {
           campaignId: args.campaignId,
           businessId: args.businessId,
           funnelStage: args.funnelStage as "tof" | "mof" | "bof",
           variant,
           format,
-          headline,
-          copy,
-          cta,
+          headline: vd.headline ?? "",
+          copy: vd.copy ?? "",
+          cta: vd.cta ?? "",
           ...(imageStorageId ? { imageStorageId } : {}),
         })
-        return { headline, copy, cta, format, variant, funnelStage: args.funnelStage, ...(imageStorageId ? { imageStorageId: imageStorageId as string } : {}) }
+        return {
+          headline: vd.headline ?? "", copy: vd.copy ?? "", cta: vd.cta ?? "",
+          format, variant, funnelStage: args.funnelStage,
+          ...(imageStorageId ? { imageStorageId: imageStorageId as string } : {}),
+        }
       } catch {
         return null
       }
     })
 
-    const results = await Promise.all(variantPromises)
+    const results = await Promise.all(imagePromises)
     for (const r of results) {
       if (r) savedCreatives.push(r)
     }
