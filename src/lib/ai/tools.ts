@@ -253,4 +253,24 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       properties: {},
     },
   },
+  {
+    name: "search_web",
+    description:
+      "Search the web for information. Use this to research competitors, market trends, industry data, company information, pricing benchmarks, or anything else that would help build a better marketing strategy. Call this proactively during onboarding when the user mentions competitors or their industry, and when building campaigns to research the market.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        query: {
+          type: "string",
+          description: "The search query. Be specific — e.g. 'top competitors to Acme in UK SaaS marketing' rather than just 'competitors'.",
+        },
+        searchDepth: {
+          type: "string",
+          enum: ["basic", "advanced"],
+          description: "Use 'basic' for quick lookups, 'advanced' for deeper research. Defaults to basic.",
+        },
+      },
+      required: ["query"],
+    },
+  },
 ]
