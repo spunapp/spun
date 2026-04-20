@@ -113,27 +113,29 @@ export const chat = action({
       messageType: "text",
     })
 
-    // Load context
-    const conversation = await ctx.runQuery(api.conversations.get, {
-      id: args.conversationId,
-    })
+    // Load context — parallelise independent queries
+    const [conversation, allMessages] = await Promise.all([
+      ctx.runQuery(api.conversations.get, { id: args.conversationId }),
+      ctx.runQuery(api.conversations.getMessages, { conversationId: args.conversationId }),
+    ])
     if (!conversation) throw new Error("Conversation not found")
 
     const business = conversation.businessId
       ? await ctx.runQuery(api.businesses.get, { id: conversation.businessId })
       : null
 
-    // Check usage limits before calling AI
+    // Check usage limits — parallelise usage + subscription queries
     if (business) {
-      const usage = await ctx.runQuery(api.usage.getCurrentUsage, { businessId: business._id })
-      const subscription = await ctx.runQuery(api.subscriptions.getByUser, { userId: args.userId })
+      const [usage, subscription, credits] = await Promise.all([
+        ctx.runQuery(api.usage.getCurrentUsage, { businessId: business._id }),
+        ctx.runQuery(api.subscriptions.getByUser, { userId: args.userId }),
+        ctx.runQuery(api.credits.getBalance, { businessId: business._id }),
+      ])
       const tier = subscription?.tier ?? "standard"
       const { checkUsageLimit } = await import("../src/lib/billing/tiers")
       const limitCheck = checkUsageLimit(tier, usage)
 
       if (!limitCheck.allowed && limitCheck.limitType === "messages") {
-        // Check if user has message credits
-        const credits = await ctx.runQuery(api.credits.getBalance, { businessId: business._id })
         if (credits.messageCredits <= 0) {
           const limitMsg = `You've used all ${limitCheck.limit} AI responses this month on your ${tier === "standard" ? "Standard" : "Pro"} plan. Buy a credit pack (£9.99) for 100 more responses, or upgrade your plan.`
           await ctx.runMutation(api.messages.send, {
@@ -145,14 +147,9 @@ export const chat = action({
           })
           return { content: limitMsg, messageType: "text", metadata: { limitReached: true, limitType: "messages" } }
         }
-        // Deduct from credits
         await ctx.runMutation(api.credits.deductMessage, { businessId: business._id })
       }
     }
-
-    const allMessages = await ctx.runQuery(api.conversations.getMessages, {
-      conversationId: args.conversationId,
-    })
 
     // `hasHistory` tells the persona whether this is a fresh conversation
     // (greet the user) or an in-progress one (continue where left off).
@@ -384,10 +381,11 @@ export const chat = action({
       metadata,
     })
 
-    // Track this AI response (1 per user turn, regardless of tool calls)
+    // Track usage in the background — don't block the response
     if (business) {
-      const ledgerId = await ctx.runMutation(api.usage.getOrCreateLedger, { businessId: business._id })
-      await ctx.runMutation(api.usage.incrementAiResponses, { ledgerId })
+      ctx.runMutation(api.usage.getOrCreateLedger, { businessId: business._id })
+        .then((ledgerId) => ctx.runMutation(api.usage.incrementAiResponses, { ledgerId }))
+        .catch((err) => console.error("Usage tracking failed:", err))
     }
 
     return { messageId, content: responseText, messageType, metadata }
@@ -678,9 +676,9 @@ export const generateCreatives = action({
       imageStorageId?: string
     }> = []
 
-    for (let variant = 1; variant <= 3; variant++) {
+    // Generate all variants in parallel for speed
+    const variantPromises = [1, 2, 3].map(async (variant) => {
       const format = formats[args.funnelStage]?.[variant - 1] ?? "Social Square"
-
       const customNote = args.customInstructions ? `\nADDITIONAL INSTRUCTIONS: ${args.customInstructions}` : ""
 
       const copyPrompt = `You are an expert ad copywriter. Write ad copy for:
@@ -708,7 +706,7 @@ Return ONLY valid JSON:
         const creativeResp = await callOpenRouter([{ role: "user", content: copyPrompt }], { maxTokens: 1500 })
         creativeText = creativeResp.choices[0].message.content ?? ""
       } catch {
-        continue
+        return null
       }
 
       try {
@@ -717,7 +715,6 @@ Return ONLY valid JSON:
 
         let imageBuffer: Buffer | null = null
 
-        // Try stock image first (faster, real photos), fall back to AI generation
         const stockQuery = creativeData.stock_search_query as string | undefined
         if (stockQuery) {
           imageBuffer = await fetchStockImage(stockQuery)
@@ -729,7 +726,6 @@ Return ONLY valid JSON:
           }
         }
 
-        // Overlay logo if available
         if (imageBuffer && logoBuffer) {
           try {
             imageBuffer = await overlayLogo(imageBuffer, logoBuffer)
@@ -759,18 +755,15 @@ Return ONLY valid JSON:
           cta,
           ...(imageStorageId ? { imageStorageId } : {}),
         })
-        savedCreatives.push({
-          headline,
-          copy,
-          cta,
-          format,
-          variant,
-          funnelStage: args.funnelStage,
-          ...(imageStorageId ? { imageStorageId: imageStorageId as string } : {}),
-        })
+        return { headline, copy, cta, format, variant, funnelStage: args.funnelStage, ...(imageStorageId ? { imageStorageId: imageStorageId as string } : {}) }
       } catch {
-        continue
+        return null
       }
+    })
+
+    const results = await Promise.all(variantPromises)
+    for (const r of results) {
+      if (r) savedCreatives.push(r)
     }
 
     if (savedCreatives.length > 0) {
