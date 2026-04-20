@@ -316,7 +316,7 @@ export const chat = action({
     if (
       !currentMsg.tool_calls &&
       responseText &&
-      /\bI('ll| will| am going to)\b.*(build|create|generate|launch|set up|put together|search for|revise|update|regenerate|do that|get that done)/i.test(responseText)
+      /\bI('ll| will| am going to)\b.*(build|create|generate|set up|put together|search for|revise|update|regenerate|do that|get that done)\b/i.test(responseText)
     ) {
       console.warn("AI narrated an action without calling a tool — retrying with nudge")
       try {
