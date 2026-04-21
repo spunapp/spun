@@ -293,8 +293,17 @@ export const chat = action({
         accMessages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify(toolResult) })
       }
 
+      // After generating a campaign, stop the loop so the AI can ask about
+      // brand assets before generating creatives. Don't auto-chain.
+      const toolsThisRound = currentMsg.tool_calls.map((tc: any) => tc.function.name)
+      const shouldPause = toolsThisRound.includes("generate_campaign") || toolsThisRound.includes("generate_strategy")
+
       try {
-        const nextResponse = await callOpenRouter(accMessages, { tools: orTools, maxTokens: 4096, models: CHAT_MODELS })
+        const nextResponse = await callOpenRouter(accMessages, {
+          tools: shouldPause ? undefined : orTools,
+          maxTokens: 4096,
+          models: CHAT_MODELS,
+        })
         currentMsg = nextResponse.choices[0].message
         if (currentMsg.content) {
           responseText = currentMsg.content
