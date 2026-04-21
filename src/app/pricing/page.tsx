@@ -93,8 +93,14 @@ export default function PricingPage() {
   const { isSignedIn } = useUser()
   const [loading, setLoading] = useState<string | null>(null)
   const [billing, setBilling] = useState<"annual" | "monthly">("annual")
-  const [adSpend, setAdSpend] = useState(1000)
-  const [roiPlan, setRoiPlan] = useState<"standard" | "pro">("standard")
+  const [compareTab, setCompareTab] = useState<"agency" | "inhouse">("agency")
+  const [agencySpend, setAgencySpend] = useState(3000)
+  const [selectedRoles, setSelectedRoles] = useState<Record<string, boolean>>({
+    "Social Media Manager": true,
+    "Paid Media Manager": true,
+    "SEO Manager": true,
+    "Content Creator": false,
+  })
 
   async function handleCheckout(priceId: string) {
     if (!isSignedIn) {
@@ -120,11 +126,21 @@ export default function PricingPage() {
   const standardPrice = PRICES.standard[billing]
   const proPrice = PRICES.pro[billing]
 
-  const planCost = roiPlan === "standard" ? PRICES.standard.annual : PRICES.pro.annual
-  const leads = Math.round(adSpend * 0.03)
-  const revenue = leads * 150
-  const totalCost = adSpend + planCost
-  const roi = totalCost > 0 ? Math.round(((revenue - totalCost) / totalCost) * 100) : 0
+  const ROLE_SALARIES: Record<string, number> = {
+    "Social Media Manager": 32000,
+    "Paid Media Manager": 38000,
+    "SEO Manager": 35000,
+    "Content Creator": 28000,
+  }
+
+  const spunAnnualCost = PRICES.pro.annual * 12
+  const agencyAnnualCost = agencySpend * 12
+  const inhouseCost = Object.entries(selectedRoles)
+    .filter(([, selected]) => selected)
+    .reduce((sum, [role]) => sum + ROLE_SALARIES[role], 0)
+  const currentCost = compareTab === "agency" ? agencyAnnualCost : inhouseCost
+  const savings = currentCost - spunAnnualCost
+  const savingsPercent = currentCost > 0 ? Math.round((savings / currentCost) * 100) : 0
 
   return (
     <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-6">
@@ -293,85 +309,149 @@ export default function PricingPage() {
       {/* ROI Calculator */}
       <div className="w-full max-w-5xl mb-16">
         <div className="text-center mb-8">
-          <h2 className="text-white text-2xl font-semibold">Calculate Your ROI</h2>
-          <p className="text-slate-400 text-sm mt-2">See what Spun could deliver for your business</p>
+          <span className="inline-block bg-[#5B9BAA]/15 text-[#5B9BAA] text-xs font-semibold px-3 py-1 rounded-full mb-3">ROI Calculator</span>
+          <h2 className="text-white text-2xl font-semibold">Calculate Your Savings</h2>
+          <p className="text-slate-400 text-sm mt-2">See how much you could save by switching to Spun compared to your current marketing setup.</p>
         </div>
         <div
           className="rounded-2xl p-8 bg-[var(--background)]"
           style={{ border: "1px solid rgba(255,255,255,0.1)" }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Inputs */}
-            <div className="space-y-6">
+          {/* Tabs */}
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <button
+              onClick={() => setCompareTab("agency")}
+              className={`flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-medium transition-all ${
+                compareTab === "agency"
+                  ? "text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+              style={{
+                border: compareTab === "agency" ? "2px solid #5B9BAA" : "1px solid rgba(255,255,255,0.1)",
+                background: compareTab === "agency" ? "rgba(91,155,170,0.08)" : "transparent",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+              Compare to Agency
+            </button>
+            <button
+              onClick={() => setCompareTab("inhouse")}
+              className={`flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-medium transition-all ${
+                compareTab === "inhouse"
+                  ? "text-white"
+                  : "text-slate-400 hover:text-white"
+              }`}
+              style={{
+                border: compareTab === "inhouse" ? "2px solid #5B9BAA" : "1px solid rgba(255,255,255,0.1)",
+                background: compareTab === "inhouse" ? "rgba(91,155,170,0.08)" : "transparent",
+              }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              Compare to In-House Team
+            </button>
+          </div>
+
+          {/* Content area */}
+          <div className="rounded-xl p-6 mb-8" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
+            {compareTab === "agency" ? (
               <div>
-                <div className="flex items-center justify-between mb-3">
-                  <label className="text-slate-300 text-sm font-medium">Monthly ad spend</label>
-                  <span className="text-white text-lg font-bold">£{adSpend.toLocaleString()}</span>
-                </div>
+                <p className="text-white text-sm font-medium mb-5">What does your agency charge per month?</p>
                 <input
                   type="range"
-                  min={500}
-                  max={10000}
+                  min={3000}
+                  max={15000}
                   step={500}
-                  value={adSpend}
-                  onChange={(e) => setAdSpend(Number(e.target.value))}
+                  value={agencySpend}
+                  onChange={(e) => setAgencySpend(Number(e.target.value))}
                   className="w-full h-2 rounded-full appearance-none cursor-pointer"
                   style={{
-                    background: `linear-gradient(to right, #5B9BAA ${((adSpend - 500) / 9500) * 100}%, rgba(255,255,255,0.1) ${((adSpend - 500) / 9500) * 100}%)`,
+                    background: `linear-gradient(to right, #5B9BAA ${((agencySpend - 3000) / 12000) * 100}%, rgba(255,255,255,0.1) ${((agencySpend - 3000) / 12000) * 100}%)`,
                     accentColor: "#5B9BAA",
                   }}
                 />
-                <div className="flex justify-between mt-1">
-                  <span className="text-slate-500 text-xs">£500</span>
-                  <span className="text-slate-500 text-xs">£10,000</span>
+                <div className="flex items-center justify-between mt-2">
+                  <span className="text-slate-500 text-xs">£3,000/mo</span>
+                  <span className="text-white text-xl font-bold">£{agencySpend.toLocaleString()}/mo</span>
+                  <span className="text-slate-500 text-xs">£15,000/mo</span>
                 </div>
               </div>
+            ) : (
               <div>
-                <label className="text-slate-300 text-sm font-medium block mb-3">Your plan</label>
-                <div className="inline-flex rounded-full p-1" style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
-                  <button
-                    onClick={() => setRoiPlan("standard")}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      roiPlan === "standard"
-                        ? "bg-[#5B9BAA] text-white"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Standard
-                  </button>
-                  <button
-                    onClick={() => setRoiPlan("pro")}
-                    className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${
-                      roiPlan === "pro"
-                        ? "bg-[#5B9BAA] text-white"
-                        : "text-slate-400 hover:text-white"
-                    }`}
-                  >
-                    Pro
-                  </button>
+                <p className="text-white text-sm font-medium mb-5">Which roles would you hire in-house? (Select all that apply)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {Object.entries(ROLE_SALARIES).map(([role, salary]) => (
+                    <button
+                      key={role}
+                      onClick={() => setSelectedRoles(prev => ({ ...prev, [role]: !prev[role] }))}
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
+                      style={{
+                        border: selectedRoles[role] ? "2px solid #5B9BAA" : "1px solid rgba(255,255,255,0.1)",
+                        background: selectedRoles[role] ? "rgba(91,155,170,0.08)" : "transparent",
+                      }}
+                    >
+                      <span
+                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
+                          selectedRoles[role] ? "bg-[#5B9BAA]" : ""
+                        }`}
+                        style={selectedRoles[role] ? {} : { border: "1px solid rgba(255,255,255,0.2)" }}
+                      >
+                        {selectedRoles[role] && <Check className="w-3 h-3 text-white" />}
+                      </span>
+                      <span className="text-white text-sm font-medium flex-1">{role}</span>
+                      <span className="text-slate-400 text-sm">£{salary.toLocaleString()}/yr</span>
+                    </button>
+                  ))}
                 </div>
               </div>
-            </div>
+            )}
+          </div>
 
-            {/* Outputs */}
-            <div className="grid grid-cols-3 gap-4">
-              <div className="rounded-xl p-4 text-center" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
-                <p className="text-slate-400 text-xs mb-2">Est. leads/mo</p>
-                <p className="text-white text-2xl font-bold">{leads}</p>
-              </div>
-              <div className="rounded-xl p-4 text-center" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)" }}>
-                <p className="text-slate-400 text-xs mb-2">Est. revenue/mo</p>
-                <p className="text-white text-2xl font-bold">£{revenue.toLocaleString()}</p>
-              </div>
-              <div className="rounded-xl p-4 text-center" style={{ border: "1px solid rgba(91,155,170,0.2)", background: "rgba(91,155,170,0.08)" }}>
-                <p className="text-slate-400 text-xs mb-2">Est. ROI</p>
-                <p className="text-[#5B9BAA] text-2xl font-bold">{roi}%</p>
-              </div>
+          {/* Results */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+            <div className="rounded-xl p-5" style={{ border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)" }}>
+              <p className="text-slate-400 text-xs mb-2 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded bg-red-500/15 flex items-center justify-center">
+                  <span className="text-red-400 text-xs font-bold">£</span>
+                </span>
+                {compareTab === "agency" ? "Agency Cost" : "In-House Cost"}
+              </p>
+              <p className="text-red-400 text-2xl font-bold">£{currentCost.toLocaleString()}</p>
+              <p className="text-slate-500 text-xs mt-1">per year</p>
+            </div>
+            <div className="rounded-xl p-5" style={{ border: "1px solid rgba(91,155,170,0.2)", background: "rgba(91,155,170,0.05)" }}>
+              <p className="text-slate-400 text-xs mb-2 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded bg-[#5B9BAA]/15 flex items-center justify-center">
+                  <span className="text-[#5B9BAA] text-xs font-bold">~</span>
+                </span>
+                Spun Pro Plan
+              </p>
+              <p className="text-[#5B9BAA] text-2xl font-bold">£{spunAnnualCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
+              <p className="text-slate-500 text-xs mt-1">per year</p>
+            </div>
+            <div className="rounded-xl p-5 bg-[#5B9BAA]">
+              <p className="text-white/80 text-xs mb-2 flex items-center gap-1.5">
+                <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">%</span>
+                </span>
+                Your Annual Savings
+              </p>
+              <p className="text-white text-2xl font-bold">£{Math.max(0, savings).toLocaleString()}</p>
+              {savings > 0 && (
+                <p className="text-white/80 text-xs mt-1">That&apos;s {savingsPercent}% less!</p>
+              )}
             </div>
           </div>
-          <p className="text-slate-500 text-xs mt-6 text-center">
-            Based on average conversion rates across SMB advertisers. Your results may vary.
-          </p>
+
+          <div className="text-center">
+            <button
+              onClick={() => handleCheckout(TIERS.pro.priceId)}
+              className="bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 px-8 rounded-xl transition-colors text-sm inline-flex items-center gap-2"
+            >
+              Start Saving Today
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+            </button>
+            <p className="text-slate-500 text-xs mt-3">14-day free trial. Cancel anytime.</p>
+          </div>
         </div>
       </div>
 
