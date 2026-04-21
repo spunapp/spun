@@ -245,6 +245,15 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
+    name: "show_ga4_setup_guide",
+    description:
+      "Show a step-by-step guide for setting up Google Analytics 4 (GA4) from scratch. Use this when the user doesn't have GA4 set up, needs help creating a GA4 property, or asks how to set up analytics tracking for their website. Do NOT use this for users who already have GA4 — use connect_channel with platform 'ga4' for them instead.",
+    input_schema: {
+      type: "object" as const,
+      properties: {},
+    },
+  },
+  {
     name: "check_usage",
     description:
       "Check the user's current usage against their subscription tier limits (campaigns launched, creatives generated, channels connected).",
