@@ -256,6 +256,9 @@ export const chat = action({
       } else if (toolName === "show_google_ads_setup_guide") {
         messageType = "google_ads_setup_guide"
         metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+      } else if (toolName === "show_ga4_setup_guide") {
+        messageType = "ga4_setup_guide"
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
       }
     }
 
@@ -1132,12 +1135,18 @@ Return ONLY valid JSON:
     }
 
     case "show_google_ads_setup_guide": {
-      // The GoogleAdsSetupGuide component holds the step content, so the
-      // tool just returns the Pipedream connect config the final CTA uses.
       return {
         action: "show_google_ads_setup_guide",
         platform: "google",
         pipedreamApp: "google_ads",
+      }
+    }
+
+    case "show_ga4_setup_guide": {
+      return {
+        action: "show_ga4_setup_guide",
+        platform: "ga4",
+        pipedreamApp: "google_analytics",
       }
     }
 

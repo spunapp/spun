@@ -11,6 +11,7 @@ import { StatusUpdate } from "./messages/StatusUpdate"
 import { ConnectPrompt } from "./messages/ConnectPrompt"
 import { MetaSetupGuide } from "./messages/MetaSetupGuide"
 import { GoogleAdsSetupGuide } from "./messages/GoogleAdsSetupGuide"
+import { GA4SetupGuide } from "./messages/GA4SetupGuide"
 
 interface Message {
   _id: string
@@ -79,6 +80,8 @@ export function ChatMessage({ message, onApprove, onReject, onRetry, onSend }: C
           <MetaSetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
         ) : message.messageType === "google_ads_setup_guide" ? (
           <GoogleAdsSetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
+        ) : message.messageType === "ga4_setup_guide" ? (
+          <GA4SetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
         ) : (
           <TextMessage content={message.content} isUser={isUser} />
         )}
