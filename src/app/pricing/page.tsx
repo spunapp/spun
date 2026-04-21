@@ -21,6 +21,7 @@ const CARD_FEATURES: Record<string, string[]> = {
     `${TIERS.standard.channels} ad channel`,
     "Strategy & competitor analysis",
     "AI image ad creation",
+    "Email support",
   ],
   pro: [
     `${TIERS.pro.messages} AI responses/mo`,
@@ -30,8 +31,11 @@ const CARD_FEATURES: Record<string, string[]> = {
     "Blog article writing",
     "Cross-platform analytics",
     "A/B testing suggestions",
+    "Email & phone support",
+    "Onboarding call",
   ],
   enterprise: [
+    "Everything in Pro, plus:",
     "Custom limits",
     "Multi-location support",
     "Multiple brands",
@@ -294,14 +298,20 @@ export default function PricingPage() {
             Contact us
           </a>
           <ul className="space-y-3 flex-1">
-            {CARD_FEATURES.enterprise.map((f) => (
-              <li key={f} className="flex items-start gap-2.5">
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15 mt-0.5 shrink-0">
-                  <Check className="w-3 h-3 text-[#5B9BAA]" />
-                </span>
-                <span className="text-slate-300 text-sm">{f}</span>
-              </li>
-            ))}
+            {CARD_FEATURES.enterprise.map((f, i) =>
+              i === 0 ? (
+                <li key={f} className="mb-1">
+                  <span className="text-slate-300 text-sm font-medium">{f}</span>
+                </li>
+              ) : (
+                <li key={f} className="flex items-start gap-2.5">
+                  <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15 mt-0.5 shrink-0">
+                    <Check className="w-3 h-3 text-[#5B9BAA]" />
+                  </span>
+                  <span className="text-slate-300 text-sm">{f}</span>
+                </li>
+              )
+            )}
           </ul>
         </div>
       </div>
