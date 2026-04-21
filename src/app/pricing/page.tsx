@@ -181,10 +181,10 @@ export default function PricingPage() {
       </div>
 
       {/* Pricing cards */}
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 items-start">
         {/* Standard */}
         <div
-          className="rounded-2xl p-6 flex flex-col bg-[var(--background)]"
+          className="rounded-2xl p-6 flex flex-col bg-[var(--background)] md:mt-6"
           style={{ border: "1px solid rgba(255,255,255,0.1)" }}
         >
           <h2 className="text-white text-lg font-semibold">Standard</h2>
@@ -203,7 +203,7 @@ export default function PricingPage() {
           <button
             onClick={() => handleCheckout(TIERS.standard.priceId)}
             disabled={loading === TIERS.standard.priceId}
-            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 mb-6"
+            className="w-full border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 mb-6"
           >
             {loading === TIERS.standard.priceId ? "Redirecting…" : "Start free trial"}
           </button>
@@ -222,11 +222,11 @@ export default function PricingPage() {
         {/* Pro */}
         <div
           className="rounded-2xl p-6 flex flex-col bg-[#5B9BAA]/5 relative"
-          style={{ border: "1px solid rgba(91,155,170,0.3)" }}
+          style={{ border: "2px solid #5B9BAA" }}
         >
           <div className="absolute -top-0 left-1/2 -translate-x-1/2">
             <span className="bg-[#5B9BAA] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-b-lg">
-              Popular
+              Most Popular
             </span>
           </div>
           <h2 className="text-white text-lg font-semibold">Pro</h2>
@@ -263,7 +263,7 @@ export default function PricingPage() {
 
         {/* Enterprise */}
         <div
-          className="rounded-2xl p-6 flex flex-col bg-[var(--background)]"
+          className="rounded-2xl p-6 flex flex-col bg-[var(--background)] md:mt-6"
           style={{ border: "1px solid rgba(255,255,255,0.1)" }}
         >
           <h2 className="text-white text-lg font-semibold">Enterprise</h2>
