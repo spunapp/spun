@@ -48,6 +48,9 @@ export default function HomePage() {
             <img src={LOGO_SRC} alt="" height={34} className="h-9 w-auto" />
           </div>
           <div className="flex items-center gap-6">
+            <Link href="/pricing" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
+              Pricing
+            </Link>
             <Link href="/faq" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
               FAQs
             </Link>
