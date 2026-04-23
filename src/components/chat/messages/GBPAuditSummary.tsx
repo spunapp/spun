@@ -85,9 +85,19 @@ export function GBPAuditSummary({ content, metadata, onSend }: GBPAuditSummaryPr
                 No Google Business Profile found
               </h4>
               <p className="text-xs text-slate-400 leading-relaxed mb-3">
-                I couldn&apos;t find a Google Business Profile linked to {audit.websiteUrl}. If you
-                have a physical location or serve local customers, a GBP is free, takes 15 minutes to
-                set up, and drives a big chunk of local discovery.
+                I couldn&apos;t find a Google Business Profile linked to {audit.websiteUrl}. Two common
+                reasons: (1) you don&apos;t have a GBP yet — it&apos;s free, takes 15 minutes, and drives a
+                big chunk of local discovery; (2) you have one but it isn&apos;t verified and published
+                yet, so it doesn&apos;t appear in public search results. Check{" "}
+                <a
+                  href="https://business.google.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#5B9BAA] hover:text-[#7ab5c4] underline"
+                >
+                  business.google.com
+                </a>{" "}
+                to see the status of your profile.
               </p>
               {onSend && (
                 <button

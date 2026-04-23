@@ -3,6 +3,7 @@
 // website — no OAuth needed. Audits what potential customers actually see.
 
 const PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText"
+const PLACES_AUTOCOMPLETE_URL = "https://places.googleapis.com/v1/places:autocomplete"
 const PLACES_DETAILS_URL = "https://places.googleapis.com/v1/places"
 
 const DETAILS_FIELD_MASK = [
@@ -247,7 +248,7 @@ async function textSearch(
   query: string,
   regionCode?: string
 ): Promise<PlaceSearchResponse["places"]> {
-  const body: Record<string, unknown> = { textQuery: query, pageSize: 5 }
+  const body: Record<string, unknown> = { textQuery: query, pageSize: 20 }
   if (regionCode) body.regionCode = regionCode
   const res = await fetch(PLACES_SEARCH_URL, {
     method: "POST",
@@ -263,6 +264,63 @@ async function textSearch(
   }
   const data = (await res.json()) as PlaceSearchResponse
   return data.places ?? []
+}
+
+// Places Autocomplete uses a different index than textSearch — sometimes
+// surfaces newer/less-established listings that textSearch misses. Returns
+// place IDs; caller must fetch details to get websiteUri.
+async function autocompletePlaceIds(
+  apiKey: string,
+  input: string,
+  regionCode?: string
+): Promise<string[]> {
+  const body: Record<string, unknown> = { input }
+  if (regionCode) body.regionCode = regionCode
+  try {
+    const res = await fetch(PLACES_AUTOCOMPLETE_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+      },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) return []
+    const data = (await res.json()) as {
+      suggestions?: Array<{ placePrediction?: { placeId?: string } }>
+    }
+    const ids = (data.suggestions ?? [])
+      .map((s) => s.placePrediction?.placeId)
+      .filter((id): id is string => typeof id === "string" && id.length > 0)
+    return ids
+  } catch {
+    return []
+  }
+}
+
+// Lightweight details lookup for autocomplete-sourced IDs — we only need
+// displayName + websiteUri to verify the domain match.
+async function getPlaceMiniDetails(
+  apiKey: string,
+  placeId: string
+): Promise<{ id: string; name?: string; websiteUri?: string } | null> {
+  try {
+    const res = await fetch(`${PLACES_DETAILS_URL}/${placeId}`, {
+      headers: {
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": "id,displayName,websiteUri",
+      },
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as {
+      id: string
+      displayName?: { text: string }
+      websiteUri?: string
+    }
+    return { id: data.id, name: data.displayName?.text, websiteUri: data.websiteUri }
+  } catch {
+    return null
+  }
 }
 
 export interface FindPlaceDiagnostic {
@@ -357,6 +415,50 @@ export async function findPlaceByWebsite(
       if (brandMatch) {
         return {
           match: { placeId: brandMatch.id, name: brandMatch.displayName?.text ?? "" },
+          diagnostic,
+        }
+      }
+    }
+  }
+
+  // Fallback: Places Autocomplete uses a different index and sometimes
+  // surfaces newer or less-indexed listings that textSearch misses.
+  const autocompleteQueries = [
+    ...scrapedNames,
+    ...domainDerivedNames,
+    businessName,
+  ].filter((q): q is string => typeof q === "string" && q.length >= 3)
+
+  const seenAc = new Set<string>()
+  for (const q of autocompleteQueries) {
+    if (seenAc.has(q.toLowerCase())) continue
+    seenAc.add(q.toLowerCase())
+
+    const placeIds = await autocompletePlaceIds(apiKey, q, regionCode)
+    for (const pid of placeIds.slice(0, 5)) {
+      const mini = await getPlaceMiniDetails(apiKey, pid)
+      if (!mini) continue
+
+      diagnostic.topResults.push({
+        name: mini.name ? `[ac] ${mini.name}` : "[ac] (no name)",
+        websiteUri: mini.websiteUri,
+      })
+
+      if (mini.websiteUri && normaliseDomain(mini.websiteUri) === targetDomain) {
+        return {
+          match: { placeId: mini.id, name: mini.name ?? "" },
+          diagnostic,
+        }
+      }
+      const brand = targetDomain.split(".")[0]
+      if (
+        brand &&
+        brand.length >= 4 &&
+        mini.websiteUri &&
+        mini.websiteUri.toLowerCase().includes(brand)
+      ) {
+        return {
+          match: { placeId: mini.id, name: mini.name ?? "" },
           diagnostic,
         }
       }
