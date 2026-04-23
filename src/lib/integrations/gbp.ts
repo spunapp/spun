@@ -88,6 +88,71 @@ function normaliseDomain(url: string): string {
   }
 }
 
+function decodeEntities(s: string): string {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .trim()
+}
+
+// Fetch the site and pull out candidate business names from <title> and
+// Open Graph metadata. Returns a de-duped list of reasonable brand-name
+// candidates to feed the Places API search.
+async function extractBrandNames(websiteUrl: string): Promise<string[]> {
+  try {
+    const url = websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`
+    const res = await fetch(url, {
+      signal: AbortSignal.timeout(4000),
+      redirect: "follow",
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; SpunBot/1.0; +https://spun.bot) gzip",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    })
+    if (!res.ok) return []
+    const html = (await res.text()).slice(0, 200_000) // cap at 200KB
+    const names: string[] = []
+
+    const ogSiteName = html.match(
+      /<meta[^>]+property=["']og:site_name["'][^>]+content=["']([^"']+)["']/i
+    )
+    if (ogSiteName) names.push(decodeEntities(ogSiteName[1]))
+
+    const twitterSite = html.match(
+      /<meta[^>]+name=["']application-name["'][^>]+content=["']([^"']+)["']/i
+    )
+    if (twitterSite) names.push(decodeEntities(twitterSite[1]))
+
+    const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
+    if (titleMatch) {
+      const title = decodeEntities(titleMatch[1])
+      names.push(title)
+      // Split on common separators; each segment is a candidate brand name.
+      title
+        .split(/\s*[|\-–—·•:]\s*/)
+        .map((s) => s.trim())
+        .filter((s) => s.length >= 2 && s.length <= 60)
+        .forEach((s) => names.push(s))
+    }
+
+    // De-duplicate, preserve order
+    const seen = new Set<string>()
+    return names.filter((n) => {
+      const k = n.toLowerCase()
+      if (seen.has(k)) return false
+      seen.add(k)
+      return true
+    })
+  } catch {
+    return []
+  }
+}
+
 async function textSearch(
   apiKey: string,
   query: string
@@ -116,22 +181,27 @@ export async function findPlaceByWebsite(
 ): Promise<{ placeId: string; name: string } | null> {
   const targetDomain = normaliseDomain(websiteUrl)
 
-  // Name-based queries go first — the Places API finds businesses by name
-  // far more reliably than by bare domain. We always verify the result's
-  // websiteUri matches the user's domain; a wrong audit is worse than
-  // "not found".
+  // Scrape the site to discover the business name automatically — user
+  // shouldn't have to type it separately.
+  const scrapedNames = await extractBrandNames(websiteUrl)
+
+  // Search by name first (Places API finds businesses by name far more
+  // reliably than by bare domain). Verify every result by website-domain
+  // match — wrong audits are worse than "not found".
   const queries = [
+    ...scrapedNames,
     businessName ?? null,
     businessName && location ? `${businessName} ${location}` : null,
+    scrapedNames[0] && location ? `${scrapedNames[0]} ${location}` : null,
     targetDomain,
     `https://${targetDomain}`,
-  ].filter(Boolean) as string[]
+  ].filter((q): q is string => typeof q === "string" && q.length > 0)
 
-  // Deduplicate (e.g. when businessName is null, multiple nulls collapse)
   const seen = new Set<string>()
   const uniqueQueries = queries.filter((q) => {
-    if (seen.has(q)) return false
-    seen.add(q)
+    const k = q.toLowerCase()
+    if (seen.has(k)) return false
+    seen.add(k)
     return true
   })
 
