@@ -116,9 +116,13 @@ export async function findPlaceByWebsite(
 ): Promise<{ placeId: string; name: string } | null> {
   const targetDomain = normaliseDomain(websiteUrl)
 
+  // Domain search first — the most specific signal. Name/location are only
+  // hints used to widen the net if the domain query returns nothing; we
+  // never accept a result without a verified website-domain match, because
+  // auditing the wrong business is worse than reporting "not found".
   const queries = [
-    businessName && location ? `${businessName} ${location}` : null,
     targetDomain,
+    businessName && location ? `${businessName} ${location}` : null,
     businessName ?? null,
   ].filter(Boolean) as string[]
 
@@ -126,19 +130,12 @@ export async function findPlaceByWebsite(
     const places = await textSearch(apiKey, q)
     if (!places || places.length === 0) continue
 
-    // Prefer a place whose websiteUri shares the user's domain.
     const domainMatch = places.find((p) => {
       if (!p.websiteUri) return false
       return normaliseDomain(p.websiteUri) === targetDomain
     })
     if (domainMatch) {
       return { placeId: domainMatch.id, name: domainMatch.displayName?.text ?? "" }
-    }
-
-    // If the query already included the business name + location, accept the
-    // first result even without a website match — it's our best guess.
-    if (q === queries[0] && places[0]) {
-      return { placeId: places[0].id, name: places[0].displayName?.text ?? "" }
     }
   }
 
