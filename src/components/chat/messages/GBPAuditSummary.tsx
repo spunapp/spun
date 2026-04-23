@@ -29,6 +29,9 @@ type AuditMetadata =
   | {
       found: false
       websiteUrl: string
+      triedQueries?: string[]
+      scrapedNames?: string[]
+      topResults?: Array<{ name?: string; websiteUri?: string }>
     }
   | { error: string }
 
@@ -59,6 +62,10 @@ export function GBPAuditSummary({ content, metadata, onSend }: GBPAuditSummaryPr
   }
 
   if (!audit.found) {
+    const hasDiagnostics =
+      (audit.triedQueries && audit.triedQueries.length > 0) ||
+      (audit.scrapedNames && audit.scrapedNames.length > 0) ||
+      (audit.topResults && audit.topResults.length > 0)
     return (
       <div className="space-y-3">
         {content && (
@@ -85,6 +92,47 @@ export function GBPAuditSummary({ content, metadata, onSend }: GBPAuditSummaryPr
                 >
                   Help me set one up
                 </button>
+              )}
+              {hasDiagnostics && (
+                <details className="mt-4">
+                  <summary className="text-[10px] uppercase tracking-wider text-slate-500 cursor-pointer hover:text-slate-400">
+                    Debug info
+                  </summary>
+                  <div className="mt-2 space-y-2 text-[11px] text-slate-400">
+                    {audit.scrapedNames && audit.scrapedNames.length > 0 && (
+                      <div>
+                        <p className="text-slate-500 mb-1">Scraped names:</p>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {audit.scrapedNames.map((n, i) => (
+                            <li key={i}>{n}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {audit.triedQueries && audit.triedQueries.length > 0 && (
+                      <div>
+                        <p className="text-slate-500 mb-1">Search queries tried:</p>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {audit.triedQueries.map((q, i) => (
+                            <li key={i}>{q}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {audit.topResults && audit.topResults.length > 0 && (
+                      <div>
+                        <p className="text-slate-500 mb-1">Top Places results (none matched domain):</p>
+                        <ul className="list-disc pl-4 space-y-0.5">
+                          {audit.topResults.slice(0, 8).map((r, i) => (
+                            <li key={i}>
+                              {r.name ?? "(no name)"} — {r.websiteUri ?? "(no website)"}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </details>
               )}
             </div>
           </div>
