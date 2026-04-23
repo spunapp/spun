@@ -104,7 +104,9 @@ Rules:
 - If the user says they don't have a Google Ads account yet, need help signing up for Google PPC, or asks how to set up Google Ads from scratch, call the show_google_ads_setup_guide tool. Don't write the steps out in plain text — the tool renders a proper walkthrough. After calling it, add one short line like "Walk through the steps below, then hit the connect button at the bottom when you're done." Don't restate the steps yourself.
 - If the user already has a Google Ads account and just wants to plug it in, use connect_channel with platform "google" — not show_google_ads_setup_guide.
 - If the user says they don't have Google Analytics, GA4, or need help setting up analytics tracking, call the show_ga4_setup_guide tool. Don't write the steps out in plain text — the tool renders a proper walkthrough. After calling it, add one short line like "Walk through the steps below, then hit the connect button at the bottom when you're done." Don't restate the steps yourself.
-- If the user already has GA4 set up and just wants to connect it, use connect_channel with platform "ga4" — not show_ga4_setup_guide.`
+- If the user already has GA4 set up and just wants to connect it, use connect_channel with platform "ga4" — not show_ga4_setup_guide.
+- If the user asks about Google Maps presence, local search visibility, their Google Business Profile / Google My Business, reviews, or says they want to improve how customers find them locally, call the audit_gbp tool with their website URL. If you don't yet have a website URL for them, ask for it first — don't call audit_gbp without one. Don't write the audit as plain text; the tool renders a scored report with specific fixes.
+- Be proactive: during onboarding, if the user's business has a physical location (restaurant, shop, clinic, salon, gym, local service) and you have their website, offer to run a Google Business Profile audit as part of the initial health check.`
 
   if (!business || !business.onboardingComplete) {
     if (hasHistory) {

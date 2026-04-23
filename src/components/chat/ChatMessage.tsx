@@ -12,6 +12,7 @@ import { ConnectPrompt } from "./messages/ConnectPrompt"
 import { MetaSetupGuide } from "./messages/MetaSetupGuide"
 import { GoogleAdsSetupGuide } from "./messages/GoogleAdsSetupGuide"
 import { GA4SetupGuide } from "./messages/GA4SetupGuide"
+import { GBPAuditSummary } from "./messages/GBPAuditSummary"
 
 interface Message {
   _id: string
@@ -82,6 +83,8 @@ export function ChatMessage({ message, onApprove, onReject, onRetry, onSend }: C
           <GoogleAdsSetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
         ) : message.messageType === "ga4_setup_guide" ? (
           <GA4SetupGuide content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
+        ) : message.messageType === "gbp_audit" ? (
+          <GBPAuditSummary content={message.content} metadata={message.metadata ?? {}} onSend={onSend} />
         ) : (
           <TextMessage content={message.content} isUser={isUser} />
         )}

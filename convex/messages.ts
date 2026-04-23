@@ -22,7 +22,8 @@ export const send = mutation({
       v.literal("connect_prompt"),
       v.literal("meta_setup_guide"),
       v.literal("google_ads_setup_guide"),
-      v.literal("ga4_setup_guide")
+      v.literal("ga4_setup_guide"),
+      v.literal("gbp_audit")
     ),
     metadata: v.optional(v.any()),
     linkedActionId: v.optional(v.string()),
