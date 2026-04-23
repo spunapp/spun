@@ -35,11 +35,11 @@ export async function GET() {
     const businessId = await convex.mutation(api.businesses.create, {
       userId,
       name: "Spun",
-      description: "AI marketing platform for founders",
+      description: "AI growth platform for SMEs",
       productOrService: "service",
       whatTheySell: "AI-powered marketing tools and automation",
       industry: "Technology / SaaS",
-      targetAudience: "Startup founders and small business owners",
+      targetAudience: "SMEs with 10-50 employees",
       demographics: {},
       locations: [],
       competitors: [],

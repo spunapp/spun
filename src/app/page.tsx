@@ -8,7 +8,7 @@ const FEATURES = [
   {
     icon: Target,
     title: "Strategy",
-    description: "Market positioning, audience targeting, and go-to-market plans built around your product.",
+    description: "Growth positioning, audience targeting, and go-to-market plans built around your business.",
   },
   {
     icon: Lightbulb,
@@ -17,8 +17,8 @@ const FEATURES = [
   },
   {
     icon: Megaphone,
-    title: "Creatives",
-    description: "Ad copy, social posts, email sequences, and more. Written, refined, and ready to run.",
+    title: "Lead generation",
+    description: "Ad copy, landing pages, email sequences, and more. Written, refined, and ready to convert.",
   },
   {
     icon: Zap,
@@ -33,7 +33,7 @@ const FEATURES = [
   {
     icon: Rocket,
     title: "Full funnel",
-    description: "Awareness to conversion, covered end-to-end. One tool, every stage of growth.",
+    description: "Awareness to conversion, covered end-to-end. One platform, every stage of growth.",
   },
 ]
 
@@ -68,7 +68,7 @@ export default function HomePage() {
       <section className="max-w-6xl mx-auto px-6 pt-24 pb-20 text-center">
         <div className="inline-flex items-center gap-2 bg-[#5B9BAA]/10 border border-[#5B9BAA]/20 rounded-full px-4 py-1.5 text-xs font-medium text-[#5B9BAA] mb-8">
           <span className="w-1.5 h-1.5 bg-[#5B9BAA] rounded-full" />
-          Your marketing department in a chat window
+          Your growth engine in a chat window
         </div>
 
         <h1 className="text-5xl sm:text-6xl md:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
@@ -82,7 +82,7 @@ export default function HomePage() {
         </h1>
 
         <p className="text-lg text-slate-400 max-w-2xl mx-auto mt-6 leading-relaxed">
-          Founders have enough to worry about. Spun is your always-on AI marketing team — strategy,
+          Growing a business is hard enough. Spun is your always-on AI growth team — strategy,
           campaigns, creatives, and analytics — for a fraction of the cost of a single hire.
         </p>
 
@@ -104,7 +104,7 @@ export default function HomePage() {
       {/* Features grid */}
       <section className="max-w-6xl mx-auto px-6 py-20">
         <div className="text-center mb-14">
-          <h2 className="text-2xl sm:text-3xl font-bold">Everything a marketing team does.</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold">Everything a growth team does.</h2>
           <p className="text-slate-400 mt-3 text-base max-w-lg mx-auto">
             Without the salaries, the onboarding, or the waiting.
           </p>
@@ -133,15 +133,15 @@ export default function HomePage() {
             {/* Left */}
             <div className="p-10 md:p-14 border-b md:border-b-0 md:border-r border-white/5">
               <p className="text-xs font-semibold uppercase tracking-widest text-[#5B9BAA] mb-4">
-                Built for founders
+                Built for growing businesses
               </p>
               <h3 className="text-2xl font-bold leading-snug mb-4">
-                Marketing firepower,<br />without the overhead.
+                Growth firepower,<br />without the overhead.
               </h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                New employment legislation has made hiring more expensive and bureaucratic than ever.
+                Hiring a full marketing team is expensive and slow.
                 Spun sidesteps all of it — no contracts, no NI contributions, no sick days. Just
-                a relentless marketing engine working for your business around the clock.
+                a relentless growth engine working for your business around the clock.
               </p>
             </div>
             {/* Right */}
@@ -178,7 +178,7 @@ export default function HomePage() {
           <p className="text-sm text-slate-500 font-medium text-center">
             No sick days, no holidays, no overtime paid, no national insurance paid, no pension
             contributions, no stress, no fuss:{" "}
-            <span className="text-white font-semibold">All Marketing, All the Time.</span>
+            <span className="text-white font-semibold">All Growth, All the Time.</span>
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>

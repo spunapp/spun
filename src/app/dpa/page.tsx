@@ -47,7 +47,7 @@ export default function DpaPage() {
       <h2>2. Subject matter and details of processing</h2>
       <p>The details of processing carried out by Spun under this DPA are:</p>
       <ul>
-        <li><strong>Subject matter</strong> — provision of the Spun AI marketing platform.</li>
+        <li><strong>Subject matter</strong> — provision of the Spun AI growth platform.</li>
         <li><strong>Duration</strong> — the term of the main agreement, plus any period during which Spun retains Customer Personal Data as described in the Privacy Policy.</li>
         <li><strong>Nature and purpose</strong> — hosting, transmitting, and transforming customer content to generate marketing outputs, execute campaigns on connected platforms, and report on performance.</li>
         <li><strong>Types of personal data</strong> — contact details, account identifiers, authentication data, usage data, IP addresses, content submitted by users (prompts, briefs, uploaded assets), and campaign metadata. The Customer may choose to include additional categories in the content it submits.</li>

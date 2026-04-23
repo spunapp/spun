@@ -28,7 +28,7 @@ export default function TermsPage() {
 
       <h2>2. The service</h2>
       <p>
-        Spun is an AI-powered marketing platform that helps you plan, create, launch,
+        Spun is an AI-powered growth platform that helps you plan, create, launch,
         and analyse marketing campaigns through a chat interface. Features include
         strategy and campaign generation, ad copy, image generation, ad platform
         integrations, and performance reporting.
