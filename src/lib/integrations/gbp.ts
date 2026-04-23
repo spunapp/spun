@@ -81,6 +81,8 @@ export type GbpAuditResult =
       // cases where a GBP actually exists.
       triedQueries?: string[]
       scrapedNames?: string[]
+      scrapeStatus?: string
+      domainDerivedNames?: string[]
       topResults?: Array<{ name?: string; websiteUri?: string }>
     }
 
@@ -109,10 +111,15 @@ function decodeEntities(s: string): string {
 const BROWSER_UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
+interface BrandScrape {
+  names: string[]
+  status: string
+}
+
 // Fetch the site and pull out candidate business names from <title> and
 // Open Graph metadata. Returns a de-duped list of reasonable brand-name
 // candidates to feed the Places API search.
-async function extractBrandNames(websiteUrl: string): Promise<string[]> {
+async function extractBrandNames(websiteUrl: string): Promise<BrandScrape> {
   try {
     const url = websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`
     const res = await fetch(url, {
@@ -124,7 +131,7 @@ async function extractBrandNames(websiteUrl: string): Promise<string[]> {
         "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
       },
     })
-    if (!res.ok) return []
+    if (!res.ok) return { names: [], status: `http_${res.status}` }
     const html = (await res.text()).slice(0, 400_000) // cap at 400KB
     const names: string[] = []
 
@@ -157,15 +164,60 @@ async function extractBrandNames(websiteUrl: string): Promise<string[]> {
 
     // De-duplicate, preserve order
     const seen = new Set<string>()
-    return names.filter((n) => {
+    const dedup = names.filter((n) => {
       const k = n.toLowerCase()
       if (seen.has(k)) return false
       seen.add(k)
       return true
     })
-  } catch {
-    return []
+    return { names: dedup, status: dedup.length > 0 ? "ok" : "no_metadata" }
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    return { names: [], status: `fetch_error: ${msg.slice(0, 80)}` }
   }
+}
+
+function titleCase(s: string): string {
+  if (s.length === 0) return s
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase()
+}
+
+// Try to split a domain's brand portion into readable words by finding
+// common business suffix/prefix words. e.g. "mghlmarketing" → "Mghl Marketing".
+// Not always right, but Places API's fuzzy matching handles the rest.
+function splitBrandFromDomain(domain: string): string[] {
+  const brand = domain.split(".")[0].toLowerCase()
+  if (brand.length < 4) return []
+
+  // Longer words first so we prefer "restaurant" over "rest" etc.
+  const words = [
+    "marketing", "restaurant", "consulting", "properties", "construction",
+    "technologies", "solutions", "engineering", "photography", "veterinary",
+    "accounting", "education", "furniture", "boutique", "insurance",
+    "landscaping", "wellness", "plumbing", "roofing", "fitness", "nutrition",
+    "catering", "cleaning", "staffing", "training", "wedding", "electric",
+    "software", "agency", "studio", "design", "digital", "online", "health",
+    "fashion", "jewelry", "flowers", "realty", "travel", "coffee", "finance",
+    "bakery", "kitchen", "dental", "clinic", "salon", "legal", "homes",
+    "motors", "foods", "games", "books", "media", "music", "sports",
+    "farms", "group", "works", "labs", "shop", "store", "cafe", "house",
+    "tech", "dev", "bar", "gym", "spa", "law", "pub",
+  ]
+
+  const result: string[] = []
+  for (const w of words) {
+    if (brand.endsWith(w) && brand.length > w.length) {
+      const prefix = brand.slice(0, brand.length - w.length)
+      result.push(`${titleCase(prefix)} ${titleCase(w)}`)
+    }
+    if (brand.startsWith(w) && brand.length > w.length) {
+      const suffix = brand.slice(w.length)
+      result.push(`${titleCase(w)} ${titleCase(suffix)}`)
+    }
+  }
+  // Also include the bare brand word itself as a search query
+  result.push(titleCase(brand))
+  return [...new Set(result)]
 }
 
 // Map common TLDs to ISO region codes for Places API region bias.
@@ -216,6 +268,8 @@ async function textSearch(
 export interface FindPlaceDiagnostic {
   triedQueries: string[]
   scrapedNames: string[]
+  scrapeStatus: string
+  domainDerivedNames: string[]
   topResults: Array<{ name?: string; websiteUri?: string }>
 }
 
@@ -230,16 +284,23 @@ export async function findPlaceByWebsite(
 
   // Scrape the site to discover the business name automatically — user
   // shouldn't have to type it separately.
-  const scrapedNames = await extractBrandNames(websiteUrl)
+  const { names: scrapedNames, status: scrapeStatus } = await extractBrandNames(websiteUrl)
+
+  // Fallback: derive names from the domain itself. Works when the site
+  // can't be scraped (Cloudflare, bot blocks, SPAs). "mghlmarketing" →
+  // "Mghl Marketing" etc.
+  const domainDerivedNames = splitBrandFromDomain(targetDomain)
 
   // Search by name first (Places API finds businesses by name far more
   // reliably than by bare domain). Verify every result by website-domain
   // match — wrong audits are worse than "not found".
   const queries = [
     ...scrapedNames,
+    ...domainDerivedNames,
     businessName ?? null,
     businessName && location ? `${businessName} ${location}` : null,
     scrapedNames[0] && location ? `${scrapedNames[0]} ${location}` : null,
+    domainDerivedNames[0] && location ? `${domainDerivedNames[0]} ${location}` : null,
     targetDomain,
     `https://${targetDomain}`,
   ].filter((q): q is string => typeof q === "string" && q.length > 0)
@@ -255,6 +316,8 @@ export async function findPlaceByWebsite(
   const diagnostic: FindPlaceDiagnostic = {
     triedQueries: uniqueQueries,
     scrapedNames,
+    scrapeStatus,
+    domainDerivedNames,
     topResults: [],
   }
 
@@ -484,6 +547,8 @@ export async function runGbpAudit(
       websiteUrl,
       triedQueries: diagnostic.triedQueries,
       scrapedNames: diagnostic.scrapedNames,
+      scrapeStatus: diagnostic.scrapeStatus,
+      domainDerivedNames: diagnostic.domainDerivedNames,
       topResults: diagnostic.topResults,
     }
   }
