@@ -95,7 +95,7 @@ export function GBPAuditSummary({ content, metadata, onSend }: GBPAuditSummaryPr
               </p>
               {onSend && (
                 <button
-                  onClick={() => onSend("Help me set up a Google Business Profile")}
+                  onClick={() => onSend("I don't have a Google Business Profile yet. Walk me through creating one step by step.")}
                   className="text-xs font-medium px-3 py-1.5 rounded-lg bg-[#5B9BAA] hover:bg-[#4d8a99] text-white transition-colors"
                 >
                   Help me set one up
