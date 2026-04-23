@@ -61,7 +61,7 @@ const FAQS = [
       },
       {
         q: "Is there a discount for annual billing?",
-        a: "Reach out to hello@spun.bot to discuss annual pricing options.",
+        a: "Yes. Annual billing saves you 20% compared to monthly. Standard is £69.99/mo billed annually (vs £87.99 monthly) and Pro is £119.99/mo billed annually (vs £149.99 monthly). You can switch between monthly and annual billing at any time.",
       },
     ],
   },
