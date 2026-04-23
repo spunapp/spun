@@ -116,17 +116,26 @@ export async function findPlaceByWebsite(
 ): Promise<{ placeId: string; name: string } | null> {
   const targetDomain = normaliseDomain(websiteUrl)
 
-  // Domain search first — the most specific signal. Name/location are only
-  // hints used to widen the net if the domain query returns nothing; we
-  // never accept a result without a verified website-domain match, because
-  // auditing the wrong business is worse than reporting "not found".
+  // Name-based queries go first — the Places API finds businesses by name
+  // far more reliably than by bare domain. We always verify the result's
+  // websiteUri matches the user's domain; a wrong audit is worse than
+  // "not found".
   const queries = [
-    targetDomain,
-    businessName && location ? `${businessName} ${location}` : null,
     businessName ?? null,
+    businessName && location ? `${businessName} ${location}` : null,
+    targetDomain,
+    `https://${targetDomain}`,
   ].filter(Boolean) as string[]
 
-  for (const q of queries) {
+  // Deduplicate (e.g. when businessName is null, multiple nulls collapse)
+  const seen = new Set<string>()
+  const uniqueQueries = queries.filter((q) => {
+    if (seen.has(q)) return false
+    seen.add(q)
+    return true
+  })
+
+  for (const q of uniqueQueries) {
     const places = await textSearch(apiKey, q)
     if (!places || places.length === 0) continue
 

@@ -285,13 +285,17 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "audit_gbp",
     description:
-      "Audit the user's Google Business Profile (GBP / Google My Business) and report how well optimised it is. Use this when the user mentions local search, Google Maps, their storefront/location, reviews, or asks for a GBP audit. The user's website URL is required — ask for it first if they haven't given you one. The tool renders a scored report card with specific fixes; don't try to audit in plain text.",
+      "Audit the user's Google Business Profile (GBP / Google My Business) and report how well optimised it is. Use this when the user mentions local search, Google Maps, their storefront/location, reviews, or asks for a GBP audit. The user's website URL is required — ask for it first if they haven't given you one. Always pass the business name too if you know it from the conversation — it dramatically improves the lookup accuracy. The tool renders a scored report card with specific fixes; don't try to audit in plain text.",
     input_schema: {
       type: "object" as const,
       properties: {
         websiteUrl: {
           type: "string",
-          description: "The user's website URL. Used to locate their Google Business Profile.",
+          description: "The user's website URL. Used to verify the correct Google Business Profile.",
+        },
+        businessName: {
+          type: "string",
+          description: "The business name, if known from the conversation or user profile. Greatly improves lookup accuracy.",
         },
       },
       required: ["websiteUrl"],
