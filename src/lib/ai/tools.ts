@@ -282,4 +282,19 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
       required: ["query"],
     },
   },
+  {
+    name: "audit_gbp",
+    description:
+      "Audit the user's Google Business Profile (GBP / Google My Business) and report how well optimised it is. Use this when the user mentions local search, Google Maps, their storefront/location, reviews, or asks for a GBP audit. The user's website URL is required — ask for it first if they haven't given you one. The tool renders a scored report card with specific fixes; don't try to audit in plain text.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        websiteUrl: {
+          type: "string",
+          description: "The user's website URL. Used to locate their Google Business Profile.",
+        },
+      },
+      required: ["websiteUrl"],
+    },
+  },
 ]

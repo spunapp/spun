@@ -221,7 +221,9 @@ export const chat = action({
       | "onboarding"
       | "connect_prompt"
       | "meta_setup_guide"
-      | "google_ads_setup_guide" = "text"
+      | "google_ads_setup_guide"
+      | "ga4_setup_guide"
+      | "gbp_audit" = "text"
     let metadata: Record<string, unknown> | undefined
 
     // Multi-round tool-calling loop: process tool calls, send results back,
@@ -259,6 +261,9 @@ export const chat = action({
       } else if (toolName === "show_ga4_setup_guide") {
         messageType = "ga4_setup_guide"
         metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+      } else if (toolName === "audit_gbp") {
+        messageType = "gbp_audit"
+        metadata = toolResult as Record<string, unknown>
       }
     }
 
@@ -1147,6 +1152,32 @@ Return ONLY valid JSON:
         action: "show_ga4_setup_guide",
         platform: "ga4",
         pipedreamApp: "google_analytics",
+      }
+    }
+
+    case "audit_gbp": {
+      const websiteUrl = input.websiteUrl as string | undefined
+      if (!websiteUrl) return { error: "No website URL provided." }
+
+      const apiKey = process.env.GOOGLE_PLACES_API_KEY
+      if (!apiKey) {
+        return { error: "Google Places API is not configured yet. Ask the user to add GOOGLE_PLACES_API_KEY." }
+      }
+
+      try {
+        const { runGbpAudit } = await import("../src/lib/integrations/gbp")
+        let businessName: string | undefined
+        let location: string | undefined
+        if (businessId) {
+          const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
+          if (business) {
+            businessName = business.name
+            location = business.locations?.[0]
+          }
+        }
+        return await runGbpAudit(websiteUrl, businessName, location)
+      } catch (err) {
+        return { error: `GBP audit failed: ${err instanceof Error ? err.message : String(err)}` }
       }
     }
 
