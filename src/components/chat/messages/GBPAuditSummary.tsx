@@ -31,6 +31,8 @@ type AuditMetadata =
       websiteUrl: string
       triedQueries?: string[]
       scrapedNames?: string[]
+      scrapeStatus?: string
+      domainDerivedNames?: string[]
       topResults?: Array<{ name?: string; websiteUri?: string }>
     }
   | { error: string }
@@ -65,7 +67,9 @@ export function GBPAuditSummary({ content, metadata, onSend }: GBPAuditSummaryPr
     const hasDiagnostics =
       (audit.triedQueries && audit.triedQueries.length > 0) ||
       (audit.scrapedNames && audit.scrapedNames.length > 0) ||
-      (audit.topResults && audit.topResults.length > 0)
+      (audit.domainDerivedNames && audit.domainDerivedNames.length > 0) ||
+      (audit.topResults && audit.topResults.length > 0) ||
+      Boolean(audit.scrapeStatus)
     return (
       <div className="space-y-3">
         {content && (
@@ -99,11 +103,25 @@ export function GBPAuditSummary({ content, metadata, onSend }: GBPAuditSummaryPr
                     Debug info
                   </summary>
                   <div className="mt-2 space-y-2 text-[11px] text-slate-400">
-                    {audit.scrapedNames && audit.scrapedNames.length > 0 && (
+                    {audit.scrapeStatus && (
                       <div>
-                        <p className="text-slate-500 mb-1">Scraped names:</p>
+                        <p className="text-slate-500 mb-1">
+                          Scrape status: <span className="text-slate-300">{audit.scrapeStatus}</span>
+                        </p>
+                        {audit.scrapedNames && audit.scrapedNames.length > 0 && (
+                          <ul className="list-disc pl-4 space-y-0.5 mt-1">
+                            {audit.scrapedNames.map((n, i) => (
+                              <li key={i}>{n}</li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                    )}
+                    {audit.domainDerivedNames && audit.domainDerivedNames.length > 0 && (
+                      <div>
+                        <p className="text-slate-500 mb-1">Names guessed from domain:</p>
                         <ul className="list-disc pl-4 space-y-0.5">
-                          {audit.scrapedNames.map((n, i) => (
+                          {audit.domainDerivedNames.map((n, i) => (
                             <li key={i}>{n}</li>
                           ))}
                         </ul>
