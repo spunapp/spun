@@ -11,11 +11,11 @@ const FAQS = [
     items: [
       {
         q: "What is Spun?",
-        a: "Your always-on AI marketing team. Spun handles strategy, campaigns, creatives, execution, and analytics from a single chat window — at a fraction of the cost of a single hire.",
+        a: "Your always-on AI growth team. Spun handles strategy, campaigns, lead generation, execution, and analytics from a single chat window — at a fraction of the cost of a single hire.",
       },
       {
         q: "Who is Spun for?",
-        a: "Built for founders and small businesses who need serious marketing firepower without the overhead of hiring a team.",
+        a: "Built for SMEs and growing businesses who need serious growth firepower without the overhead of a full in-house team.",
       },
       {
         q: "Do I need any marketing experience to use Spun?",
@@ -203,7 +203,7 @@ export default function FaqPage() {
           <p className="text-sm text-slate-500 font-medium text-center">
             No sick days, no holidays, no overtime paid, no national insurance paid, no pension
             contributions, no stress, no fuss:{" "}
-            <span className="text-white font-semibold">All Marketing, All the Time.</span>
+            <span className="text-white font-semibold">All Growth, All the Time.</span>
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
             <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>

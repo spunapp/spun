@@ -45,11 +45,11 @@ export function ChatThread({
           <div className="text-center max-w-md">
             <img src="/spun.gif" alt="Spun" className="w-16 h-16 rounded-2xl mx-auto mb-4 object-contain" />
             <h2 className="text-xl font-semibold text-white mb-2">
-              Hi! I&apos;m Spun, your AI Marketing Team.
+              Hi! I&apos;m Spun, your AI Growth Agent.
             </h2>
             <p className="text-slate-400">
               Tell me about your business and I&apos;ll start building your
-              marketing strategy. Or if we&apos;ve already talked, pick up where
+              growth strategy. Or if we&apos;ve already talked, pick up where
               we left off.
             </p>
           </div>

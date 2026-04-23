@@ -12,19 +12,19 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://spun.bot"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Spun — Your Marketing Department in a Chat Window",
+    default: "Spun — AI Growth Platform for SMEs",
     template: "%s — Spun",
   },
   description:
-    "AI-powered marketing team for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+    "AI-powered growth platform for SMEs. Strategy, campaigns, lead generation, ad execution, and analytics — all through conversation.",
   keywords: [
-    "AI marketing",
-    "AI marketing team",
-    "marketing automation",
-    "ad creatives",
+    "AI growth platform",
+    "SME growth",
+    "lead generation",
+    "growth automation",
     "campaign launch",
     "Facebook Ads AI",
-    "founders marketing",
+    "ad creatives",
   ],
   authors: [{ name: "Spun" }],
   creator: "Spun",
@@ -40,23 +40,23 @@ export const metadata: Metadata = {
     type: "website",
     url: siteUrl,
     siteName: "Spun",
-    title: "Spun — Your Marketing Department in a Chat Window",
+    title: "Spun — AI Growth Platform for SMEs",
     description:
-      "AI-powered marketing team for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+      "AI-powered growth platform for SMEs. Strategy, campaigns, lead generation, ad execution, and analytics — all through conversation.",
     images: [
       {
         url: "/spun_facebook_cover.png",
         width: 1200,
         height: 630,
-        alt: "Spun — Your Marketing Department in a Chat Window",
+        alt: "Spun — AI Growth Platform for SMEs",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Spun — Your Marketing Department in a Chat Window",
+    title: "Spun — AI Growth Platform for SMEs",
     description:
-      "AI-powered marketing team for founders. Strategy, campaigns, creatives, ad execution, and analytics — all through conversation.",
+      "AI-powered growth platform for SMEs. Strategy, campaigns, lead generation, ad execution, and analytics — all through conversation.",
     images: ["/spun_facebook_cover.png"],
   },
   robots: {

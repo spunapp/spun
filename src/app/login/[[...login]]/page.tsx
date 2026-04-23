@@ -26,7 +26,7 @@ export default function LoginPage() {
             className="mx-auto"
           />
           <p className="text-slate-300 mt-3">
-            Your marketing department in a chat window.
+            Your growth engine in a chat window.
           </p>
         </div>
 

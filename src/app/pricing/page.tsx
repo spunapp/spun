@@ -315,7 +315,7 @@ export default function PricingPage() {
         <div className="text-center mb-8">
           <span className="inline-block bg-[#5B9BAA]/15 text-[#5B9BAA] text-xs font-semibold px-3 py-1 rounded-full mb-3">ROI Calculator</span>
           <h2 className="text-white text-2xl font-semibold">Calculate Your Savings</h2>
-          <p className="text-slate-400 text-sm mt-2">See how much you could save by switching to Spun compared to your current marketing setup.</p>
+          <p className="text-slate-400 text-sm mt-2">See how much you could save by switching to Spun compared to your current setup.</p>
         </div>
         <div
           className="rounded-2xl p-8 bg-[var(--background)]"

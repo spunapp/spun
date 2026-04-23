@@ -265,7 +265,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_web",
     description:
-      "Search the web for information. Use this to research competitors, market trends, industry data, company information, pricing benchmarks, or anything else that would help build a better marketing strategy. Call this proactively during onboarding when the user mentions competitors or their industry, and when building campaigns to research the market.",
+      "Search the web for information. Use this to research competitors, market trends, industry data, company information, pricing benchmarks, or anything else that would help build a better growth strategy. Call this proactively during onboarding when the user mentions competitors or their industry, and when building campaigns to research the market.",
     input_schema: {
       type: "object" as const,
       properties: {
