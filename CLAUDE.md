@@ -8,6 +8,7 @@
 - When asked to research something online, do deep research on every possible angle first, then and only then start coding.
 - Never tell the user to push via terminal. They use Vercel for deployments — code deploys automatically when pushed to GitHub.
 - Read over all prior context in the codebase and conversation before making changes. Don't make assumptions.
+- **The user does NOT run the app locally.** They do not have a local dev environment, do not run `npm run dev`, and do not maintain a `.env.local` file. All environment variables live in **Vercel** (frontend/Next.js) and **Convex** (backend actions). Never instruct them to edit `.env.local` or run local dev commands. For any new env var: tell them to set it in Vercel and/or Convex only.
 
 ## Tech stack
 
