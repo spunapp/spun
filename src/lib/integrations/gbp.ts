@@ -77,6 +77,11 @@ export type GbpAuditResult =
   | {
       found: false
       websiteUrl: string
+      // Diagnostic: what the matcher tried. Useful for debugging "not found"
+      // cases where a GBP actually exists.
+      triedQueries?: string[]
+      scrapedNames?: string[]
+      topResults?: Array<{ name?: string; websiteUri?: string }>
     }
 
 function normaliseDomain(url: string): string {
@@ -99,6 +104,11 @@ function decodeEntities(s: string): string {
     .trim()
 }
 
+// Real browser user-agent — many sites (especially Cloudflare-fronted ones)
+// block unknown/bot-looking agents with 403s or challenge pages.
+const BROWSER_UA =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+
 // Fetch the site and pull out candidate business names from <title> and
 // Open Graph metadata. Returns a de-duped list of reasonable brand-name
 // candidates to feed the Places API search.
@@ -106,16 +116,16 @@ async function extractBrandNames(websiteUrl: string): Promise<string[]> {
   try {
     const url = websiteUrl.startsWith("http") ? websiteUrl : `https://${websiteUrl}`
     const res = await fetch(url, {
-      signal: AbortSignal.timeout(4000),
+      signal: AbortSignal.timeout(6000),
       redirect: "follow",
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (compatible; SpunBot/1.0; +https://spun.bot) gzip",
-        Accept: "text/html,application/xhtml+xml",
+        "User-Agent": BROWSER_UA,
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-GB,en-US;q=0.9,en;q=0.8",
       },
     })
     if (!res.ok) return []
-    const html = (await res.text()).slice(0, 200_000) // cap at 200KB
+    const html = (await res.text()).slice(0, 400_000) // cap at 400KB
     const names: string[] = []
 
     const ogSiteName = html.match(
@@ -123,10 +133,15 @@ async function extractBrandNames(websiteUrl: string): Promise<string[]> {
     )
     if (ogSiteName) names.push(decodeEntities(ogSiteName[1]))
 
-    const twitterSite = html.match(
+    const appName = html.match(
       /<meta[^>]+name=["']application-name["'][^>]+content=["']([^"']+)["']/i
     )
-    if (twitterSite) names.push(decodeEntities(twitterSite[1]))
+    if (appName) names.push(decodeEntities(appName[1]))
+
+    const ogTitle = html.match(
+      /<meta[^>]+property=["']og:title["'][^>]+content=["']([^"']+)["']/i
+    )
+    if (ogTitle) names.push(decodeEntities(ogTitle[1]))
 
     const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i)
     if (titleMatch) {
@@ -153,10 +168,35 @@ async function extractBrandNames(websiteUrl: string): Promise<string[]> {
   }
 }
 
+// Map common TLDs to ISO region codes for Places API region bias.
+function regionFromDomain(domain: string): string | undefined {
+  const tld = domain.split(".").slice(-2).join(".")
+  const map: Record<string, string> = {
+    "co.uk": "GB",
+    "org.uk": "GB",
+    ".uk": "GB",
+    ".ie": "IE",
+    ".de": "DE",
+    ".fr": "FR",
+    ".es": "ES",
+    ".it": "IT",
+    ".nl": "NL",
+    ".ca": "CA",
+    ".au": "AU",
+    ".nz": "NZ",
+  }
+  if (map[tld]) return map[tld]
+  const lastTld = `.${domain.split(".").pop()}`
+  return map[lastTld]
+}
+
 async function textSearch(
   apiKey: string,
-  query: string
+  query: string,
+  regionCode?: string
 ): Promise<PlaceSearchResponse["places"]> {
+  const body: Record<string, unknown> = { textQuery: query, pageSize: 5 }
+  if (regionCode) body.regionCode = regionCode
   const res = await fetch(PLACES_SEARCH_URL, {
     method: "POST",
     headers: {
@@ -164,7 +204,7 @@ async function textSearch(
       "X-Goog-Api-Key": apiKey,
       "X-Goog-FieldMask": "places.id,places.displayName,places.formattedAddress,places.websiteUri",
     },
-    body: JSON.stringify({ textQuery: query, pageSize: 5 }),
+    body: JSON.stringify(body),
   })
   if (!res.ok) {
     throw new Error(`Places searchText failed: ${res.status} ${await res.text()}`)
@@ -173,13 +213,20 @@ async function textSearch(
   return data.places ?? []
 }
 
+export interface FindPlaceDiagnostic {
+  triedQueries: string[]
+  scrapedNames: string[]
+  topResults: Array<{ name?: string; websiteUri?: string }>
+}
+
 export async function findPlaceByWebsite(
   apiKey: string,
   websiteUrl: string,
   businessName?: string,
   location?: string
-): Promise<{ placeId: string; name: string } | null> {
+): Promise<{ match: { placeId: string; name: string } | null; diagnostic: FindPlaceDiagnostic }> {
   const targetDomain = normaliseDomain(websiteUrl)
+  const regionCode = regionFromDomain(targetDomain)
 
   // Scrape the site to discover the business name automatically — user
   // shouldn't have to type it separately.
@@ -205,20 +252,55 @@ export async function findPlaceByWebsite(
     return true
   })
 
+  const diagnostic: FindPlaceDiagnostic = {
+    triedQueries: uniqueQueries,
+    scrapedNames,
+    topResults: [],
+  }
+
   for (const q of uniqueQueries) {
-    const places = await textSearch(apiKey, q)
+    const places = await textSearch(apiKey, q, regionCode)
     if (!places || places.length === 0) continue
 
-    const domainMatch = places.find((p) => {
+    // Record up to 3 top results for diagnostics
+    for (const p of places.slice(0, 3)) {
+      diagnostic.topResults.push({
+        name: p.displayName?.text,
+        websiteUri: p.websiteUri,
+      })
+    }
+
+    // Strict match: websiteUri normalises to exactly the target domain.
+    const strictMatch = places.find((p) => {
       if (!p.websiteUri) return false
       return normaliseDomain(p.websiteUri) === targetDomain
     })
-    if (domainMatch) {
-      return { placeId: domainMatch.id, name: domainMatch.displayName?.text ?? "" }
+    if (strictMatch) {
+      return {
+        match: { placeId: strictMatch.id, name: strictMatch.displayName?.text ?? "" },
+        diagnostic,
+      }
+    }
+
+    // Looser match: some GBPs store the website with a redirect host, tracking
+    // subdomain, or a different TLD variant. Accept if the websiteUri contains
+    // the target domain's distinctive brand portion (domain without the TLD).
+    const brand = targetDomain.split(".")[0]
+    if (brand && brand.length >= 4) {
+      const brandMatch = places.find((p) => {
+        if (!p.websiteUri) return false
+        return p.websiteUri.toLowerCase().includes(brand)
+      })
+      if (brandMatch) {
+        return {
+          match: { placeId: brandMatch.id, name: brandMatch.displayName?.text ?? "" },
+          diagnostic,
+        }
+      }
     }
   }
 
-  return null
+  return { match: null, diagnostic }
 }
 
 export async function getPlaceDetails(
@@ -395,9 +477,15 @@ export async function runGbpAudit(
     throw new Error("GOOGLE_PLACES_API_KEY is not set")
   }
 
-  const match = await findPlaceByWebsite(apiKey, websiteUrl, businessName, location)
+  const { match, diagnostic } = await findPlaceByWebsite(apiKey, websiteUrl, businessName, location)
   if (!match) {
-    return { found: false, websiteUrl }
+    return {
+      found: false,
+      websiteUrl,
+      triedQueries: diagnostic.triedQueries,
+      scrapedNames: diagnostic.scrapedNames,
+      topResults: diagnostic.topResults,
+    }
   }
 
   const details = await getPlaceDetails(apiKey, match.placeId)
