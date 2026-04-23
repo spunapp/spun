@@ -1166,9 +1166,11 @@ Return ONLY valid JSON:
 
       try {
         const { runGbpAudit } = await import("../src/lib/integrations/gbp")
-        let businessName: string | undefined
+        // Prefer the business name the AI extracted from conversation context —
+        // the onboarded name might belong to a different business entirely.
+        let businessName = (input.businessName as string | undefined) ?? undefined
         let location: string | undefined
-        if (businessId) {
+        if (!businessName && businessId) {
           const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
           if (business) {
             businessName = business.name
