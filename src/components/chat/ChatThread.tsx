@@ -50,7 +50,7 @@ export function ChatThread({
             <p className="text-slate-400">
               Tell me about your local business — cafe, salon, barber, gym,
               restaurant — and I&apos;ll handle your Google Business Profile,
-              local ads, and social posts. Or pick up where we left off.
+              local ads, and social posts.
             </p>
           </div>
         </div>
