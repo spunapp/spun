@@ -33,6 +33,7 @@ export default defineSchema({
     }),
     locations: v.array(v.string()),
     competitors: v.array(v.string()),
+    websiteUrl: v.optional(v.string()),
     logoUrl: v.optional(v.string()),
     imageryUrls: v.array(v.string()),
     trustMode: v.union(

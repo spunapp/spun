@@ -12,32 +12,32 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "onboard_business",
     description:
-      "Create the user's business profile from information gathered through conversation. Call this once you have their business name, description, what they sell, industry, target audience, and at least one location.",
+      "Create the local business profile once you have their name, what service they offer, who they target, the town/city/area they serve, and their website URL. Competitors and demographics can be left empty — you'll research competitors from the website after onboarding.",
     input_schema: {
       type: "object" as const,
       properties: {
         name: { type: "string", description: "Business name" },
         description: {
           type: "string",
-          description: "Business description",
+          description: "Short description of the business",
         },
         productOrService: {
           type: "string",
           enum: ["product", "service", "both"],
-          description: "Type of offering",
+          description: "Type of offering. For most local businesses this is 'service'.",
         },
         whatTheySell: {
           type: "string",
-          description: "Description of what they sell",
+          description: "What the business actually sells — e.g. 'speciality coffee and brunch', 'women's haircuts and colour', 'dog grooming'",
         },
-        industry: { type: "string", description: "Business industry" },
+        industry: { type: "string", description: "Business category — e.g. 'cafe', 'hair salon', 'barber', 'nail salon', 'gym', 'restaurant', 'dentist', 'florist'" },
         targetAudience: {
           type: "string",
-          description: "Target audience description",
+          description: "Who their customers are — e.g. 'office workers within a 10-minute walk', 'mums with young children', 'students and young professionals'",
         },
         demographics: {
           type: "object",
-          description: "Demographics info if provided",
+          description: "Optional demographic detail if the user mentioned any",
           properties: {
             gender: { type: "string" },
             ageRange: { type: "string" },
@@ -48,12 +48,16 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         locations: {
           type: "array",
           items: { type: "string" },
-          description: "Operating locations",
+          description: "Town, city, or service area — e.g. ['Shoreditch, London'] or ['Brighton city centre']. Every local business must have at least one.",
+        },
+        websiteUrl: {
+          type: "string",
+          description: "Their website URL. Include the protocol if the user didn't (https://). This is essential — do not onboard without it.",
         },
         competitors: {
           type: "array",
           items: { type: "string" },
-          description: "Main competitors",
+          description: "Leave empty — you'll find these yourself from the website after onboarding.",
         },
       },
       required: [
@@ -64,6 +68,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
         "industry",
         "targetAudience",
         "locations",
+        "websiteUrl",
       ],
     },
   },
@@ -265,7 +270,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_web",
     description:
-      "Search the web for information. Use this to research competitors, market trends, industry data, company information, pricing benchmarks, or anything else that would help build a better growth strategy. Call this proactively during onboarding when the user mentions competitors or their industry, and when building campaigns to research the market.",
+      "Search the web for information. Use this to research local competitors in the user's area, average pricing for their service in the local market, or information about the neighbourhood/catchment they serve. Call this proactively right after onboarding to find 3-5 local competitors (e.g. query 'best [industry] in [town/neighbourhood]').",
     input_schema: {
       type: "object" as const,
       properties: {

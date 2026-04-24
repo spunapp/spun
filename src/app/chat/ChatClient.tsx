@@ -121,9 +121,21 @@ export default function ChatClient() {
       const lastMsg = messages[messages.length - 1]
       if (lastMsg.role === "assistant") {
         if (lastMsg.messageType === "campaign_preview") {
-          setQuickReplies(["Approve this", "Adjust budget", "Try different angle"])
+          setQuickReplies(["Approve this", "Adjust budget", "Now do social posts"])
         } else if (lastMsg.messageType === "strategy") {
-          setQuickReplies(["Generate creatives", "Adjust targeting", "Launch this"])
+          setQuickReplies(["Create the ads", "Adjust targeting", "Now do social posts"])
+        } else if (lastMsg.messageType === "gbp_audit") {
+          setQuickReplies([
+            "Fix the top issues",
+            "Help me set up GBP",
+            "Now recommend an ad platform",
+          ])
+        } else if (lastMsg.messageType === "creative_gallery") {
+          setQuickReplies([
+            "Also create social posts",
+            "Try a different style",
+            "Launch these",
+          ])
         } else if (lastMsg.messageType === "meta_setup_guide") {
           setQuickReplies([
             "I'm stuck on business verification",
@@ -303,7 +315,7 @@ export default function ChatClient() {
           <p className="text-xs text-slate-500">
             {business
               ? `${business.industry} — ${business.trustMode === "draft" ? "preview before executing mode" : business.trustMode === "auto" ? "auto execute mode" : business.trustMode + " mode"}`
-              : "Your Growth Agent is ready"}
+              : "Your local marketing team is ready"}
           </p>
         </div>
       </header>
@@ -380,7 +392,7 @@ export default function ChatClient() {
       <ChatInput
         onSend={handleSend}
         disabled={isLoading || !activeConversationId || atMessageLimit}
-        placeholder={atMessageLimit ? "Message limit reached — buy credits or upgrade" : business ? "Talk to Spun..." : "Tell me about your business..."}
+        placeholder={atMessageLimit ? "Message limit reached — buy credits or upgrade" : business ? "Talk to Spun..." : "Tell me about your local business..."}
       />
     </div>
     </ChatSidebarProvider>
