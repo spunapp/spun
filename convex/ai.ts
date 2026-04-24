@@ -140,8 +140,12 @@ export const chat = action({
     ])
     if (!conversation) throw new Error("Conversation not found")
 
-    const business = conversation.businessId
-      ? await ctx.runQuery(api.businesses.get, { id: conversation.businessId })
+    // Mutable across the tool loop: onboard_business creates a business
+    // mid-turn, so the conversation pointer we fetched at the start can be
+    // stale by the next tool call. Update it as we go.
+    let activeBusinessId = conversation.businessId
+    const business = activeBusinessId
+      ? await ctx.runQuery(api.businesses.get, { id: activeBusinessId })
       : null
 
     // Check usage limits — parallelise usage + subscription queries
@@ -271,16 +275,16 @@ export const chat = action({
         metadata = toolResult as Record<string, unknown>
       } else if (toolName === "connect_channel") {
         messageType = "connect_prompt"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "show_meta_setup_guide") {
         messageType = "meta_setup_guide"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "show_google_ads_setup_guide") {
         messageType = "google_ads_setup_guide"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "show_ga4_setup_guide") {
         messageType = "ga4_setup_guide"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "audit_gbp") {
         messageType = "gbp_audit"
         metadata = toolResult as Record<string, unknown>
@@ -310,11 +314,18 @@ export const chat = action({
         try {
           toolResult = await executeToolCall(
             ctx as unknown as ToolCtx, toolName, toolInput,
-            args.userId, conversation.businessId, args.conversationId
+            args.userId, activeBusinessId, args.conversationId
           )
         } catch (err) {
           accMessages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ error: String(err) }) })
           continue
+        }
+
+        // onboard_business just created and linked a business; adopt the new
+        // id so any further tool calls in this turn see it.
+        if (toolName === "onboard_business") {
+          const newId = (toolResult as { businessId?: Id<"businesses"> })?.businessId
+          if (newId) activeBusinessId = newId
         }
 
         applyToolType(toolName, toolResult)
@@ -376,9 +387,13 @@ export const chat = action({
             try {
               toolResult = await executeToolCall(
                 ctx as unknown as ToolCtx, tc.function.name, toolInput,
-                args.userId, conversation.businessId, args.conversationId
+                args.userId, activeBusinessId, args.conversationId
               )
             } catch { continue }
+            if (tc.function.name === "onboard_business") {
+              const newId = (toolResult as { businessId?: Id<"businesses"> })?.businessId
+              if (newId) activeBusinessId = newId
+            }
             applyToolType(tc.function.name, toolResult)
 
             try {
@@ -973,6 +988,15 @@ async function executeToolCall(
         websiteUrl: (input.websiteUrl as string | undefined) ?? undefined,
         imageryUrls: [],
       })
+      // Link the new business to this conversation so the next tools in the
+      // same turn (find_local_competitors, audit_gbp) — and every turn that
+      // follows — can fetch the business record without another onboarding.
+      if (conversationId) {
+        await ctx.runMutation(api.conversations.linkBusiness, {
+          conversationId,
+          businessId: id,
+        })
+      }
       return { success: true, businessId: id }
     }
 

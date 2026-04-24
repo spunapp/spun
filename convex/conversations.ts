@@ -83,3 +83,13 @@ export const updateTitle = mutation({
     await ctx.db.patch(args.id, { title: args.title })
   },
 })
+
+export const linkBusiness = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    businessId: v.id("businesses"),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.conversationId, { businessId: args.businessId })
+  },
+})
