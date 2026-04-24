@@ -1,36 +1,69 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spun
 
-## Getting Started
+**Automate marketing for your local business.**
 
-First, run the development server:
+Spun is an AI agent that manages your Google listing, runs your ads, collects reviews, posts on social and follows up with leads — all while chatting with you via WhatsApp or SMS.
+
+## How It Works
+
+1. **Tell Spun about your business** — a quick chat conversation, not a form
+2. **Spun audits your online presence** — your Google listing, reviews, website, ad accounts
+3. **Spun builds a plan** — plain English, no jargon, sent to your phone
+4. **You approve (or let it run)** — reply YES or tell it what to change
+5. **Spun executes and reports back** — weekly report showing exactly where customers came from
+
+## What Spun Does
+
+| Function | What happens |
+|---|---|
+| **Google listing** | Optimizes your Google Business Profile — hours, photos, categories, posts |
+| **Ads** | Creates and manages Google Ads campaigns, adjusts budget based on performance |
+| **Reviews** | Sends review requests to customers, responds to new reviews |
+| **Social** | Posts to Facebook and Instagram on a schedule |
+| **Lead follow-up** | Tracks new leads, sends follow-up messages, moves them through a pipeline |
+| **Reporting** | Weekly plain-language report via WhatsApp/SMS — calls, reviews, ad spend, ROI |
+
+## Who It's For
+
+Local service businesses — plumbers, dentists, salons, gyms, restaurants, HVAC, chiropractors, auto shops, cleaning services. Businesses doing $100K–$2M/yr that know they should be marketing but don't have the time, knowledge, or budget for an agency.
+
+## Pricing
+
+| Plan | Price | Includes |
+|---|---|---|
+| **Starter** | $99/mo | Google listing management, review collection, weekly reports |
+| **Growth** | $199/mo | + Ads management, social posting, lead follow-ups |
+| **Pro** | $399/mo | + Multi-location, priority support, custom integrations |
+
+Ad spend is separate (passed through to Google/Meta).
+
+## Tech Stack
+
+- Next.js 16 / React 19 / TypeScript / Tailwind v4
+- Convex (real-time backend)
+- Anthropic Claude (AI agent brain)
+- WhatsApp Business API / Twilio (SMS)
+- Google Business Profile API / Google Ads API / Meta Graph API / Yelp API
+
+## Development
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npx convex dev     # Start Convex backend
+npm run dev        # Start Next.js dev server
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Copy `.env.example` to `.env.local` and fill in your API keys.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Documentation
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- [Architecture](docs/architecture.md) — system design, data flow, deployment
+- [Data Model](docs/data-model.md) — Convex schema with field-level detail
+- [Agent System](docs/agent-system.md) — Claude tool-use, system prompt, trust escalation
+- [Integrations](docs/integrations.md) — platform API specs and OAuth flows
+- [Messaging](docs/messaging.md) — WhatsApp/SMS channel architecture
+- [Onboarding](docs/onboarding.md) — conversational intake flow
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Proprietary. All rights reserved.
