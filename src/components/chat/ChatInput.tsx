@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ArrowUp, Plus, Image, X } from "lucide-react"
+import { ArrowUp, Plus, X } from "lucide-react"
 
 interface PendingFile {
   file: File
@@ -87,17 +87,18 @@ export function ChatInput({
   }
 
   return (
-    <div className="border-t border-white/5 px-4 py-3">
+    <div className="border-t border-grid bg-white px-4 py-3">
       <div className="max-w-3xl mx-auto">
         {/* Pending file previews */}
         {pendingFiles.length > 0 && (
           <div className="flex gap-2 mb-2 flex-wrap">
             {pendingFiles.map((pf, i) => (
               <div key={i} className="relative group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={pf.preview}
                   alt={pf.file.name}
-                  className="w-16 h-16 object-cover rounded-lg border border-white/10"
+                  className="w-16 h-16 object-cover rounded-md border border-grid"
                 />
                 <button
                   onClick={() => removeFile(i)}
@@ -111,12 +112,10 @@ export function ChatInput({
         )}
 
         <div className="flex items-stretch gap-2">
-          {/* Plus button for file upload */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={disabled}
-            className="flex-shrink-0 w-10 bg-white/5 hover:bg-white/15 rounded-xl flex items-center justify-center text-white/60 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
-            style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+            className="flex-shrink-0 w-10 border border-grid bg-white hover:bg-surface-alt rounded-md flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
             title="Upload images"
           >
             <Plus className="w-5 h-5" />
@@ -138,15 +137,14 @@ export function ChatInput({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="flex-1 px-4 py-3 bg-white/5 rounded-xl text-white placeholder-slate-500 outline-none focus:outline-none focus-visible:outline-none focus:ring-0 focus-visible:ring-0 resize-none disabled:opacity-50"
-            style={{ border: '1px solid rgba(255,255,255,0.1)', overflowY: 'hidden', scrollbarWidth: 'none' }}
+            className="flex-1 px-4 py-3 border border-grid bg-surface-alt rounded-md text-gray-900 placeholder-gray-400 outline-none focus:border-spun/40 focus:bg-white resize-none disabled:opacity-50 transition-colors"
+            style={{ overflowY: 'hidden', scrollbarWidth: 'none' }}
           />
 
           <button
             onClick={handleSubmit}
             disabled={(!input.trim() && pendingFiles.length === 0) || disabled}
-            className="flex-shrink-0 w-10 bg-white/15 hover:bg-white/25 rounded-xl flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all outline-none focus:outline-none focus-visible:outline-none"
-            style={{ border: '1px solid rgba(255,255,255,0.2)' }}
+            className="flex-shrink-0 w-10 bg-spun hover:bg-spun-dark rounded-md flex items-center justify-center text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
           >
             <ArrowUp className="w-5 h-5" />
           </button>

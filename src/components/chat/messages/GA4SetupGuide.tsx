@@ -195,7 +195,7 @@ export function GA4SetupGuide({ content, metadata, onSend }: GA4SetupGuideProps)
   return (
     <div className="space-y-3">
       {content && (
-        <div className="text-sm text-slate-200 leading-relaxed">
+        <div className="text-sm text-gray-700 leading-relaxed">
           {content.split("\n").map((line, i) => (
             <p key={i} className={line ? "" : "h-3"}>
               {line}
@@ -205,25 +205,25 @@ export function GA4SetupGuide({ content, metadata, onSend }: GA4SetupGuideProps)
       )}
 
       <div
-        className="rounded-xl bg-white/5 p-3"
-        style={{ border: "1px solid rgba(255,255,255,0.08)" }}
+        className="rounded-xl bg-surface-alt p-3"
+        
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-gradient-to-br from-[#F9AB00] to-[#E37400] flex items-center justify-center text-[10px] font-bold text-white">
               A
             </div>
-            <span className="text-sm font-medium text-white">
+            <span className="text-sm font-medium text-gray-900">
               Set up Google Analytics 4
             </span>
           </div>
-          <span className="text-xs text-slate-400">
+          <span className="text-xs text-gray-500">
             {completedCount}/{totalSteps}
           </span>
         </div>
 
         {/* Progress bar */}
-        <div className="h-1 w-full rounded-full bg-white/5 mb-3 overflow-hidden">
+        <div className="h-1 w-full rounded-full bg-grid mb-3 overflow-hidden">
           <div
             className="h-full bg-gradient-to-r from-[#F9AB00] to-[#E37400] transition-all"
             style={{ width: `${(completedCount / totalSteps) * 100}%` }}
@@ -252,7 +252,7 @@ export function GA4SetupGuide({ content, metadata, onSend }: GA4SetupGuideProps)
                     {isChecked ? (
                       <CheckCircle className="w-4 h-4 text-[#F9AB00]" />
                     ) : (
-                      <Circle className="w-4 h-4 text-slate-500 hover:text-slate-300 transition-colors" />
+                      <Circle className="w-4 h-4 text-gray-400 hover:text-gray-600 transition-colors" />
                     )}
                   </button>
 
@@ -263,32 +263,32 @@ export function GA4SetupGuide({ content, metadata, onSend }: GA4SetupGuideProps)
                     <div className="flex-1">
                       <div
                         className={`text-sm font-medium transition-colors ${
-                          isChecked ? "text-slate-400 line-through" : "text-slate-100"
+                          isChecked ? "text-gray-500 line-through" : "text-gray-900"
                         }`}
                       >
-                        <span className="text-slate-500 mr-1.5">{i + 1}.</span>
+                        <span className="text-gray-400 mr-1.5">{i + 1}.</span>
                         {step.title}
                       </div>
                     </div>
                     {isOpen ? (
-                      <ChevronDown className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
+                      <ChevronDown className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
                     ) : (
-                      <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-slate-300 mt-0.5 flex-shrink-0 transition-colors" />
+                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-gray-600 mt-0.5 flex-shrink-0 transition-colors" />
                     )}
                   </button>
                 </div>
 
                 {isOpen && (
                   <div className="px-3 pb-3 pl-9 space-y-2">
-                    <p className="text-xs text-slate-300 leading-relaxed">{step.body}</p>
+                    <p className="text-xs text-gray-600 leading-relaxed">{step.body}</p>
 
                     {step.tip && (
                       <div
-                        className="flex items-start gap-2 p-2 rounded-md bg-amber-500/5"
+                        className="flex items-start gap-2 p-2 rounded-md bg-amber-50"
                         style={{ border: "1px solid rgba(245,158,11,0.2)" }}
                       >
-                        <Info className="w-3 h-3 text-amber-400 mt-0.5 flex-shrink-0" />
-                        <p className="text-[11px] text-amber-200/90 leading-relaxed">
+                        <Info className="w-3 h-3 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-[11px] text-amber-800/90 leading-relaxed">
                           {step.tip}
                         </p>
                       </div>
@@ -321,13 +321,13 @@ export function GA4SetupGuide({ content, metadata, onSend }: GA4SetupGuideProps)
             </div>
           ) : status === "error" ? (
             <div className="space-y-2">
-              <div className="flex items-center gap-2 text-red-400 text-sm">
+              <div className="flex items-center gap-2 text-red-600 text-sm">
                 <XCircle size={16} />
                 <span>Connection failed{errorMsg ? `: ${errorMsg}` : ""}</span>
               </div>
               <button
                 onClick={handleConnect}
-                className="px-3 py-1.5 bg-white/10 hover:bg-white/20 rounded-lg text-white text-xs transition-colors"
+                className="px-3 py-1.5 bg-white hover:bg-surface-alt border border-grid rounded-md text-gray-700 text-xs transition-colors"
                 style={{ border: "1px solid rgba(255,255,255,0.15)" }}
               >
                 Try again

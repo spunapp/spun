@@ -26,7 +26,7 @@ export function ConversationList({
       <div className="p-3">
         <button
           onClick={onNew}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg transition-all"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:text-gray-900 bg-white hover:bg-surface-alt border border-grid rounded-md transition-all"
         >
           <Plus className="w-4 h-4" />
           New conversation
@@ -38,10 +38,10 @@ export function ConversationList({
           <button
             key={conv._id}
             onClick={() => onSelect(conv._id)}
-            className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-all text-left ${
+            className={`w-full flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-all text-left ${
               activeId === conv._id
-                ? "bg-[#5B9BAA]/20 text-[#5B9BAA] border border-[#5B9BAA]/30"
-                : "text-slate-400 hover:text-white hover:bg-white/5"
+                ? "bg-spun-50 text-spun border border-spun/20"
+                : "text-gray-500 hover:text-gray-900 hover:bg-surface-alt"
             }`}
           >
             <MessageSquare className="w-4 h-4 flex-shrink-0" />
@@ -52,7 +52,7 @@ export function ConversationList({
         ))}
 
         {conversations.length === 0 && (
-          <p className="text-xs text-slate-600 px-3 py-4">
+          <p className="text-xs text-gray-400 px-3 py-4">
             No conversations yet
           </p>
         )}

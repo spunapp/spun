@@ -42,16 +42,17 @@ export function ChatMessage({ message, onApprove, onReject, onRetry, onSend }: C
   return (
     <div className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}>
       {!isUser && (
-        <img src="/spun.gif" alt="Spun" className="w-8 h-8 rounded-lg flex-shrink-0 object-contain" />
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src="/icon-192.png" alt="Spun" className="w-8 h-8 rounded-md flex-shrink-0 object-contain" />
       )}
 
       <div
         className={`max-w-[80%] ${
           isUser
-            ? "bg-white/10 border border-white/20 rounded-2xl rounded-tr-sm"
+            ? "bg-spun text-white rounded-2xl rounded-tr-sm"
             : isRetryableError
-              ? "bg-amber-500/10 border border-amber-500/30 rounded-2xl rounded-tl-sm"
-              : "bg-white/5 border border-white/10 rounded-2xl rounded-tl-sm"
+              ? "bg-amber-50 border border-amber-200 rounded-2xl rounded-tl-sm"
+              : "bg-white border border-grid rounded-2xl rounded-tl-sm"
         } px-4 py-3`}
       >
         {message.messageType === "strategy" && message.metadata ? (
@@ -92,7 +93,7 @@ export function ChatMessage({ message, onApprove, onReject, onRetry, onSend }: C
         {isRetryableError && onRetry && (
           <button
             onClick={() => onRetry(meta!.failedUserMessage as string)}
-            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-200 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg transition-colors"
+            className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-amber-800 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-md transition-colors"
           >
             <RotateCcw className="w-3 h-3" />
             Retry

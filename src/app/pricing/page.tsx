@@ -3,9 +3,8 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
-import Link from "next/link"
-import { Check, X } from "lucide-react"
-import { LOGO_SRC } from "@/lib/logo"
+import { Check, X, ArrowRight } from "lucide-react"
+import { MarketingShell } from "@/components/landing/MarketingShell"
 import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 
 const PRICES = {
@@ -76,18 +75,18 @@ const features: FeatureRow[] = [
 
 function FeatureValue({ value }: { value: boolean | string }) {
   if (typeof value === "string") {
-    return <span className="text-white text-sm font-medium">{value}</span>
+    return <span className="text-gray-900 text-sm font-medium">{value}</span>
   }
   if (value) {
     return (
-      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15">
-        <Check className="w-3.5 h-3.5 text-[#5B9BAA]" />
+      <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-spun-50">
+        <Check className="w-3.5 h-3.5 text-spun" />
       </span>
     )
   }
   return (
-    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/5">
-      <X className="w-3.5 h-3.5 text-slate-600" />
+    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-grid">
+      <X className="w-3.5 h-3.5 text-gray-400" />
     </span>
   )
 }
@@ -147,399 +146,404 @@ export default function PricingPage() {
   const savingsPercent = currentCost > 0 ? Math.round((savings / currentCost) * 100) : 0
 
   return (
-    <div className="min-h-screen bg-[var(--background-dark)] flex flex-col items-center px-4 py-6">
-      {/* Header */}
-      <div className="text-center mb-8 space-y-3">
-        <Link href="/" className="inline-block">
-          <img
-            src="/spun.gif"
-            alt=""
-            width={56}
-            height={56}
-            className="mx-auto rounded-2xl"
-          />
-          <img
-            src={LOGO_SRC}
-            alt=""
-            className="mx-auto mt-3"
-            style={{ height: 80 }}
-          />
-        </Link>
-        <h1 className="text-white text-2xl font-semibold">Start Your 14 Day Free Trial</h1>
-        <p className="text-slate-300 text-base max-w-md mx-auto">
-          Cancel anytime before the 14 days are up. Credit card details required.
-        </p>
-      </div>
-
-      {/* Billing toggle */}
-      <div className="flex items-center gap-3 mb-8">
-        <div className="inline-flex rounded-full p-1" style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.05)" }}>
-          <button
-            onClick={() => setBilling("monthly")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              billing === "monthly"
-                ? "bg-[#5B9BAA] text-white shadow-lg"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setBilling("annual")}
-            className={`px-5 py-2 rounded-full text-sm font-medium transition-all ${
-              billing === "annual"
-                ? "bg-[#5B9BAA] text-white shadow-lg"
-                : "text-slate-400 hover:text-white"
-            }`}
-          >
-            Annual
-          </button>
-        </div>
-        {billing === "annual" && (
-          <span className="text-emerald-400 text-xs font-semibold">Save 20%</span>
-        )}
-      </div>
-
-      {/* Pricing cards */}
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 items-start">
-        {/* Standard */}
-        <div
-          className="rounded-2xl p-6 flex flex-col bg-[var(--background)] md:mt-6"
-          style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <h2 className="text-white text-lg font-semibold">Standard</h2>
-          <div className="mt-4 mb-1">
-            <span className="text-white text-4xl font-bold">£{standardPrice.toFixed(2)}</span>
-            <span className="text-slate-400 text-sm ml-1">/mo</span>
-          </div>
-          {billing === "annual" && (
-            <p className="text-slate-500 text-xs mb-4">Billed annually</p>
-          )}
-          {billing === "monthly" && (
-            <p className="text-emerald-400/70 text-xs mb-4">
-              £{PRICES.standard.annual.toFixed(2)}/mo billed annually
-            </p>
-          )}
-          <button
-            onClick={() => handleCheckout(TIERS.standard.priceId)}
-            disabled={loading === TIERS.standard.priceId}
-            className="w-full border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 mb-6"
-          >
-            {loading === TIERS.standard.priceId ? "Redirecting…" : "Start free trial"}
-          </button>
-          <ul className="space-y-3 flex-1">
-            {CARD_FEATURES.standard.map((f) => (
-              <li key={f} className="flex items-start gap-2.5">
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15 mt-0.5 shrink-0">
-                  <Check className="w-3 h-3 text-[#5B9BAA]" />
-                </span>
-                <span className="text-slate-300 text-sm">{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Pro */}
-        <div
-          className="rounded-2xl p-6 flex flex-col bg-[#5B9BAA]/5 relative"
-          style={{ border: "2px solid #5B9BAA" }}
-        >
-          <div className="absolute -top-0 left-1/2 -translate-x-1/2">
-            <span className="bg-[#5B9BAA] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-b-lg">
-              Most Popular
-            </span>
-          </div>
-          <h2 className="text-white text-lg font-semibold">Pro</h2>
-          <div className="mt-4 mb-1">
-            <span className="text-white text-4xl font-bold">£{proPrice.toFixed(2)}</span>
-            <span className="text-slate-400 text-sm ml-1">/mo</span>
-          </div>
-          {billing === "annual" && (
-            <p className="text-slate-500 text-xs mb-4">Billed annually</p>
-          )}
-          {billing === "monthly" && (
-            <p className="text-emerald-400/70 text-xs mb-4">
-              £{PRICES.pro.annual.toFixed(2)}/mo billed annually
-            </p>
-          )}
-          <button
-            onClick={() => handleCheckout(TIERS.pro.priceId)}
-            disabled={loading === TIERS.pro.priceId}
-            className="w-full bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 rounded-xl transition-colors text-sm disabled:opacity-50 mb-6"
-          >
-            {loading === TIERS.pro.priceId ? "Redirecting…" : "Start free trial"}
-          </button>
-          <ul className="space-y-3 flex-1">
-            {CARD_FEATURES.pro.map((f) => (
-              <li key={f} className="flex items-start gap-2.5">
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15 mt-0.5 shrink-0">
-                  <Check className="w-3 h-3 text-[#5B9BAA]" />
-                </span>
-                <span className="text-slate-300 text-sm">{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        {/* Enterprise */}
-        <div
-          className="rounded-2xl p-6 flex flex-col bg-[var(--background)] md:mt-6"
-          style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          <h2 className="text-white text-lg font-semibold">Enterprise</h2>
-          <div className="mt-4 mb-1">
-            <span className="text-white text-4xl font-bold">POA</span>
-          </div>
-          <p className="text-slate-500 text-xs mb-4">Custom pricing</p>
-          <a
-            href="mailto:contact@spun.bot"
-            className="w-full text-center border border-[#5B9BAA] text-[#5B9BAA] hover:bg-[#5B9BAA]/10 font-semibold py-3 rounded-xl transition-colors text-sm block mb-6"
-          >
-            Contact us
-          </a>
-          <ul className="space-y-3 flex-1">
-            {CARD_FEATURES.enterprise.map((f) => (
-              <li key={f} className="flex items-start gap-2.5">
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[#5B9BAA]/15 mt-0.5 shrink-0">
-                  <Check className="w-3 h-3 text-[#5B9BAA]" />
-                </span>
-                <span className="text-slate-300 text-sm">{f}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-
-      {/* ROI Calculator */}
-      <div className="w-full max-w-5xl mb-16">
-        <div className="text-center mb-8">
-          <span className="inline-block bg-[#5B9BAA]/15 text-[#5B9BAA] text-xs font-semibold px-3 py-1 rounded-full mb-3">ROI Calculator</span>
-          <h2 className="text-white text-2xl font-semibold">Calculate Your Savings</h2>
-          <p className="text-slate-400 text-sm mt-2">See how much you could save by switching to Spun compared to your current setup.</p>
-        </div>
-        <div
-          className="rounded-2xl p-8 bg-[var(--background)]"
-          style={{ border: "1px solid rgba(255,255,255,0.1)" }}
-        >
-          {/* Tabs */}
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <button
-              onClick={() => setCompareTab("agency")}
-              className={`flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-medium transition-all ${
-                compareTab === "agency"
-                  ? "text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-              style={{
-                border: compareTab === "agency" ? "2px solid #5B9BAA" : "1px solid rgba(255,255,255,0.1)",
-                background: compareTab === "agency" ? "rgba(91,155,170,0.08)" : "transparent",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-              Compare to Agency
-            </button>
-            <button
-              onClick={() => setCompareTab("inhouse")}
-              className={`flex items-center justify-center gap-2 py-3.5 rounded-xl text-sm font-medium transition-all ${
-                compareTab === "inhouse"
-                  ? "text-white"
-                  : "text-slate-400 hover:text-white"
-              }`}
-              style={{
-                border: compareTab === "inhouse" ? "2px solid #5B9BAA" : "1px solid rgba(255,255,255,0.1)",
-                background: compareTab === "inhouse" ? "rgba(91,155,170,0.08)" : "transparent",
-              }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-              Compare to In-House Team
-            </button>
-          </div>
-
-          {/* Content area */}
-          <div className="rounded-xl p-6 mb-8" style={{ border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.02)" }}>
-            {compareTab === "agency" ? (
-              <div>
-                <p className="text-white text-sm font-medium mb-5">What does your agency charge per month?</p>
-                <input
-                  type="range"
-                  min={3000}
-                  max={15000}
-                  step={500}
-                  value={agencySpend}
-                  onChange={(e) => setAgencySpend(Number(e.target.value))}
-                  className="w-full h-2 rounded-full appearance-none cursor-pointer"
-                  style={{
-                    background: `linear-gradient(to right, #5B9BAA ${((agencySpend - 3000) / 12000) * 100}%, rgba(255,255,255,0.1) ${((agencySpend - 3000) / 12000) * 100}%)`,
-                    accentColor: "#5B9BAA",
-                  }}
-                />
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-slate-500 text-xs">£3,000/mo</span>
-                  <span className="text-white text-xl font-bold">£{agencySpend.toLocaleString()}/mo</span>
-                  <span className="text-slate-500 text-xs">£15,000/mo</span>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <p className="text-white text-sm font-medium mb-5">Which roles would you hire in-house? (Select all that apply)</p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {Object.entries(ROLE_SALARIES).map(([role, salary]) => (
-                    <button
-                      key={role}
-                      onClick={() => setSelectedRoles(prev => ({ ...prev, [role]: !prev[role] }))}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all"
-                      style={{
-                        border: selectedRoles[role] ? "2px solid #5B9BAA" : "1px solid rgba(255,255,255,0.1)",
-                        background: selectedRoles[role] ? "rgba(91,155,170,0.08)" : "transparent",
-                      }}
-                    >
-                      <span
-                        className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
-                          selectedRoles[role] ? "bg-[#5B9BAA]" : ""
-                        }`}
-                        style={selectedRoles[role] ? {} : { border: "1px solid rgba(255,255,255,0.2)" }}
-                      >
-                        {selectedRoles[role] && <Check className="w-3 h-3 text-white" />}
-                      </span>
-                      <span className="text-white text-sm font-medium flex-1">{role}</span>
-                      <span className="text-slate-400 text-sm">£{salary.toLocaleString()}/yr</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Results */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            <div className="rounded-xl p-5" style={{ border: "1px solid rgba(239,68,68,0.2)", background: "rgba(239,68,68,0.05)" }}>
-              <p className="text-slate-400 text-xs mb-2 flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded bg-red-500/15 flex items-center justify-center">
-                  <span className="text-red-400 text-xs font-bold">£</span>
-                </span>
-                {compareTab === "agency" ? "Agency Cost" : "In-House Cost"}
+    <MarketingShell>
+      {/* Hero */}
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="px-4 md:px-14 lg:px-20 pt-20 pb-10">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-3 font-mono">
+                Pricing
               </p>
-              <p className="text-red-400 text-2xl font-bold">£{currentCost.toLocaleString()}</p>
-              <p className="text-slate-500 text-xs mt-1">per year</p>
+              <h1 className="text-3xl md:text-4xl lg:text-[44px] font-bold tracking-tight text-gray-900 leading-[1.1]">
+                Start your 14-day free trial
+              </h1>
+              <p className="mt-5 text-gray-500 text-[15px] leading-relaxed">
+                Cancel anytime before the 14 days are up. Credit card details
+                required.
+              </p>
             </div>
-            <div className="rounded-xl p-5" style={{ border: "1px solid rgba(91,155,170,0.2)", background: "rgba(91,155,170,0.05)" }}>
-              <p className="text-slate-400 text-xs mb-2 flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded bg-[#5B9BAA]/15 flex items-center justify-center">
-                  <span className="text-[#5B9BAA] text-xs font-bold">~</span>
-                </span>
-                Spun Pro Plan
-              </p>
-              <p className="text-[#5B9BAA] text-2xl font-bold">£{spunAnnualCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
-              <p className="text-slate-500 text-xs mt-1">per year</p>
-            </div>
-            <div className="rounded-xl p-5 bg-[#5B9BAA]">
-              <p className="text-white/80 text-xs mb-2 flex items-center gap-1.5">
-                <span className="w-5 h-5 rounded bg-white/20 flex items-center justify-center">
-                  <span className="text-white text-xs font-bold">%</span>
-                </span>
-                Your Annual Savings
-              </p>
-              <p className="text-white text-2xl font-bold">£{Math.max(0, savings).toLocaleString()}</p>
-              {savings > 0 && (
-                <p className="text-white/80 text-xs mt-1">That&apos;s {savingsPercent}% less!</p>
+
+            {/* Billing toggle */}
+            <div className="mt-10 flex items-center justify-center gap-3">
+              <div className="inline-flex rounded-full p-1 border border-grid bg-white">
+                <button
+                  onClick={() => setBilling("monthly")}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition ${
+                    billing === "monthly"
+                      ? "bg-spun text-white"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setBilling("annual")}
+                  className={`px-5 py-2 rounded-full text-sm font-medium transition ${
+                    billing === "annual"
+                      ? "bg-spun text-white"
+                      : "text-gray-500 hover:text-gray-900"
+                  }`}
+                >
+                  Annual
+                </button>
+              </div>
+              {billing === "annual" && (
+                <span className="text-spun text-xs font-semibold">Save 20%</span>
               )}
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="text-center">
-            <button
-              onClick={() => handleCheckout(TIERS.pro.priceId)}
-              className="bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold py-3 px-8 rounded-xl transition-colors text-sm inline-flex items-center gap-2"
-            >
-              Start Saving Today
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-            </button>
-            <p className="text-slate-500 text-xs mt-3">14-day free trial. Cancel anytime.</p>
+      {/* Pricing cards */}
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="h-px bg-ruler" />
+          <div className="px-4 md:px-14 lg:px-20 py-16">
+            <div className="grid md:grid-cols-3 gap-px bg-grid border border-grid">
+              {/* Standard */}
+              <div className="p-8 flex flex-col bg-white">
+                <h2 className="text-lg font-bold text-gray-900">Standard</h2>
+                <p className="text-[13px] text-gray-500 mt-1">For getting started</p>
+                <div className="mt-6 mb-1">
+                  <span className="text-3xl font-bold text-gray-900">£{standardPrice.toFixed(2)}</span>
+                  <span className="text-[13px] text-gray-400 ml-1">/mo</span>
+                </div>
+                {billing === "annual" && (
+                  <p className="text-gray-400 text-xs mb-6">Billed annually</p>
+                )}
+                {billing === "monthly" && (
+                  <p className="text-spun text-xs mb-6">
+                    £{PRICES.standard.annual.toFixed(2)}/mo billed annually
+                  </p>
+                )}
+                <button
+                  onClick={() => handleCheckout(TIERS.standard.priceId)}
+                  disabled={loading === TIERS.standard.priceId}
+                  className="w-full border border-grid hover:border-gray-300 bg-white text-gray-700 font-medium py-2.5 rounded-md text-[13px] transition disabled:opacity-50 mb-6"
+                >
+                  {loading === TIERS.standard.priceId ? "Redirecting…" : "Start free trial"}
+                </button>
+                <ul className="space-y-3 flex-1">
+                  {CARD_FEATURES.standard.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-[13px]">
+                      <Check className="mt-0.5 shrink-0 w-3.5 h-3.5 text-gray-300" strokeWidth={2} />
+                      <span className="text-gray-600">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Pro */}
+              <div className="p-8 flex flex-col bg-spun-50/50 relative">
+                <p className="text-[10px] font-semibold text-spun uppercase tracking-[0.15em] mb-4">
+                  Most popular
+                </p>
+                <h2 className="text-lg font-bold text-gray-900">Pro</h2>
+                <p className="text-[13px] text-gray-500 mt-1">Full marketing on autopilot</p>
+                <div className="mt-6 mb-1">
+                  <span className="text-3xl font-bold text-gray-900">£{proPrice.toFixed(2)}</span>
+                  <span className="text-[13px] text-gray-400 ml-1">/mo</span>
+                </div>
+                {billing === "annual" && (
+                  <p className="text-gray-400 text-xs mb-6">Billed annually</p>
+                )}
+                {billing === "monthly" && (
+                  <p className="text-spun text-xs mb-6">
+                    £{PRICES.pro.annual.toFixed(2)}/mo billed annually
+                  </p>
+                )}
+                <button
+                  onClick={() => handleCheckout(TIERS.pro.priceId)}
+                  disabled={loading === TIERS.pro.priceId}
+                  className="w-full bg-spun hover:bg-spun-dark text-white font-medium py-2.5 rounded-md text-[13px] transition disabled:opacity-50 mb-6"
+                >
+                  {loading === TIERS.pro.priceId ? "Redirecting…" : "Start free trial"}
+                </button>
+                <ul className="space-y-3 flex-1">
+                  {CARD_FEATURES.pro.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-[13px]">
+                      <Check className="mt-0.5 shrink-0 w-3.5 h-3.5 text-spun" strokeWidth={2} />
+                      <span className="text-gray-600">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Enterprise */}
+              <div className="p-8 flex flex-col bg-white">
+                <h2 className="text-lg font-bold text-gray-900">Enterprise</h2>
+                <p className="text-[13px] text-gray-500 mt-1">Custom solutions</p>
+                <div className="mt-6 mb-1">
+                  <span className="text-3xl font-bold text-gray-900">POA</span>
+                </div>
+                <p className="text-gray-400 text-xs mb-6">Custom pricing</p>
+                <a
+                  href="mailto:contact@spun.bot"
+                  className="w-full text-center border border-grid hover:border-gray-300 bg-white text-gray-700 font-medium py-2.5 rounded-md text-[13px] transition block mb-6"
+                >
+                  Contact us
+                </a>
+                <ul className="space-y-3 flex-1">
+                  {CARD_FEATURES.enterprise.map((f) => (
+                    <li key={f} className="flex items-start gap-2.5 text-[13px]">
+                      <Check className="mt-0.5 shrink-0 w-3.5 h-3.5 text-gray-300" strokeWidth={2} />
+                      <span className="text-gray-600">{f}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Compare Plans */}
-      <div className="w-full max-w-5xl mb-16">
-        <div className="text-center mb-8">
-          <h2 className="text-white text-2xl font-semibold">Compare Plans</h2>
-        </div>
-        <div className="bg-[var(--background)] rounded-2xl overflow-x-auto" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-          {/* Tier headers */}
-          <div className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] min-w-[640px]" style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-            <div className="p-6" />
-            <div className="p-6 text-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
-              <h3 className="text-white text-base font-semibold">Standard</h3>
-            </div>
-            <div className="p-6 text-center bg-[#5B9BAA]/5" style={{ borderLeft: "1px solid rgba(91,155,170,0.2)" }}>
-              <h3 className="text-white text-base font-semibold">Pro</h3>
-            </div>
-            <div className="p-6 text-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.1)" }}>
-              <h3 className="text-white text-base font-semibold">Enterprise</h3>
-            </div>
-          </div>
+      {/* ROI Calculator */}
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="h-px bg-ruler" />
+          <div className="px-4 md:px-14 lg:px-20 py-16">
+            <div className="max-w-4xl mx-auto">
+              <div className="mb-10 text-center">
+                <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-3 font-mono">
+                  ROI Calculator
+                </p>
+                <h2 className="text-2xl md:text-3xl lg:text-[36px] font-bold text-gray-900 tracking-tight">
+                  Calculate your savings
+                </h2>
+                <p className="mt-3 text-gray-500 text-[15px]">
+                  See how much you could save by switching to Spun compared to
+                  your current setup.
+                </p>
+              </div>
 
-          {/* Feature rows */}
-          {features.map((row, i) => {
-            if (row.type === "divider") {
-              return <div key={`div-${i}`} className="min-w-[640px]" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }} />
-            }
+              <div className="bg-white border border-grid rounded-md p-8">
+                {/* Tabs */}
+                <div className="grid grid-cols-2 gap-3 mb-8">
+                  <button
+                    onClick={() => setCompareTab("agency")}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition border ${
+                      compareTab === "agency"
+                        ? "border-spun bg-spun-50/50 text-gray-900"
+                        : "border-grid bg-white text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                    Compare to agency
+                  </button>
+                  <button
+                    onClick={() => setCompareTab("inhouse")}
+                    className={`flex items-center justify-center gap-2 py-3 rounded-md text-sm font-medium transition border ${
+                      compareTab === "inhouse"
+                        ? "border-spun bg-spun-50/50 text-gray-900"
+                        : "border-grid bg-white text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    Compare to in-house team
+                  </button>
+                </div>
 
-            return (
-              <div
-                key={row.label}
-                className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] min-w-[640px] hover:bg-white/[0.02] transition-colors"
-                style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}
-              >
-                <div className="px-6 py-3 flex items-center">
-                  <span className="text-slate-300 text-sm">{row.label}</span>
+                {/* Content */}
+                <div className="rounded-md p-6 mb-6 border border-grid bg-surface-alt">
+                  {compareTab === "agency" ? (
+                    <div>
+                      <p className="text-gray-900 text-sm font-medium mb-5">
+                        What does your agency charge per month?
+                      </p>
+                      <input
+                        type="range"
+                        min={3000}
+                        max={15000}
+                        step={500}
+                        value={agencySpend}
+                        onChange={(e) => setAgencySpend(Number(e.target.value))}
+                        className="w-full h-2 rounded-full appearance-none cursor-pointer"
+                        style={{
+                          background: `linear-gradient(to right, #075E54 ${((agencySpend - 3000) / 12000) * 100}%, #ECEEF0 ${((agencySpend - 3000) / 12000) * 100}%)`,
+                          accentColor: "#075E54",
+                        }}
+                      />
+                      <div className="flex items-center justify-between mt-3">
+                        <span className="text-gray-400 text-xs">£3,000/mo</span>
+                        <span className="text-gray-900 text-xl font-bold">£{agencySpend.toLocaleString()}/mo</span>
+                        <span className="text-gray-400 text-xs">£15,000/mo</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-gray-900 text-sm font-medium mb-5">
+                        Which roles would you hire in-house? (Select all that apply)
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {Object.entries(ROLE_SALARIES).map(([role, salary]) => (
+                          <button
+                            key={role}
+                            onClick={() => setSelectedRoles((prev) => ({ ...prev, [role]: !prev[role] }))}
+                            className={`flex items-center gap-3 px-4 py-3 rounded-md text-left transition border ${
+                              selectedRoles[role]
+                                ? "border-spun bg-spun-50/50"
+                                : "border-grid bg-white"
+                            }`}
+                          >
+                            <span
+                              className={`w-5 h-5 rounded flex items-center justify-center shrink-0 ${
+                                selectedRoles[role]
+                                  ? "bg-spun"
+                                  : "border border-grid bg-white"
+                              }`}
+                            >
+                              {selectedRoles[role] && <Check className="w-3 h-3 text-white" />}
+                            </span>
+                            <span className="text-gray-900 text-sm font-medium flex-1">{role}</span>
+                            <span className="text-gray-500 text-sm">£{salary.toLocaleString()}/yr</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="px-6 py-3 flex items-center justify-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.04)" }}>
-                  <FeatureValue value={row.standard} />
+
+                {/* Results */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
+                  <div className="rounded-md p-5 border border-red-200 bg-red-50">
+                    <p className="text-gray-500 text-xs mb-2 flex items-center gap-1.5">
+                      {compareTab === "agency" ? "Agency cost" : "In-house cost"}
+                    </p>
+                    <p className="text-red-600 text-2xl font-bold">£{currentCost.toLocaleString()}</p>
+                    <p className="text-gray-400 text-xs mt-1">per year</p>
+                  </div>
+                  <div className="rounded-md p-5 border border-grid bg-surface-alt">
+                    <p className="text-gray-500 text-xs mb-2">Spun Pro plan</p>
+                    <p className="text-gray-900 text-2xl font-bold">£{spunAnnualCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
+                    <p className="text-gray-400 text-xs mt-1">per year</p>
+                  </div>
+                  <div className="rounded-md p-5 bg-spun">
+                    <p className="text-white/80 text-xs mb-2">Your annual savings</p>
+                    <p className="text-white text-2xl font-bold">£{Math.max(0, savings).toLocaleString()}</p>
+                    {savings > 0 && (
+                      <p className="text-white/80 text-xs mt-1">That&apos;s {savingsPercent}% less</p>
+                    )}
+                  </div>
                 </div>
-                <div className="px-6 py-3 flex items-center justify-center bg-[#5B9BAA]/[0.02]" style={{ borderLeft: "1px solid rgba(91,155,170,0.08)" }}>
-                  <FeatureValue value={row.pro} />
-                </div>
-                <div className="px-6 py-3 flex items-center justify-center" style={{ borderLeft: "1px solid rgba(255,255,255,0.04)" }}>
-                  <FeatureValue value={row.enterprise} />
+
+                <div className="text-center">
+                  <button
+                    onClick={() => handleCheckout(TIERS.pro.priceId)}
+                    className="inline-flex items-center gap-2 bg-spun hover:bg-spun-dark text-white font-medium py-3 px-7 rounded-md text-sm transition"
+                  >
+                    Start saving today
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                  <p className="text-gray-400 text-xs mt-3">14-day free trial. Cancel anytime.</p>
                 </div>
               </div>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Credit pack section */}
-      <div className="w-full max-w-5xl mb-10">
-        <div className="rounded-2xl p-8 text-center bg-[var(--background)]" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
-          <h3 className="text-white text-lg font-semibold mb-2">Need more?</h3>
-          <p className="text-slate-300 text-sm mb-4">
-            Top up anytime with a credit pack. Credits never expire and stack with your monthly allowance.
-          </p>
-          <div className="flex justify-center gap-6 mb-4">
-            <div className="text-center">
-              <span className="text-white text-2xl font-bold">+{CREDIT_PACK.messageCredits}</span>
-              <p className="text-slate-400 text-xs mt-1">AI responses</p>
-            </div>
-            <div className="text-center">
-              <span className="text-white text-2xl font-bold">+{CREDIT_PACK.creativeCredits}</span>
-              <p className="text-slate-400 text-xs mt-1">creatives</p>
-            </div>
-            <div className="text-center">
-              <span className="text-white text-2xl font-bold">+{CREDIT_PACK.channelCredits}</span>
-              <p className="text-slate-400 text-xs mt-1">ad channel</p>
             </div>
           </div>
-          <p className="text-[#5B9BAA] text-xl font-bold">
-            £{(CREDIT_PACK.price / 100).toFixed(2)} <span className="text-slate-400 text-sm font-normal">one-time</span>
-          </p>
         </div>
-      </div>
+      </section>
 
-      {/* Footer note */}
-      <p className="text-slate-500 text-sm mt-2 mb-6 text-center max-w-md">
-        Secure payments powered by Stripe. Cancel anytime. All plans include a 14-day free trial.
-      </p>
-    </div>
+      {/* Compare plans */}
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="h-px bg-ruler" />
+          <div className="px-4 md:px-14 lg:px-20 py-16">
+            <div className="max-w-5xl mx-auto">
+              <div className="text-center mb-10">
+                <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-3 font-mono">
+                  Compare plans
+                </p>
+                <h2 className="text-2xl md:text-3xl lg:text-[36px] font-bold text-gray-900 tracking-tight">
+                  Every feature, side by side
+                </h2>
+              </div>
+
+              <div className="bg-white border border-grid rounded-md overflow-x-auto">
+                <div className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] min-w-[640px] border-b border-grid">
+                  <div className="p-6" />
+                  <div className="p-6 text-center border-l border-grid">
+                    <h3 className="text-gray-900 text-base font-semibold">Standard</h3>
+                  </div>
+                  <div className="p-6 text-center border-l border-grid bg-spun-50/40">
+                    <h3 className="text-gray-900 text-base font-semibold">Pro</h3>
+                  </div>
+                  <div className="p-6 text-center border-l border-grid">
+                    <h3 className="text-gray-900 text-base font-semibold">Enterprise</h3>
+                  </div>
+                </div>
+
+                {features.map((row, i) => {
+                  if (row.type === "divider") {
+                    return <div key={`div-${i}`} className="min-w-[640px] border-t border-grid" />
+                  }
+
+                  return (
+                    <div
+                      key={row.label}
+                      className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] min-w-[640px] hover:bg-surface-alt transition-colors border-b border-grid"
+                    >
+                      <div className="px-6 py-3 flex items-center">
+                        <span className="text-gray-700 text-sm">{row.label}</span>
+                      </div>
+                      <div className="px-6 py-3 flex items-center justify-center border-l border-grid">
+                        <FeatureValue value={row.standard} />
+                      </div>
+                      <div className="px-6 py-3 flex items-center justify-center bg-spun-50/20 border-l border-grid">
+                        <FeatureValue value={row.pro} />
+                      </div>
+                      <div className="px-6 py-3 flex items-center justify-center border-l border-grid">
+                        <FeatureValue value={row.enterprise} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Credit pack */}
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="h-px bg-ruler" />
+          <div className="px-4 md:px-14 lg:px-20 py-16">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white border border-grid rounded-md p-8 text-center">
+                <h3 className="text-gray-900 text-lg font-bold mb-2">Need more?</h3>
+                <p className="text-gray-500 text-[14px] mb-6">
+                  Top up anytime with a credit pack. Credits never expire and
+                  stack with your monthly allowance.
+                </p>
+                <div className="flex justify-center gap-8 mb-6">
+                  <div className="text-center">
+                    <span className="text-gray-900 text-2xl font-bold">+{CREDIT_PACK.messageCredits}</span>
+                    <p className="text-gray-400 text-xs mt-1">AI responses</p>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-gray-900 text-2xl font-bold">+{CREDIT_PACK.creativeCredits}</span>
+                    <p className="text-gray-400 text-xs mt-1">creatives</p>
+                  </div>
+                  <div className="text-center">
+                    <span className="text-gray-900 text-2xl font-bold">+{CREDIT_PACK.channelCredits}</span>
+                    <p className="text-gray-400 text-xs mt-1">ad channel</p>
+                  </div>
+                </div>
+                <p className="text-spun text-xl font-bold">
+                  £{(CREDIT_PACK.price / 100).toFixed(2)}{" "}
+                  <span className="text-gray-400 text-sm font-normal">one-time</span>
+                </p>
+              </div>
+
+              <p className="text-gray-400 text-sm mt-8 text-center max-w-md mx-auto">
+                Secure payments powered by Stripe. Cancel anytime. All plans
+                include a 14-day free trial.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </MarketingShell>
   )
 }

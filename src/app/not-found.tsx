@@ -1,44 +1,40 @@
 import Link from "next/link"
+import { MarketingShell } from "@/components/landing/MarketingShell"
 
 export default function NotFound() {
   return (
-    <div
-      style={{
-        background: "#273E47",
-        color: "#f8fafc",
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif",
-        height: "100vh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-      }}
-    >
-      <h1
-        style={{
-          fontSize: "48px",
-          fontWeight: 700,
-          marginBottom: "8px",
-          color: "#5B9BAA",
-        }}
-      >
-        404
-      </h1>
-      <p style={{ fontSize: "14px", color: "#94a3b8", marginBottom: "24px" }}>
-        This page could not be found.
-      </p>
-      <Link
-        href="/"
-        style={{
-          fontSize: "14px",
-          color: "#5B9BAA",
-          textDecoration: "none",
-        }}
-      >
-        Go home
-      </Link>
-    </div>
+    <MarketingShell>
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="px-4 md:px-14 lg:px-20 py-32">
+            <div className="max-w-lg mx-auto text-center">
+              <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-3 font-mono">
+                Error 404
+              </p>
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-gray-900 leading-[1.05]">
+                Page not found
+              </h1>
+              <p className="mt-6 text-gray-500 text-[15px] leading-relaxed">
+                The page you&apos;re looking for doesn&apos;t exist or has moved.
+              </p>
+              <div className="mt-10 flex items-center justify-center gap-3">
+                <Link
+                  href="/"
+                  className="bg-spun hover:bg-spun-dark text-white font-medium px-7 py-3 rounded-md text-sm transition"
+                >
+                  Back home
+                </Link>
+                <Link
+                  href="/chat"
+                  className="text-gray-500 hover:text-gray-900 font-medium px-4 py-3 text-sm transition"
+                >
+                  Open chat →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </MarketingShell>
   )
 }

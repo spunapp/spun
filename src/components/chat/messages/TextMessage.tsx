@@ -9,7 +9,7 @@ interface TextMessageProps {
 
 export function TextMessage({ content, isUser }: TextMessageProps) {
   return (
-    <div className={`text-sm leading-relaxed ${isUser ? "text-purple-100" : "text-slate-200"}`}>
+    <div className={`text-sm leading-relaxed ${isUser ? "text-white" : "text-gray-800"}`}>
       {isUser
         ? content.split("\n").map((line, i) => (
             <p key={i} className={line ? "" : "h-3"}>{line}</p>

@@ -18,7 +18,7 @@ export function CampaignPreview({ content, metadata }: CampaignPreviewProps) {
 
   return (
     <div className="space-y-3">
-      <div className="text-sm text-slate-200 leading-relaxed">
+      <div className="text-sm text-gray-700 leading-relaxed">
         {content.split("\n").map((line, i) => (
           <p key={i} className={line ? "" : "h-3"}>
             {line}
@@ -27,21 +27,21 @@ export function CampaignPreview({ content, metadata }: CampaignPreviewProps) {
       </div>
 
       {campaign.theme && (
-        <div className="p-3 bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 rounded-lg space-y-2">
+        <div className="p-3 bg-spun-50 border border-spun/15 rounded-md space-y-2">
           <div className="flex items-center gap-2">
-            <Target className="w-4 h-4 text-purple-400" />
-            <span className="text-sm font-medium text-white">{campaign.theme}</span>
+            <Target className="w-4 h-4 text-spun" />
+            <span className="text-sm font-medium text-gray-900">{campaign.theme}</span>
           </div>
 
           <div className="flex flex-wrap gap-3 text-xs">
             {campaign.budget_breakdown && (
-              <div className="flex items-center gap-1 text-slate-300">
+              <div className="flex items-center gap-1 text-gray-600">
                 <DollarSign className="w-3 h-3" />
                 ${campaign.budget_breakdown.monthly_total?.toLocaleString()}/mo
               </div>
             )}
             {campaign.suggested_channels && (
-              <div className="flex items-center gap-1 text-slate-300">
+              <div className="flex items-center gap-1 text-gray-600">
                 <Users className="w-3 h-3" />
                 {campaign.suggested_channels.map((c) => c.channel).join(", ")}
               </div>
@@ -52,10 +52,10 @@ export function CampaignPreview({ content, metadata }: CampaignPreviewProps) {
             <span
               className={`inline-block text-xs px-2 py-0.5 rounded-full ${
                 campaign.status === "active"
-                  ? "bg-emerald-500/20 text-emerald-400"
+                  ? "bg-emerald-100 text-spun"
                   : campaign.status === "draft"
-                    ? "bg-amber-500/20 text-amber-400"
-                    : "bg-slate-500/20 text-slate-400"
+                    ? "bg-amber-100 text-amber-600"
+                    : "bg-gray-100 text-gray-500"
               }`}
             >
               {campaign.status}
