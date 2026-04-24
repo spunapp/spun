@@ -445,7 +445,7 @@ export default function SettingsPage() {
                         const res = await fetch("/api/stripe/credit-checkout", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ businessId: business._id, currency: displayCurrency }),
+                          body: JSON.stringify({ businessId: business._id }),
                         })
                         const data = await res.json()
                         if (data.url) window.location.href = data.url
