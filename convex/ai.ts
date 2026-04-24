@@ -943,6 +943,7 @@ async function executeToolCall(
           }) ?? {},
         locations: (input.locations as string[]) ?? [],
         competitors: (input.competitors as string[]) ?? [],
+        websiteUrl: (input.websiteUrl as string | undefined) ?? undefined,
         imageryUrls: [],
       })
       return { success: true, businessId: id }
@@ -1156,7 +1157,20 @@ Return ONLY valid JSON:
     }
 
     case "audit_gbp": {
-      const websiteUrl = input.websiteUrl as string | undefined
+      let websiteUrl = input.websiteUrl as string | undefined
+      let businessName = (input.businessName as string | undefined) ?? undefined
+      let location: string | undefined
+
+      // Fall back to the stored business profile for url/name/location.
+      if ((!websiteUrl || !businessName) && businessId) {
+        const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
+        if (business) {
+          if (!websiteUrl) websiteUrl = business.websiteUrl ?? undefined
+          if (!businessName) businessName = business.name
+          location = business.locations?.[0]
+        }
+      }
+
       if (!websiteUrl) return { error: "No website URL provided." }
 
       const apiKey = process.env.GOOGLE_PLACES_API_KEY
@@ -1166,17 +1180,6 @@ Return ONLY valid JSON:
 
       try {
         const { runGbpAudit } = await import("../src/lib/integrations/gbp")
-        // Prefer the business name the AI extracted from conversation context —
-        // the onboarded name might belong to a different business entirely.
-        let businessName = (input.businessName as string | undefined) ?? undefined
-        let location: string | undefined
-        if (!businessName && businessId) {
-          const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
-          if (business) {
-            businessName = business.name
-            location = business.locations?.[0]
-          }
-        }
         return await runGbpAudit(websiteUrl, businessName, location)
       } catch (err) {
         return { error: `GBP audit failed: ${err instanceof Error ? err.message : String(err)}` }
