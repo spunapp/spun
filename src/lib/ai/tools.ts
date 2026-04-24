@@ -270,7 +270,7 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
   {
     name: "search_web",
     description:
-      "Search the web for information. Use this to research competitors, market trends, industry data, company information, pricing benchmarks, or anything else that would help build a better growth strategy. Call this proactively during onboarding when the user mentions competitors or their industry, and when building campaigns to research the market.",
+      "Search the web for information. Use this to research local competitors in the user's area, average pricing for their service in the local market, or information about the neighbourhood/catchment they serve. Call this proactively right after onboarding to find 3-5 local competitors (e.g. query 'best [industry] in [town/neighbourhood]').",
     input_schema: {
       type: "object" as const,
       properties: {
