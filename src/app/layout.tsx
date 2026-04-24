@@ -1,7 +1,21 @@
 import type { Metadata } from "next"
+import { Inter, IBM_Plex_Mono } from "next/font/google"
 import { ConvexClientProvider } from "./ConvexClientProvider"
 import CookieConsent from "@/components/CookieConsent"
 import "./globals.css"
+
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+})
+
+const ibmPlexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-ibm-plex-mono",
+  display: "swap",
+})
 
 // Force server-render on every request — prevents Vercel CDN from serving
 // stale static HTML from previous deployments (the "old code" flash).
@@ -12,19 +26,19 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://spun.bot"
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Spun — AI Growth Platform for SMEs",
+    default: "Spun — Automate marketing for your local business",
     template: "%s — Spun",
   },
   description:
-    "AI-powered growth platform for SMEs. Strategy, campaigns, lead generation, ad execution, and analytics — all through conversation.",
+    "Spun is an AI agent that manages your Google listing, runs your ads, collects reviews, posts on social and follows up with leads — all while chatting with you via WhatsApp.",
   keywords: [
-    "AI growth platform",
-    "SME growth",
-    "lead generation",
-    "growth automation",
-    "campaign launch",
-    "Facebook Ads AI",
-    "ad creatives",
+    "local business marketing",
+    "WhatsApp marketing AI",
+    "Google Business Profile",
+    "Google Ads automation",
+    "review collection",
+    "local SEO",
+    "marketing agent",
   ],
   authors: [{ name: "Spun" }],
   creator: "Spun",
@@ -33,30 +47,35 @@ export const metadata: Metadata = {
     canonical: "/",
   },
   icons: {
-    icon: "/icon.png",
-    apple: "/icon.png",
+    icon: [
+      { url: "/favicon.ico", sizes: "48x48" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
   },
+  manifest: "/site.webmanifest",
   openGraph: {
     type: "website",
     url: siteUrl,
     siteName: "Spun",
-    title: "Spun — AI Growth Platform for SMEs",
+    title: "Spun — Automate marketing for your local business",
     description:
-      "AI-powered growth platform for SMEs. Strategy, campaigns, lead generation, ad execution, and analytics — all through conversation.",
+      "Spun is an AI agent that manages your Google listing, runs your ads, collects reviews, posts on social and follows up with leads — all while chatting with you via WhatsApp.",
     images: [
       {
         url: "/spun_facebook_cover.png",
         width: 1200,
         height: 630,
-        alt: "Spun — AI Growth Platform for SMEs",
+        alt: "Spun — Automate marketing for your local business",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Spun — AI Growth Platform for SMEs",
+    title: "Spun — Automate marketing for your local business",
     description:
-      "AI-powered growth platform for SMEs. Strategy, campaigns, lead generation, ad execution, and analytics — all through conversation.",
+      "Spun is an AI agent that manages your Google listing, runs your ads, collects reviews, posts on social and follows up with leads — all while chatting with you via WhatsApp.",
     images: ["/spun_facebook_cover.png"],
   },
   robots: {
@@ -77,7 +96,11 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" style={{ background: "#273E47" }}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${ibmPlexMono.variable}`}
+      style={{ background: "#273E47" }}
+    >
       <body className="antialiased font-sans" style={{ background: "#273E47", color: "#f8fafc" }}>
         <ConvexClientProvider>{children}</ConvexClientProvider>
         <CookieConsent />
