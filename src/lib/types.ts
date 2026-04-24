@@ -35,7 +35,11 @@ export function scoreToTier(score: number): 1 | 2 | 3 {
   return 3
 }
 
-export function firmographicScoreDetails(companySize?: string, estimatedRevenue?: string): { score: number; breakdown: string[] } {
+export function firmographicScoreDetails(
+  companySize?: string,
+  estimatedRevenue?: string,
+  currencySymbol: string = "£"
+): { score: number; breakdown: string[] } {
   let score = 0
   const breakdown: string[] = []
   if (companySize) {
@@ -59,15 +63,16 @@ export function firmographicScoreDetails(companySize?: string, estimatedRevenue?
       .filter(Boolean)
     const rev = nums.length > 0 ? Math.max(...nums) : 0
     const revNorm = rev > 0 && rev < 10000 ? rev * 1000 : rev
-    if (revNorm > 0 && revNorm <= 25000) { score += 2; breakdown.push('Revenue <£25k (+2)') }
-    else if (revNorm <= 100000) { score += 4; breakdown.push('Revenue £25k-£100k (+4)') }
-    else if (revNorm > 100000) { score += 6; breakdown.push('Revenue £100k+ (+6)') }
+    const sym = currencySymbol
+    if (revNorm > 0 && revNorm <= 25000) { score += 2; breakdown.push(`Revenue <${sym}25k (+2)`) }
+    else if (revNorm <= 100000) { score += 4; breakdown.push(`Revenue ${sym}25k-${sym}100k (+4)`) }
+    else if (revNorm > 100000) { score += 6; breakdown.push(`Revenue ${sym}100k+ (+6)`) }
   }
   return { score, breakdown }
 }
 
-export function firmographicScore(companySize?: string, estimatedRevenue?: string): number {
-  return firmographicScoreDetails(companySize, estimatedRevenue).score
+export function firmographicScore(companySize?: string, estimatedRevenue?: string, currencySymbol?: string): number {
+  return firmographicScoreDetails(companySize, estimatedRevenue, currencySymbol).score
 }
 
 // Message types for the chat interface

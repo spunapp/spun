@@ -2,6 +2,9 @@ import type { Metadata } from "next"
 import { Inter, IBM_Plex_Mono } from "next/font/google"
 import { ConvexClientProvider } from "./ConvexClientProvider"
 import CookieConsent from "@/components/CookieConsent"
+import { CurrencyProvider } from "@/lib/currency/context"
+import { CurrencyBusinessSync } from "@/lib/currency/CurrencyBusinessSync"
+import { getServerCurrency } from "@/lib/currency/server"
 import "./globals.css"
 
 const inter = Inter({
@@ -90,15 +93,21 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const initialCurrency = await getServerCurrency()
   return (
     <html lang="en" className={`${inter.variable} ${ibmPlexMono.variable}`}>
       <body className="antialiased font-sans">
-        <ConvexClientProvider>{children}</ConvexClientProvider>
+        <ConvexClientProvider>
+          <CurrencyProvider initialCurrency={initialCurrency}>
+            <CurrencyBusinessSync />
+            {children}
+          </CurrencyProvider>
+        </ConvexClientProvider>
         <CookieConsent />
       </body>
     </html>

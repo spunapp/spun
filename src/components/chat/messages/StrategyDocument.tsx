@@ -3,20 +3,22 @@
 import { useState } from "react"
 import { ChevronDown, ChevronRight, FileText } from "lucide-react"
 import { renderContent } from "./renderContent"
+import { useCurrency } from "@/lib/currency/context"
 
 interface StrategyDocumentProps {
   content: string
   metadata: Record<string, unknown>
 }
 
-function formatCurrency(value: unknown): string {
-  if (typeof value === "string") return value
-  if (typeof value === "number") return `£${value.toLocaleString()}`
-  return String(value ?? "")
-}
-
 export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
   const [expanded, setExpanded] = useState(false)
+  const { format } = useCurrency()
+
+  function formatAmount(value: unknown): string {
+    if (typeof value === "string") return value
+    if (typeof value === "number") return format(value, { whole: true })
+    return String(value ?? "")
+  }
 
   const strategy = metadata as {
     theme?: string
@@ -70,11 +72,11 @@ export function StrategyDocument({ content, metadata }: StrategyDocumentProps) {
             <div>
               <span className="text-gray-400 uppercase tracking-wider">Budget</span>
               <p className="text-gray-700 mt-1">
-                {formatCurrency(strategy.budget_breakdown.monthly_total)}/mo
+                {formatAmount(strategy.budget_breakdown.monthly_total)}/mo
               </p>
               {strategy.budget_breakdown.channel_split?.map((split, i) => (
                 <div key={i} className="text-gray-500">
-                  {split.channel}: {split.percentage}% ({formatCurrency(split.amount)})
+                  {split.channel}: {split.percentage}% ({formatAmount(split.amount)})
                 </div>
               ))}
             </div>

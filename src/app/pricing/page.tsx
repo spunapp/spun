@@ -5,9 +5,12 @@ import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import { Check, X, ArrowRight } from "lucide-react"
 import { MarketingShell } from "@/components/landing/MarketingShell"
-import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
+import { TIERS, CREDIT_PACK, getTierPriceId, type SubscriptionTier } from "@/lib/billing/tiers"
+import { useCurrency } from "@/lib/currency/context"
 
-const PRICES = {
+// Base prices in GBP. Displayed values are converted to the viewer's local
+// currency via the currency context.
+const PRICES_GBP = {
   standard: { annual: 69.99, monthly: 87.99 },
   pro: { annual: 119.99, monthly: 149.99 },
 }
@@ -94,10 +97,17 @@ function FeatureValue({ value }: { value: boolean | string }) {
 export default function PricingPage() {
   const router = useRouter()
   const { isSignedIn } = useUser()
-  const [loading, setLoading] = useState<string | null>(null)
+  const { currency, format, formatFromGBP, convertFromGBP } = useCurrency()
+  const [loading, setLoading] = useState<SubscriptionTier | null>(null)
   const [billing, setBilling] = useState<"annual" | "monthly">("annual")
   const [compareTab, setCompareTab] = useState<"agency" | "inhouse">("agency")
-  const [agencySpend, setAgencySpend] = useState(3000)
+  // Agency spend slider is in the viewer's own currency. Convert the GBP
+  // range (3,000–15,000) into their currency so the slider stays in a
+  // locally-meaningful range.
+  const agencyMinLocal = Math.round(convertFromGBP(3000))
+  const agencyMaxLocal = Math.round(convertFromGBP(15000))
+  const agencyStepLocal = Math.max(1, Math.round(convertFromGBP(500)))
+  const [agencySpend, setAgencySpend] = useState(agencyMinLocal)
   const [selectedRoles, setSelectedRoles] = useState<Record<string, boolean>>({
     "Social Media Manager": true,
     "Paid Media Manager": true,
@@ -105,13 +115,14 @@ export default function PricingPage() {
     "Content Creator": false,
   })
 
-  async function handleCheckout(priceId: string) {
+  async function handleCheckout(tier: SubscriptionTier) {
     if (!isSignedIn) {
       router.replace("/login")
       return
     }
-    setLoading(priceId)
+    setLoading(tier)
     try {
+      const priceId = getTierPriceId(tier, currency)
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -126,24 +137,25 @@ export default function PricingPage() {
     }
   }
 
-  const standardPrice = PRICES.standard[billing]
-  const proPrice = PRICES.pro[billing]
+  const standardPriceGBP = PRICES_GBP.standard[billing]
+  const proPriceGBP = PRICES_GBP.pro[billing]
 
-  const ROLE_SALARIES: Record<string, number> = {
+  // Salaries are GBP-denominated benchmarks; we convert for display only.
+  const ROLE_SALARIES_GBP: Record<string, number> = {
     "Social Media Manager": 32000,
     "Paid Media Manager": 38000,
     "SEO Manager": 35000,
     "Content Creator": 28000,
   }
 
-  const spunAnnualCost = PRICES.pro.annual * 12
-  const agencyAnnualCost = agencySpend * 12
-  const inhouseCost = Object.entries(selectedRoles)
+  const spunAnnualCostLocal = convertFromGBP(PRICES_GBP.pro.annual * 12)
+  const agencyAnnualCostLocal = agencySpend * 12
+  const inhouseCostLocal = Object.entries(selectedRoles)
     .filter(([, selected]) => selected)
-    .reduce((sum, [role]) => sum + ROLE_SALARIES[role], 0)
-  const currentCost = compareTab === "agency" ? agencyAnnualCost : inhouseCost
-  const savings = currentCost - spunAnnualCost
-  const savingsPercent = currentCost > 0 ? Math.round((savings / currentCost) * 100) : 0
+    .reduce((sum, [role]) => sum + convertFromGBP(ROLE_SALARIES_GBP[role]), 0)
+  const currentCostLocal = compareTab === "agency" ? agencyAnnualCostLocal : inhouseCostLocal
+  const savingsLocal = currentCostLocal - spunAnnualCostLocal
+  const savingsPercent = currentCostLocal > 0 ? Math.round((savingsLocal / currentCostLocal) * 100) : 0
 
   return (
     <MarketingShell>
@@ -207,7 +219,7 @@ export default function PricingPage() {
                 <h2 className="text-lg font-bold text-gray-900">Standard</h2>
                 <p className="text-[13px] text-gray-500 mt-1">For getting started</p>
                 <div className="mt-6 mb-1">
-                  <span className="text-3xl font-bold text-gray-900">£{standardPrice.toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-gray-900">{formatFromGBP(standardPriceGBP)}</span>
                   <span className="text-[13px] text-gray-400 ml-1">/mo</span>
                 </div>
                 {billing === "annual" && (
@@ -215,15 +227,15 @@ export default function PricingPage() {
                 )}
                 {billing === "monthly" && (
                   <p className="text-spun text-xs mb-6">
-                    £{PRICES.standard.annual.toFixed(2)}/mo billed annually
+                    {formatFromGBP(PRICES_GBP.standard.annual)}/mo billed annually
                   </p>
                 )}
                 <button
-                  onClick={() => handleCheckout(TIERS.standard.priceId)}
-                  disabled={loading === TIERS.standard.priceId}
+                  onClick={() => handleCheckout("standard")}
+                  disabled={loading === "standard"}
                   className="w-full border border-grid hover:border-gray-300 bg-white text-gray-700 font-medium py-2.5 rounded-md text-[13px] transition disabled:opacity-50 mb-6"
                 >
-                  {loading === TIERS.standard.priceId ? "Redirecting…" : "Start free trial"}
+                  {loading === "standard" ? "Redirecting…" : "Start free trial"}
                 </button>
                 <ul className="space-y-3 flex-1">
                   {CARD_FEATURES.standard.map((f) => (
@@ -243,7 +255,7 @@ export default function PricingPage() {
                 <h2 className="text-lg font-bold text-gray-900">Pro</h2>
                 <p className="text-[13px] text-gray-500 mt-1">Full marketing on autopilot</p>
                 <div className="mt-6 mb-1">
-                  <span className="text-3xl font-bold text-gray-900">£{proPrice.toFixed(2)}</span>
+                  <span className="text-3xl font-bold text-gray-900">{formatFromGBP(proPriceGBP)}</span>
                   <span className="text-[13px] text-gray-400 ml-1">/mo</span>
                 </div>
                 {billing === "annual" && (
@@ -251,15 +263,15 @@ export default function PricingPage() {
                 )}
                 {billing === "monthly" && (
                   <p className="text-spun text-xs mb-6">
-                    £{PRICES.pro.annual.toFixed(2)}/mo billed annually
+                    {formatFromGBP(PRICES_GBP.pro.annual)}/mo billed annually
                   </p>
                 )}
                 <button
-                  onClick={() => handleCheckout(TIERS.pro.priceId)}
-                  disabled={loading === TIERS.pro.priceId}
+                  onClick={() => handleCheckout("pro")}
+                  disabled={loading === "pro"}
                   className="w-full bg-spun hover:bg-spun-dark text-white font-medium py-2.5 rounded-md text-[13px] transition disabled:opacity-50 mb-6"
                 >
-                  {loading === TIERS.pro.priceId ? "Redirecting…" : "Start free trial"}
+                  {loading === "pro" ? "Redirecting…" : "Start free trial"}
                 </button>
                 <ul className="space-y-3 flex-1">
                   {CARD_FEATURES.pro.map((f) => (
@@ -354,21 +366,21 @@ export default function PricingPage() {
                       </p>
                       <input
                         type="range"
-                        min={3000}
-                        max={15000}
-                        step={500}
+                        min={agencyMinLocal}
+                        max={agencyMaxLocal}
+                        step={agencyStepLocal}
                         value={agencySpend}
                         onChange={(e) => setAgencySpend(Number(e.target.value))}
                         className="w-full h-2 rounded-full appearance-none cursor-pointer"
                         style={{
-                          background: `linear-gradient(to right, #075E54 ${((agencySpend - 3000) / 12000) * 100}%, #ECEEF0 ${((agencySpend - 3000) / 12000) * 100}%)`,
+                          background: `linear-gradient(to right, #075E54 ${((agencySpend - agencyMinLocal) / Math.max(1, agencyMaxLocal - agencyMinLocal)) * 100}%, #ECEEF0 ${((agencySpend - agencyMinLocal) / Math.max(1, agencyMaxLocal - agencyMinLocal)) * 100}%)`,
                           accentColor: "#075E54",
                         }}
                       />
                       <div className="flex items-center justify-between mt-3">
-                        <span className="text-gray-400 text-xs">£3,000/mo</span>
-                        <span className="text-gray-900 text-xl font-bold">£{agencySpend.toLocaleString()}/mo</span>
-                        <span className="text-gray-400 text-xs">£15,000/mo</span>
+                        <span className="text-gray-400 text-xs">{format(agencyMinLocal, { whole: true })}/mo</span>
+                        <span className="text-gray-900 text-xl font-bold">{format(agencySpend, { whole: true })}/mo</span>
+                        <span className="text-gray-400 text-xs">{format(agencyMaxLocal, { whole: true })}/mo</span>
                       </div>
                     </div>
                   ) : (
@@ -377,7 +389,7 @@ export default function PricingPage() {
                         Which roles would you hire in-house? (Select all that apply)
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {Object.entries(ROLE_SALARIES).map(([role, salary]) => (
+                        {Object.entries(ROLE_SALARIES_GBP).map(([role, salary]) => (
                           <button
                             key={role}
                             onClick={() => setSelectedRoles((prev) => ({ ...prev, [role]: !prev[role] }))}
@@ -397,7 +409,7 @@ export default function PricingPage() {
                               {selectedRoles[role] && <Check className="w-3 h-3 text-white" />}
                             </span>
                             <span className="text-gray-900 text-sm font-medium flex-1">{role}</span>
-                            <span className="text-gray-500 text-sm">£{salary.toLocaleString()}/yr</span>
+                            <span className="text-gray-500 text-sm">{formatFromGBP(salary, { whole: true })}/yr</span>
                           </button>
                         ))}
                       </div>
@@ -411,18 +423,18 @@ export default function PricingPage() {
                     <p className="text-gray-500 text-xs mb-2 flex items-center gap-1.5">
                       {compareTab === "agency" ? "Agency cost" : "In-house cost"}
                     </p>
-                    <p className="text-red-600 text-2xl font-bold">£{currentCost.toLocaleString()}</p>
+                    <p className="text-red-600 text-2xl font-bold">{format(currentCostLocal, { whole: true })}</p>
                     <p className="text-gray-400 text-xs mt-1">per year</p>
                   </div>
                   <div className="rounded-md p-5 border border-grid bg-surface-alt">
                     <p className="text-gray-500 text-xs mb-2">Spun Pro plan</p>
-                    <p className="text-gray-900 text-2xl font-bold">£{spunAnnualCost.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</p>
+                    <p className="text-gray-900 text-2xl font-bold">{format(spunAnnualCostLocal, { whole: true })}</p>
                     <p className="text-gray-400 text-xs mt-1">per year</p>
                   </div>
                   <div className="rounded-md p-5 bg-spun">
                     <p className="text-white/80 text-xs mb-2">Your annual savings</p>
-                    <p className="text-white text-2xl font-bold">£{Math.max(0, savings).toLocaleString()}</p>
-                    {savings > 0 && (
+                    <p className="text-white text-2xl font-bold">{format(Math.max(0, savingsLocal), { whole: true })}</p>
+                    {savingsLocal > 0 && (
                       <p className="text-white/80 text-xs mt-1">That&apos;s {savingsPercent}% less</p>
                     )}
                   </div>
@@ -430,7 +442,7 @@ export default function PricingPage() {
 
                 <div className="text-center">
                   <button
-                    onClick={() => handleCheckout(TIERS.pro.priceId)}
+                    onClick={() => handleCheckout("pro")}
                     className="inline-flex items-center gap-2 bg-spun hover:bg-spun-dark text-white font-medium py-3 px-7 rounded-md text-sm transition"
                   >
                     Start saving today
@@ -531,7 +543,7 @@ export default function PricingPage() {
                   </div>
                 </div>
                 <p className="text-spun text-xl font-bold">
-                  £{(CREDIT_PACK.price / 100).toFixed(2)}{" "}
+                  {formatFromGBP(CREDIT_PACK.price / 100)}{" "}
                   <span className="text-gray-400 text-sm font-normal">one-time</span>
                 </p>
               </div>

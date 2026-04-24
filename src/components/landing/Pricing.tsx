@@ -1,10 +1,15 @@
+"use client"
+
 import Link from "next/link";
 import { Check } from "lucide-react";
+import { useCurrency } from "@/lib/currency/context";
 
+// Base prices in GBP. Displayed values are converted to the viewer's local
+// currency via the currency context.
 const plans = [
   {
     name: "Starter",
-    price: 99,
+    priceGBP: 99,
     description: "Get found on Google",
     features: [
       "Google listing management",
@@ -18,7 +23,7 @@ const plans = [
   },
   {
     name: "Growth",
-    price: 199,
+    priceGBP: 199,
     description: "Full marketing on autopilot",
     features: [
       "Everything in Starter",
@@ -34,6 +39,7 @@ const plans = [
 ];
 
 export function Pricing() {
+  const { formatFromGBP } = useCurrency();
   return (
     <section id="pricing" className="bg-surface">
       <div className="mx-4 md:mx-16 lg:mx-20">
@@ -53,7 +59,7 @@ export function Pricing() {
 
           <div className="grid md:grid-cols-2 gap-px bg-grid border border-grid">
             {plans.map(
-              ({ name, price, description, features, cta, featured }) => (
+              ({ name, priceGBP, description, features, cta, featured }) => (
                 <div
                   key={name}
                   className={`p-8 flex flex-col ${featured ? "bg-spun-50/50" : "bg-white"}`}
@@ -67,7 +73,7 @@ export function Pricing() {
                   <p className="text-[13px] text-gray-500 mt-1">{description}</p>
 
                   <div className="mt-6 mb-8">
-                    <span className="text-3xl font-bold text-gray-900">${price}</span>
+                    <span className="text-3xl font-bold text-gray-900">{formatFromGBP(priceGBP, { whole: true })}</span>
                     <span className="text-[13px] text-gray-400">/mo</span>
                   </div>
 

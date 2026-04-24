@@ -11,6 +11,7 @@ import { ChatThread } from "@/components/chat/ChatThread"
 import { ChatInput } from "@/components/chat/ChatInput"
 import { QuickReplies } from "@/components/chat/QuickReplies"
 import { ChatSidebarProvider } from "./ChatSidebarContext"
+import { useCurrency } from "@/lib/currency/context"
 
 // Test accounts that bypass the subscription check (matched by email)
 const TEST_ACCOUNT_EMAILS = new Set([
@@ -21,6 +22,7 @@ export default function ChatClient() {
   const { user } = useUser()
   const userId = user?.id ?? null
   const router = useRouter()
+  const { currency: displayCurrency, formatFromGBP } = useCurrency()
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [pendingSend, setPendingSend] = useState(false)
@@ -370,7 +372,7 @@ export default function ChatClient() {
                   const res = await fetch("/api/stripe/credit-checkout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ businessId: business._id }),
+                    body: JSON.stringify({ businessId: business._id, currency: displayCurrency }),
                   })
                   const data = await res.json()
                   if (data.url) window.location.href = data.url
@@ -378,7 +380,7 @@ export default function ChatClient() {
               }}
               className="text-xs text-spun hover:text-spun-dark transition-colors font-medium"
             >
-              Buy credits (£{(CREDIT_PACK.price / 100).toFixed(2)})
+              Buy credits ({formatFromGBP(CREDIT_PACK.price / 100)})
             </button>
             {tier === "standard" && (
               <a href="/pricing" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">

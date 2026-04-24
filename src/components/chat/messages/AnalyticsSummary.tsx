@@ -1,6 +1,7 @@
 "use client"
 
 import { TrendingUp, TrendingDown } from "lucide-react"
+import { useCurrency } from "@/lib/currency/context"
 
 interface AnalyticsSummaryProps {
   content: string
@@ -8,6 +9,7 @@ interface AnalyticsSummaryProps {
 }
 
 export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
+  const { format } = useCurrency()
   const analytics = metadata as {
     campaigns?: Array<{ theme: string; status: string; budget?: Record<string, unknown> }>
     summary?: {
@@ -35,7 +37,7 @@ export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
             <div className="p-2 bg-surface-alt rounded-lg">
               <p className="text-xs text-gray-400">Revenue</p>
               <p className="text-sm font-semibold text-spun">
-                ${analytics.summary.totalRevenue.toLocaleString()}
+                {format(analytics.summary.totalRevenue, { whole: true })}
               </p>
             </div>
           )}
@@ -60,7 +62,7 @@ export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
             <div className="p-2 bg-surface-alt rounded-lg">
               <p className="text-xs text-gray-400">CAC</p>
               <p className="text-sm font-semibold text-gray-700">
-                ${analytics.summary.cac}
+                {format(Number(analytics.summary.cac) || 0, { whole: true })}
               </p>
             </div>
           )}
