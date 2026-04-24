@@ -161,7 +161,7 @@ export const chat = action({
 
       if (!limitCheck.allowed && limitCheck.limitType === "messages") {
         if (credits.messageCredits <= 0) {
-          const limitMsg = `You've used all ${limitCheck.limit} AI responses this month on your ${tier === "standard" ? "Standard" : "Pro"} plan. Buy a credit pack (£9.99) for 100 more responses, or upgrade your plan.`
+          const limitMsg = `You've used all ${limitCheck.limit} AI responses this month on your ${tier === "standard" ? "Standard" : "Pro"} plan. Buy a credit pack for 100 more responses, or upgrade your plan.`
           await ctx.runMutation(api.messages.send, {
             conversationId: args.conversationId,
             role: "assistant",
@@ -458,8 +458,22 @@ export const chat = action({
   },
 })
 
-function currencyForLocations(locations: string[] | undefined): { symbol: string; code: string } {
-  const loc = (locations ?? []).join(" ").toLowerCase()
+const CODE_TO_SYMBOL: Record<string, string> = {
+  GBP: "£", USD: "$", EUR: "€", CAD: "C$", AUD: "A$", NZD: "NZ$", JPY: "¥",
+  CNY: "¥", INR: "₹", KRW: "₩", HKD: "HK$", SGD: "S$", CHF: "CHF", SEK: "kr",
+  NOK: "kr", DKK: "kr", PLN: "zł", CZK: "Kč", HUF: "Ft", TRY: "₺", ILS: "₪",
+  AED: "د.إ", SAR: "﷼", ZAR: "R", MXN: "Mex$", BRL: "R$", THB: "฿", VND: "₫",
+  IDR: "Rp", PHP: "₱", MYR: "RM", TWD: "NT$", NGN: "₦", KES: "KSh", EGP: "E£",
+  PKR: "₨", BDT: "৳", LKR: "₨", ARS: "$", CLP: "$", COP: "$", PEN: "S/",
+  RON: "lei", BGN: "лв", QAR: "﷼", KWD: "د.ك",
+}
+
+function currencyForBusiness(business: { currency?: string | null; locations?: string[] | null }): { symbol: string; code: string } {
+  const explicit = business.currency?.toUpperCase()
+  if (explicit && CODE_TO_SYMBOL[explicit]) {
+    return { symbol: CODE_TO_SYMBOL[explicit], code: explicit }
+  }
+  const loc = (business.locations ?? []).join(" ").toLowerCase()
   if (/\b(us|usa|united states|america|new york|california|texas|florida|chicago|los angeles)\b/.test(loc)) return { symbol: "$", code: "USD" }
   if (/\b(eu|europe|germany|france|spain|italy|netherlands|belgium|austria|ireland|portugal|finland|greece)\b/.test(loc)) return { symbol: "€", code: "EUR" }
   if (/\b(australia|sydney|melbourne)\b/.test(loc)) return { symbol: "A$", code: "AUD" }
@@ -501,7 +515,7 @@ export const generateCampaign = action({
 STRICT RULE: The suggested_channels array and budget_breakdown.channel_split array MUST only contain channels from the list above. Do NOT add LinkedIn, Google, TikTok, or any other platform that is not listed. If only one channel is allowed, put 100% of the budget on that single channel.`
       : "No ad platforms are connected yet. Suggest which platform(s) would work best and why."
 
-    const currency = currencyForLocations(business.locations)
+    const currency = currencyForBusiness(business as { currency?: string | null; locations?: string[] | null })
 
     const prompt = `You are an expert marketing strategist. Create a comprehensive marketing campaign plan for this business.
 
@@ -871,7 +885,11 @@ export const tierProspects = action({
       leadScore: number
     }>
 
+    const prospectCurrency = currencyForBusiness(business as { currency?: string | null; locations?: string[] | null })
+
     const prompt = `You are a B2B research analyst. Estimate firmographic data for each prospect.
+
+All monetary values MUST be expressed in ${prospectCurrency.code} using the symbol ${prospectCurrency.symbol}. Do not mix currencies.
 
 SELLER: ${business.name} (${business.industry}) — ${business.whatTheySell}
 TARGET PROFILE: ${business.targetAudience}
@@ -880,7 +898,7 @@ PROSPECTS:
 ${JSON.stringify(prospectList.map((p) => ({ id: p._id, name: p.name, company: p.company, email: p.email })), null, 2)}
 
 Return a JSON array, one object per prospect:
-[{ "id": "...", "company_size": "10-50", "estimated_revenue": "£50,000", "years_in_business": 5, "company_news": null, "tier_reasoning": "..." }]
+[{ "id": "...", "company_size": "10-50", "estimated_revenue": "${prospectCurrency.symbol}50,000", "years_in_business": 5, "company_news": null, "tier_reasoning": "..." }]
 
 Return ONLY a valid JSON array.`
 
@@ -914,7 +932,8 @@ Return ONLY a valid JSON array.`
 
         const { score: firmoScore, breakdown } = firmographicScoreDetails(
           firm.company_size,
-          firm.estimated_revenue
+          firm.estimated_revenue,
+          prospectCurrency.symbol
         )
 
         await ctx.runMutation(api.prospects.logScoreEvent, {

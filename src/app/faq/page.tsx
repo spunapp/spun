@@ -4,8 +4,17 @@ import { useState } from "react"
 import Link from "next/link"
 import { ChevronDown, ArrowRight } from "lucide-react"
 import { MarketingShell } from "@/components/landing/MarketingShell"
+import { useCurrency } from "@/lib/currency/context"
 
-const FAQS = [
+// Pricing-answer base prices in GBP; rendered in the viewer's local currency
+// via useCurrency below.
+const FAQ_PRICES_GBP = {
+  starter: 99,
+  growth: 199,
+}
+
+function buildFaqs(starter: string, growth: string) {
+  return [
   {
     category: "Getting Started",
     items: [
@@ -53,7 +62,7 @@ const FAQS = [
     items: [
       {
         q: "What plans are available?",
-        a: "Starter ($99/mo) covers Google listing management, review collection, and weekly reports. Growth ($199/mo) adds Google Ads management, social posting, and lead follow-ups. Ad spend is separate — passed through to Google/Meta at cost.",
+        a: `Starter (${starter}/mo) covers Google listing management, review collection, and weekly reports. Growth (${growth}/mo) adds Google Ads management, social posting, and lead follow-ups. Ad spend is separate — passed through to Google/Meta at cost.`,
       },
       {
         q: "Can I cancel anytime?",
@@ -75,6 +84,7 @@ const FAQS = [
     ],
   },
 ]
+}
 
 function FaqItem({
   q,
@@ -119,6 +129,11 @@ function FaqItem({
 
 export default function FaqPage() {
   const [openId, setOpenId] = useState<string | null>(null)
+  const { formatFromGBP } = useCurrency()
+  const FAQS = buildFaqs(
+    formatFromGBP(FAQ_PRICES_GBP.starter, { whole: true }),
+    formatFromGBP(FAQ_PRICES_GBP.growth, { whole: true })
+  )
 
   return (
     <MarketingShell>

@@ -1,6 +1,7 @@
 "use client"
 
-import { Target, DollarSign, Users } from "lucide-react"
+import { Target, Wallet, Users } from "lucide-react"
+import { useCurrency } from "@/lib/currency/context"
 
 interface CampaignPreviewProps {
   content: string
@@ -8,6 +9,7 @@ interface CampaignPreviewProps {
 }
 
 export function CampaignPreview({ content, metadata }: CampaignPreviewProps) {
+  const { format } = useCurrency()
   const campaign = metadata as {
     theme?: string
     status?: string
@@ -36,8 +38,8 @@ export function CampaignPreview({ content, metadata }: CampaignPreviewProps) {
           <div className="flex flex-wrap gap-3 text-xs">
             {campaign.budget_breakdown && (
               <div className="flex items-center gap-1 text-gray-600">
-                <DollarSign className="w-3 h-3" />
-                ${campaign.budget_breakdown.monthly_total?.toLocaleString()}/mo
+                <Wallet className="w-3 h-3" />
+                {format(campaign.budget_breakdown.monthly_total ?? 0, { whole: true })}/mo
               </div>
             )}
             {campaign.suggested_channels && (

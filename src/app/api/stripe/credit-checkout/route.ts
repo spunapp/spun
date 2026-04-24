@@ -1,7 +1,9 @@
 import { auth } from "@clerk/nextjs/server"
+import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-import { CREDIT_PACK } from "@/lib/billing/tiers"
+import { getCreditPackPriceId } from "@/lib/billing/tiers"
+import { CURRENCY_COOKIE, normaliseCurrency } from "@/lib/currency/currencies"
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -15,10 +17,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { businessId } = await request.json()
+  const body = await request.json().catch(() => ({}))
+  const { businessId, currency: bodyCurrency } = body as { businessId?: string; currency?: string }
   if (!businessId) {
     return NextResponse.json({ error: "Missing businessId" }, { status: 400 })
   }
+
+  const cookieCurrency = (await cookies()).get(CURRENCY_COOKIE)?.value
+  const currency = normaliseCurrency(bodyCurrency ?? cookieCurrency)
+  const priceId = getCreditPackPriceId(currency)
 
   const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://spun.bot"
 
@@ -26,11 +33,11 @@ export async function POST(request: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
-    line_items: [{ price: CREDIT_PACK.priceId, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${origin}/settings?credits=success`,
     cancel_url: `${origin}/settings?credits=canceled`,
     client_reference_id: userId,
-    metadata: { type: "credit_pack", userId, businessId },
+    metadata: { type: "credit_pack", userId, businessId, currency },
   })
 
   return NextResponse.json({ url: session.url })

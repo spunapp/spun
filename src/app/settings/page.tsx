@@ -11,6 +11,8 @@ import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
 import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 import { PostingTargets } from "@/components/settings/PostingTargets"
 import { PostQueue } from "@/components/settings/PostQueue"
+import { useCurrency } from "@/lib/currency/context"
+import { CURRENCIES as CURRENCY_CATALOGUE } from "@/lib/currency/currencies"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages", oauthAppId: "oa_K1i8YD" },
@@ -19,13 +21,9 @@ const PLATFORMS = [
   { id: "shopify", label: "Shopify", pipedreamApp: "shopify", oauthAppId: undefined },
 ]
 
-const CURRENCIES = [
-  { code: "GBP", label: "GBP — British Pound" },
-  { code: "USD", label: "USD — US Dollar" },
-  { code: "EUR", label: "EUR — Euro" },
-  { code: "AUD", label: "AUD — Australian Dollar" },
-  { code: "CAD", label: "CAD — Canadian Dollar" },
-]
+const CURRENCY_OPTIONS = Object.values(CURRENCY_CATALOGUE)
+  .map((c) => ({ code: c.code, label: c.label }))
+  .sort((a, b) => (a.code === "GBP" ? -1 : b.code === "GBP" ? 1 : a.label.localeCompare(b.label)))
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -72,6 +70,7 @@ export default function SettingsPage() {
   const { signOut } = useClerk()
   const router = useRouter()
   const userId = user?.id ?? null
+  const { currency: displayCurrency, formatFromGBP, setCurrency: setDisplayCurrency } = useCurrency()
 
   const [accountIdVisible, setAccountIdVisible] = useState(false)
   const [accountId, setAccountId] = useState<string | null>(null)
@@ -205,11 +204,13 @@ export default function SettingsPage() {
   const [currency, setCurrency] = useState<string>("")
   const [budgetSaved, setBudgetSaved] = useState(false)
 
-  // Sync local state from business once loaded
+  // Sync local state from business once loaded. If the user hasn't saved a
+  // currency yet, seed the selector with the geo-detected display currency
+  // so they see the right default at rest.
   const [initialised, setInitialised] = useState(false)
   if (business && !initialised) {
     setBudget(business.defaultCampaignBudget?.toString() ?? "")
-    setCurrency(business.currency ?? "GBP")
+    setCurrency(business.currency ?? displayCurrency)
     setInitialised(true)
   }
 
@@ -233,10 +234,11 @@ export default function SettingsPage() {
   async function handleBudgetSave() {
     if (!business?._id) return
     const parsed = parseFloat(budget)
+    const effectiveCurrency = currency || displayCurrency
     await updateSettings({
       id: business._id as Id<"businesses">,
       defaultCampaignBudget: isNaN(parsed) ? undefined : parsed,
-      currency: currency || "GBP",
+      currency: effectiveCurrency,
     })
     setBudgetSaved(true)
     setTimeout(() => setBudgetSaved(false), 2000)
@@ -244,6 +246,7 @@ export default function SettingsPage() {
 
   async function handleCurrencyChange(val: string) {
     setCurrency(val)
+    setDisplayCurrency(val)
     if (!business?._id) return
     await updateSettings({
       id: business._id as Id<"businesses">,
@@ -442,7 +445,7 @@ export default function SettingsPage() {
                         const res = await fetch("/api/stripe/credit-checkout", {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({ businessId: business._id }),
+                          body: JSON.stringify({ businessId: business._id, currency: displayCurrency }),
                         })
                         const data = await res.json()
                         if (data.url) window.location.href = data.url
@@ -450,7 +453,7 @@ export default function SettingsPage() {
                     }}
                     className="mt-4 w-full text-xs text-spun border border-spun/30 hover:bg-spun-50 py-2 rounded-lg transition-colors"
                   >
-                    Buy credit pack — £{(CREDIT_PACK.price / 100).toFixed(2)}
+                    Buy credit pack — {formatFromGBP(CREDIT_PACK.price / 100)}
                   </button>
                 </>
               )
@@ -485,7 +488,7 @@ export default function SettingsPage() {
                   onChange={(e) => handleCurrencyChange(e.target.value)}
                   className="w-full border border-grid bg-white rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-spun/40"
                 >
-                  {CURRENCIES.map((c) => (
+                  {CURRENCY_OPTIONS.map((c) => (
                     <option key={c.code} value={c.code}>{c.label}</option>
                   ))}
                 </select>

@@ -1,6 +1,14 @@
+"use client"
+
 import Image from "next/image";
+import { useCurrency } from "@/lib/currency/context";
 
 export function WeeklyReport() {
+  const { formatFromGBP } = useCurrency();
+  // Example figures in GBP; converted per viewer for a more relatable mockup.
+  const adSpendGBP = 146;
+  const perCallGBP = 18;
+  const dailyBudgetGBP = 12;
   return (
     <section className="bg-spun-50/30">
       <div className="mx-4 md:mx-16 lg:mx-20">
@@ -64,8 +72,8 @@ export function WeeklyReport() {
                   </div>
                   <div className="border border-grid rounded-md p-3">
                     <p className="text-[11px] text-gray-400 uppercase tracking-wider">Ad spend</p>
-                    <p className="text-xl font-bold text-gray-900 mt-1">$186</p>
-                    <p className="text-[11px] text-gray-400 mt-0.5">~$23 per call</p>
+                    <p className="text-xl font-bold text-gray-900 mt-1">{formatFromGBP(adSpendGBP, { whole: true })}</p>
+                    <p className="text-[11px] text-gray-400 mt-0.5">~{formatFromGBP(perCallGBP, { whole: true })} per call</p>
                   </div>
                   <div className="border border-grid rounded-md p-3">
                     <p className="text-[11px] text-gray-400 uppercase tracking-wider">Listing views</p>
@@ -77,7 +85,7 @@ export function WeeklyReport() {
                 <div className="border border-grid rounded-md p-3 bg-surface">
                   <p className="text-[12px] font-medium text-gray-800 mb-2">Next week:</p>
                   <div className="space-y-1 text-[12px] text-gray-500">
-                    <p>· Launch &quot;spring cleaning&quot; campaign ($15/day)</p>
+                    <p>· Launch &quot;spring cleaning&quot; campaign ({formatFromGBP(dailyBudgetGBP, { whole: true })}/day)</p>
                     <p>· Post 3x on Instagram</p>
                     <p>· Follow up with 2 unbooked leads</p>
                   </div>

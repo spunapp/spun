@@ -3,47 +3,56 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useCurrency } from "@/lib/currency/context";
 
-const messages = [
-  {
-    from: "spun",
-    text: "Hey Maria! I'm Spun — I help local businesses get more customers. What's your business called and what do you do?",
-    delay: 800,
-  },
-  {
-    from: "user",
-    text: "Hi! I own Bright Smile Dental in Oakland. We do general dentistry and cosmetic work.",
-    delay: 2400,
-  },
-  {
-    from: "spun",
-    text: "Great. I checked your Google listing — you're missing business hours, 3 photo categories, and your description is blank. You have 23 reviews at 4.6 stars. I can fix all of this today.",
-    delay: 4200,
-  },
-  {
-    from: "user",
-    text: "Wow, yes please",
-    delay: 6000,
-  },
-  {
-    from: "spun",
-    text: "Done. I also want to launch a Google Ads campaign targeting \"dentist near me\" in Oakland — $12/day. And I'll send review requests to your recent patients. Sound good?",
-    delay: 7400,
-  },
-  {
-    from: "user",
-    text: "Yes do it",
-    delay: 9200,
-  },
-  {
-    from: "spun",
-    text: "You're all set. I'll send you a report next Monday showing how many new patients called. Talk soon.",
-    delay: 10400,
-  },
-];
+// Demo ad-spend figure (GBP base) shown in the hero WhatsApp mockup. Rendered
+// in the viewer's local currency via useCurrency below.
+const DEMO_DAILY_BUDGET_GBP = 10;
+
+function buildMessages(dailyBudget: string) {
+  return [
+    {
+      from: "spun",
+      text: "Hey Maria! I'm Spun — I help local businesses get more customers. What's your business called and what do you do?",
+      delay: 800,
+    },
+    {
+      from: "user",
+      text: "Hi! I own Bright Smile Dental in Oakland. We do general dentistry and cosmetic work.",
+      delay: 2400,
+    },
+    {
+      from: "spun",
+      text: "Great. I checked your Google listing — you're missing business hours, 3 photo categories, and your description is blank. You have 23 reviews at 4.6 stars. I can fix all of this today.",
+      delay: 4200,
+    },
+    {
+      from: "user",
+      text: "Wow, yes please",
+      delay: 6000,
+    },
+    {
+      from: "spun",
+      text: `Done. I also want to launch a Google Ads campaign targeting "dentist near me" in Oakland — ${dailyBudget}/day. And I'll send review requests to your recent patients. Sound good?`,
+      delay: 7400,
+    },
+    {
+      from: "user",
+      text: "Yes do it",
+      delay: 9200,
+    },
+    {
+      from: "spun",
+      text: "You're all set. I'll send you a report next Monday showing how many new patients called. Talk soon.",
+      delay: 10400,
+    },
+  ];
+}
 
 function WhatsAppMockup() {
   const [visibleCount, setVisibleCount] = useState(0);
+  const { formatFromGBP } = useCurrency();
+  const messages = buildMessages(formatFromGBP(DEMO_DAILY_BUDGET_GBP, { whole: true }));
 
   useEffect(() => {
     const timeouts: NodeJS.Timeout[] = [];
@@ -51,6 +60,7 @@ function WhatsAppMockup() {
       timeouts.push(setTimeout(() => setVisibleCount(i + 1), msg.delay));
     });
     return () => timeouts.forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

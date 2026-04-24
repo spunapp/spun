@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Shield, Check, X, AlertTriangle, Loader2 } from "lucide-react"
+import { useCurrency } from "@/lib/currency/context"
 
 interface ApprovalRequestProps {
   content: string
@@ -18,6 +19,7 @@ export function ApprovalRequest({
 }: ApprovalRequestProps) {
   const [executing, setExecuting] = useState(false)
   const [executed, setExecuted] = useState(false)
+  const { format } = useCurrency()
 
   const approval = metadata as {
     actionType?: string
@@ -63,7 +65,7 @@ export function ApprovalRequest({
           )}
           {approval.budget !== undefined && (
             <p className="text-gray-500">
-              Budget: <span className="text-gray-700">${approval.budget}/day</span>
+              Budget: <span className="text-gray-700">{format(approval.budget, { whole: true })}/day</span>
             </p>
           )}
           {approval.campaignTheme && (
