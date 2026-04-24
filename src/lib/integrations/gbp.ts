@@ -658,3 +658,114 @@ export async function runGbpAudit(
   const details = await getPlaceDetails(apiKey, match.placeId)
   return auditGbpProfile(details)
 }
+
+// Hyperlocal competitor discovery via Places searchText. Uses the postcode
+// or neighbourhood in the query so results are ordered by proximity — city
+// names alone (e.g. "Brighton") return businesses miles from the user's
+// actual location, which is what Tavily was giving us before.
+
+export interface LocalCompetitor {
+  name: string
+  address?: string
+  rating?: number
+  reviewCount?: number
+  primaryType?: string
+  websiteUri?: string
+  googleMapsUri?: string
+}
+
+export interface LocalCompetitorsResult {
+  queryUsed: string
+  competitors: LocalCompetitor[]
+}
+
+function inferRegionCode(area: string): string {
+  // UK postcodes: AA9A 9AA, A9A 9AA, A9 9AA, A99 9AA, AA9 9AA, AA99 9AA.
+  // Matches the common UK formats loosely — any 1-2 letters + digits
+  // followed by a space and a digit + 2 letters.
+  if (/\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(area)) return "GB"
+  // Fall back to GB as the product's primary market. Can be made
+  // user-configurable later if we expand outside the UK.
+  return "GB"
+}
+
+export async function findLocalCompetitors(
+  category: string,
+  area: string,
+  excludeBusinessName?: string
+): Promise<LocalCompetitorsResult | { error: string }> {
+  const apiKey = process.env.GOOGLE_PLACES_API_KEY
+  if (!apiKey) return { error: "GOOGLE_PLACES_API_KEY is not set" }
+
+  const textQuery = `${category} near ${area}`
+  const regionCode = inferRegionCode(area)
+
+  const fieldMask = [
+    "places.id",
+    "places.displayName",
+    "places.formattedAddress",
+    "places.rating",
+    "places.userRatingCount",
+    "places.primaryTypeDisplayName",
+    "places.websiteUri",
+    "places.googleMapsUri",
+    "places.businessStatus",
+  ].join(",")
+
+  try {
+    const res = await fetch(PLACES_SEARCH_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+        "X-Goog-FieldMask": fieldMask,
+      },
+      body: JSON.stringify({
+        textQuery,
+        maxResultCount: 10,
+        regionCode,
+      }),
+    })
+
+    if (!res.ok) {
+      return { error: `Places search failed: ${res.status} ${await res.text()}` }
+    }
+
+    const data = (await res.json()) as {
+      places?: Array<{
+        id: string
+        displayName?: { text: string }
+        formattedAddress?: string
+        rating?: number
+        userRatingCount?: number
+        primaryTypeDisplayName?: { text: string }
+        websiteUri?: string
+        googleMapsUri?: string
+        businessStatus?: string
+      }>
+    }
+
+    const exclude = (excludeBusinessName ?? "").trim().toLowerCase()
+    const competitors: LocalCompetitor[] = (data.places ?? [])
+      .filter((p) => p.businessStatus !== "CLOSED_PERMANENTLY")
+      .filter((p) => {
+        if (!exclude) return true
+        const name = (p.displayName?.text ?? "").toLowerCase()
+        return !name.includes(exclude) && !exclude.includes(name)
+      })
+      .slice(0, 8)
+      .map((p) => ({
+        name: p.displayName?.text ?? "Unknown",
+        address: p.formattedAddress,
+        rating: p.rating,
+        reviewCount: p.userRatingCount,
+        primaryType: p.primaryTypeDisplayName?.text,
+        websiteUri: p.websiteUri,
+        googleMapsUri: p.googleMapsUri,
+      }))
+
+    return { queryUsed: textQuery, competitors }
+  } catch (err) {
+    return { error: `Places search threw: ${err instanceof Error ? err.message : String(err)}` }
+  }
+}

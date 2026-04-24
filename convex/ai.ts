@@ -1183,6 +1183,32 @@ Return ONLY valid JSON:
       }
     }
 
+    case "find_local_competitors": {
+      const category = (input.category as string | undefined) ?? ""
+      const area = (input.area as string | undefined) ?? ""
+      if (!category || !area) return { error: "category and area are required" }
+
+      // Belt-and-braces guard: refuse a bare city name so the tool can't
+      // regress into returning results miles away. Looks for a UK postcode
+      // or at least two words (implying neighbourhood + town).
+      const looksLikePostcode = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(area)
+      const wordCount = area.trim().split(/\s+/).length
+      if (!looksLikePostcode && wordCount < 2) {
+        return {
+          error: `area "${area}" is too broad — pass a postcode (e.g. 'BN2 6NL') or neighbourhood + town (e.g. 'Woodingdean Brighton'). A bare city name returns irrelevant results.`,
+        }
+      }
+
+      let excludeName: string | undefined
+      if (businessId) {
+        const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
+        excludeName = business?.name
+      }
+
+      const { findLocalCompetitors } = await import("../src/lib/integrations/gbp")
+      return await findLocalCompetitors(category, area, excludeName)
+    }
+
     case "audit_gbp": {
       let websiteUrl = input.websiteUrl as string | undefined
       let businessName = (input.businessName as string | undefined) ?? undefined
