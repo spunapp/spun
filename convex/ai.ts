@@ -288,6 +288,10 @@ export const chat = action({
       } else if (toolName === "audit_gbp") {
         messageType = "gbp_audit"
         metadata = toolResult as Record<string, unknown>
+      } else if (toolName === "publish_social_post") {
+        // Render as a status_update card with a link to the live post.
+        messageType = "status_update"
+        metadata = toolResult as Record<string, unknown>
       }
     }
 
@@ -811,7 +815,7 @@ Return ONLY valid JSON:
           imageStorageId = await ctx.storage.store(blob)
         }
 
-        await ctx.runMutation(api.adCreatives.create, {
+        const creativeId = await ctx.runMutation(api.adCreatives.create, {
           campaignId: args.campaignId,
           businessId: args.businessId,
           funnelStage: args.funnelStage as "tof" | "mof" | "bof",
@@ -823,6 +827,7 @@ Return ONLY valid JSON:
           ...(imageStorageId ? { imageStorageId } : {}),
         })
         return {
+          creativeId: creativeId as string,
           headline: vd.headline ?? "", copy: vd.copy ?? "", cta: vd.cta ?? "",
           format, variant, funnelStage: args.funnelStage,
           ...(imageStorageId ? { imageStorageId: imageStorageId as string } : {}),
@@ -1231,6 +1236,77 @@ Return ONLY valid JSON:
 
       const { findLocalCompetitors } = await import("../src/lib/integrations/gbp")
       return await findLocalCompetitors(category, area, excludeName)
+    }
+
+    case "publish_social_post": {
+      if (!businessId) return { error: "No business context" }
+      const creativeIdRaw = input.creativeId as string | undefined
+      const platform = input.platform as "facebook" | "instagram" | undefined
+      const caption = input.caption as string | undefined
+      const scheduleAtIso = input.scheduleAt as string | undefined
+      if (!creativeIdRaw || !platform || !caption) {
+        return { error: "creativeId, platform and caption are required" }
+      }
+
+      // Check Meta is connected.
+      const channels = (await ctx.runQuery(api.channels.listByBusiness, {
+        businessId: businessId as Id<"businesses">,
+      })) as Array<{ platform: string; status: string }>
+      const metaConnected = channels.some((c) => c.platform === "meta" && c.status === "active")
+      if (!metaConnected) {
+        return { error: "Meta isn't connected. Ask the user to connect it via Settings → Meta (Facebook & Instagram) first." }
+      }
+
+      // If the business doesn't have a default target saved, ask the user to pick.
+      const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
+      if (!business) return { error: "Business not found" }
+      const targetId =
+        platform === "facebook"
+          ? business.defaultFacebookPageId
+          : business.defaultInstagramUserId
+      if (!targetId) {
+        const targetsRes = (await ctx.runAction(api.socialPostsActions.listMetaTargets, {
+          businessId: businessId as Id<"businesses">,
+        })) as { targets?: Array<{ pageId: string; pageName: string; igUserId?: string }>; error?: string }
+        if (targetsRes.error) return { error: targetsRes.error }
+        return {
+          needsTargetSelection: true,
+          platform,
+          pendingPublish: { creativeId: creativeIdRaw, caption, scheduleAt: scheduleAtIso },
+          targets: targetsRes.targets ?? [],
+        }
+      }
+
+      let scheduleAt: number | undefined
+      if (scheduleAtIso) {
+        const parsed = Date.parse(scheduleAtIso)
+        if (isNaN(parsed)) return { error: `scheduleAt "${scheduleAtIso}" is not a valid ISO-8601 timestamp` }
+        if (parsed <= Date.now()) return { error: "scheduleAt must be in the future" }
+        scheduleAt = parsed
+      }
+
+      return await ctx.runAction(api.socialPostsActions.startFromCreative, {
+        businessId: businessId as Id<"businesses">,
+        creativeId: creativeIdRaw as Id<"adCreatives">,
+        platform,
+        caption,
+        scheduleAt,
+      })
+    }
+
+    case "pick_social_target": {
+      if (!businessId) return { error: "No business context" }
+      const facebookPageId = input.facebookPageId as string | undefined
+      const instagramUserId = input.instagramUserId as string | undefined
+      if (!facebookPageId && !instagramUserId) {
+        return { error: "Provide at least facebookPageId or instagramUserId" }
+      }
+      await ctx.runMutation(api.socialPosts.setDefaultTargets, {
+        businessId: businessId as Id<"businesses">,
+        facebookPageId,
+        instagramUserId,
+      })
+      return { success: true, facebookPageId, instagramUserId }
     }
 
     case "audit_gbp": {

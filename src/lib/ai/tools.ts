@@ -288,6 +288,43 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
+    name: "publish_social_post",
+    description:
+      "Publish a generated creative as an organic social post on the user's connected Facebook Page or Instagram Business account. Only call after the user has explicitly said 'post it', 'publish it', or 'schedule it' for a specific creative — 'I like this one' is feedback, not an instruction to publish. Requires Meta to be connected; if not, call connect_channel with platform 'meta' first. If the tool returns needsTargetSelection:true with a list of pages, present the options and ask which Page / Instagram account to use, then call pick_social_target. Pass scheduleAt as an ISO-8601 timestamp to schedule; omit for immediate publish.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        creativeId: { type: "string", description: "ID of the adCreatives record to publish." },
+        platform: {
+          type: "string",
+          enum: ["facebook", "instagram"],
+          description: "Which channel to post on. Instagram requires the user's Facebook Page to have a linked Instagram Business account.",
+        },
+        caption: {
+          type: "string",
+          description: "Final caption to post. Usually copy the creative's copy verbatim; refine only if the user asked for changes.",
+        },
+        scheduleAt: {
+          type: "string",
+          description: "Optional ISO-8601 timestamp in the future for scheduled publish. Omit to publish now.",
+        },
+      },
+      required: ["creativeId", "platform", "caption"],
+    },
+  },
+  {
+    name: "pick_social_target",
+    description:
+      "Save the user's choice of Facebook Page (and optionally linked Instagram Business account) as the default for publishing. Call ONLY after publish_social_post returned needsTargetSelection:true and the user named which page they want to use.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        facebookPageId: { type: "string", description: "Facebook Page id from the earlier listMetaTargets response." },
+        instagramUserId: { type: "string", description: "Instagram Business user id linked to that Page, if present in the earlier response." },
+      },
+    },
+  },
+  {
     name: "find_local_competitors",
     description:
       "Find hyperlocal competitors using Google Places. ALWAYS prefer this over search_web for competitor discovery — it returns businesses ranked by proximity to a postcode/neighbourhood, with ratings, review counts, and Google Maps links. The 'area' parameter MUST be a postcode (e.g. 'BN2 6NL') or a specific neighbourhood plus town (e.g. 'Woodingdean Brighton'). NEVER pass a bare city name like 'Brighton' or 'London' — city-level queries return businesses miles away from the user's actual location and are useless for a local business.",

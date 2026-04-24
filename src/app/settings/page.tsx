@@ -14,8 +14,7 @@ const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages", oauthAppId: "oa_K1i8YD" },
   { id: "google", label: "Google Ads", pipedreamApp: null, oauthAppId: undefined },
   { id: "ga4", label: "Google Analytics 4", pipedreamApp: "google_analytics", oauthAppId: undefined },
-  { id: "shopify", label: "Shopify", pipedreamApp: null, oauthAppId: undefined },
-  { id: "buffer", label: "Buffer", pipedreamApp: null, oauthAppId: undefined },
+  { id: "shopify", label: "Shopify", pipedreamApp: "shopify", oauthAppId: undefined },
 ]
 
 const CURRENCIES = [

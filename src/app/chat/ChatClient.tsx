@@ -136,9 +136,9 @@ export default function ChatClient() {
           )
         } else if (lastMsg.messageType === "creative_gallery") {
           setQuickReplies([
-            "Also create social posts",
+            "Post the best one to Instagram",
+            "Schedule these across the week",
             "Try a different style",
-            "Launch these",
           ])
         } else if (lastMsg.messageType === "meta_setup_guide") {
           setQuickReplies([
