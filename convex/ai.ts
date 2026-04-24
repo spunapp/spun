@@ -10,13 +10,13 @@ import { buildSystemPrompt } from "../src/lib/ai/persona"
 import { TOOL_DEFINITIONS } from "../src/lib/ai/tools"
 import { firmographicScoreDetails, scoreToTier } from "../src/lib/types"
 
-// Chat models for user-facing conversation turns. Gemini 2.5 Flash is stable
-// and handles tool calling in multi-turn conversations reliably (the 3.1 Flash
-// Lite preview had known issues with empty responses). Claude Haiku 4.5 is
-// the fallback — OpenRouter auto-falls-back on 5xx/rate limits.
+// Chat models for user-facing conversation turns. Claude Haiku 4.5 leads —
+// consistently faster time-to-first-token and fewer 5xx retries than Gemini
+// Flash through OpenRouter, with strong tool-calling. Gemini 2.5 Flash is
+// the fallback; OpenRouter auto-falls-back on 5xx/rate limits.
 const CHAT_MODELS = [
-  "google/gemini-2.5-flash",
   "anthropic/claude-haiku-4-5",
+  "google/gemini-2.5-flash",
 ]
 // Reasoning models for heavy analytical work (strategy, creatives, tiering,
 // sales strategies). Pro Preview is higher quality but slower; Claude Sonnet
@@ -38,6 +38,26 @@ function toOrTools(tools: typeof TOOL_DEFINITIONS) {
     type: "function" as const,
     function: { name: t.name, description: t.description, parameters: t.input_schema },
   }))
+}
+
+// During onboarding the AI only needs to gather info and optionally look up
+// context. Everything else (generate_campaign, audit_gbp, connect_channel,
+// setup guides, creatives) is post-onboarding. Sending the full 15-tool
+// schema on every onboarding turn inflates input tokens by ~3K for no reason.
+const ONBOARDING_TOOL_NAMES = new Set(["onboard_business", "search_web"])
+// B2B sales tools that aren't part of the local-business flow. Still exist
+// in case a past user comes back to a saved workflow, but we don't surface
+// them to the model on normal turns.
+const EXCLUDED_POST_ONBOARDING_TOOLS = new Set([
+  "tier_prospects",
+  "generate_sales_strategy",
+])
+
+function selectToolsFor(business: { onboardingComplete?: boolean } | null) {
+  if (!business || !business.onboardingComplete) {
+    return TOOL_DEFINITIONS.filter((t) => ONBOARDING_TOOL_NAMES.has(t.name))
+  }
+  return TOOL_DEFINITIONS.filter((t) => !EXCLUDED_POST_ONBOARDING_TOOLS.has(t.name))
 }
 
 // Retry transient failures with exponential backoff. 5xx responses and
@@ -163,7 +183,7 @@ export const chat = action({
       business as Parameters<typeof buildSystemPrompt>[0],
       hasHistory
     )
-    const orTools = toOrTools(TOOL_DEFINITIONS)
+    let orTools = toOrTools(selectToolsFor(business as { onboardingComplete?: boolean } | null))
 
     const orMessages: OrMessage[] = [
       { role: "system", content: systemPrompt },
@@ -305,6 +325,13 @@ export const chat = action({
       // brand assets before generating creatives. Don't auto-chain.
       const toolsThisRound = currentMsg.tool_calls.map((tc: any) => tc.function.name)
       const shouldPause = toolsThisRound.includes("generate_campaign") || toolsThisRound.includes("generate_strategy")
+
+      // Once onboard_business fires, the user is now onboarded — upgrade the
+      // tool set so the follow-up call can run competitor search + GBP audit
+      // in the same turn (per the post-onboarding Step 1 in the persona).
+      if (toolsThisRound.includes("onboard_business")) {
+        orTools = toOrTools(selectToolsFor({ onboardingComplete: true }))
+      }
 
       try {
         const nextResponse = await callOpenRouter(accMessages, {
