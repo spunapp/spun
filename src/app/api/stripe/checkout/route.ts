@@ -26,6 +26,10 @@ export async function POST(request: Request) {
     mode: "subscription",
     payment_method_types: ["card"],
     line_items: [{ price: priceId, quantity: 1 }],
+    // Stripe auto-converts the GBP price into the customer's local currency
+    // at checkout time. Belt-and-braces: this overrides the dashboard setting
+    // in case it isn't toggled on.
+    adaptive_pricing: { enabled: true },
     success_url: `${origin}/chat?checkout=success`,
     cancel_url: `${origin}/pricing?checkout=canceled`,
     client_reference_id: userId,

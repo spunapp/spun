@@ -1,9 +1,7 @@
 import { auth } from "@clerk/nextjs/server"
-import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import Stripe from "stripe"
-import { getCreditPackPriceId } from "@/lib/billing/tiers"
-import { CURRENCY_COOKIE, normaliseCurrency } from "@/lib/currency/currencies"
+import { CREDIT_PACK } from "@/lib/billing/tiers"
 
 function getStripe() {
   return new Stripe(process.env.STRIPE_SECRET_KEY!, {
@@ -17,15 +15,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const body = await request.json().catch(() => ({}))
-  const { businessId, currency: bodyCurrency } = body as { businessId?: string; currency?: string }
+  const { businessId } = await request.json()
   if (!businessId) {
     return NextResponse.json({ error: "Missing businessId" }, { status: 400 })
   }
-
-  const cookieCurrency = (await cookies()).get(CURRENCY_COOKIE)?.value
-  const currency = normaliseCurrency(bodyCurrency ?? cookieCurrency)
-  const priceId = getCreditPackPriceId(currency)
 
   const origin = request.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "https://spun.bot"
 
@@ -33,11 +26,14 @@ export async function POST(request: Request) {
   const session = await stripe.checkout.sessions.create({
     mode: "payment",
     payment_method_types: ["card"],
-    line_items: [{ price: priceId, quantity: 1 }],
+    line_items: [{ price: CREDIT_PACK.priceId, quantity: 1 }],
+    // Stripe auto-converts the GBP price into the customer's local currency
+    // at checkout time.
+    adaptive_pricing: { enabled: true },
     success_url: `${origin}/settings?credits=success`,
     cancel_url: `${origin}/settings?credits=canceled`,
     client_reference_id: userId,
-    metadata: { type: "credit_pack", userId, businessId, currency },
+    metadata: { type: "credit_pack", userId, businessId },
   })
 
   return NextResponse.json({ url: session.url })

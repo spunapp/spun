@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useUser } from "@clerk/nextjs"
 import { Check, X, ArrowRight } from "lucide-react"
 import { MarketingShell } from "@/components/landing/MarketingShell"
-import { TIERS, CREDIT_PACK, getTierPriceId, type SubscriptionTier } from "@/lib/billing/tiers"
+import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
 import { useCurrency } from "@/lib/currency/context"
 
 // Base prices in GBP. Displayed values are converted to the viewer's local
@@ -97,8 +97,8 @@ function FeatureValue({ value }: { value: boolean | string }) {
 export default function PricingPage() {
   const router = useRouter()
   const { isSignedIn } = useUser()
-  const { currency, format, formatFromGBP, convertFromGBP } = useCurrency()
-  const [loading, setLoading] = useState<SubscriptionTier | null>(null)
+  const { format, formatFromGBP, convertFromGBP } = useCurrency()
+  const [loading, setLoading] = useState<string | null>(null)
   const [billing, setBilling] = useState<"annual" | "monthly">("annual")
   const [compareTab, setCompareTab] = useState<"agency" | "inhouse">("agency")
   // Agency spend slider is in the viewer's own currency. Convert the GBP
@@ -115,14 +115,13 @@ export default function PricingPage() {
     "Content Creator": false,
   })
 
-  async function handleCheckout(tier: SubscriptionTier) {
+  async function handleCheckout(priceId: string) {
     if (!isSignedIn) {
       router.replace("/login")
       return
     }
-    setLoading(tier)
+    setLoading(priceId)
     try {
-      const priceId = getTierPriceId(tier, currency)
       const res = await fetch("/api/stripe/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -231,11 +230,11 @@ export default function PricingPage() {
                   </p>
                 )}
                 <button
-                  onClick={() => handleCheckout("standard")}
-                  disabled={loading === "standard"}
+                  onClick={() => handleCheckout(TIERS.standard.priceId)}
+                  disabled={loading === TIERS.standard.priceId}
                   className="w-full border border-grid hover:border-gray-300 bg-white text-gray-700 font-medium py-2.5 rounded-md text-[13px] transition disabled:opacity-50 mb-6"
                 >
-                  {loading === "standard" ? "Redirecting…" : "Start free trial"}
+                  {loading === TIERS.standard.priceId ? "Redirecting…" : "Start free trial"}
                 </button>
                 <ul className="space-y-3 flex-1">
                   {CARD_FEATURES.standard.map((f) => (
@@ -267,11 +266,11 @@ export default function PricingPage() {
                   </p>
                 )}
                 <button
-                  onClick={() => handleCheckout("pro")}
-                  disabled={loading === "pro"}
+                  onClick={() => handleCheckout(TIERS.pro.priceId)}
+                  disabled={loading === TIERS.pro.priceId}
                   className="w-full bg-spun hover:bg-spun-dark text-white font-medium py-2.5 rounded-md text-[13px] transition disabled:opacity-50 mb-6"
                 >
-                  {loading === "pro" ? "Redirecting…" : "Start free trial"}
+                  {loading === TIERS.pro.priceId ? "Redirecting…" : "Start free trial"}
                 </button>
                 <ul className="space-y-3 flex-1">
                   {CARD_FEATURES.pro.map((f) => (
@@ -442,7 +441,7 @@ export default function PricingPage() {
 
                 <div className="text-center">
                   <button
-                    onClick={() => handleCheckout("pro")}
+                    onClick={() => handleCheckout(TIERS.pro.priceId)}
                     className="inline-flex items-center gap-2 bg-spun hover:bg-spun-dark text-white font-medium py-3 px-7 rounded-md text-sm transition"
                   >
                     Start saving today

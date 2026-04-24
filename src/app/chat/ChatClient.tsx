@@ -22,7 +22,7 @@ export default function ChatClient() {
   const { user } = useUser()
   const userId = user?.id ?? null
   const router = useRouter()
-  const { currency: displayCurrency, formatFromGBP } = useCurrency()
+  const { formatFromGBP } = useCurrency()
   const [selectedConversationId, setSelectedConversationId] =
     useState<Id<"conversations"> | null>(null)
   const [pendingSend, setPendingSend] = useState(false)
@@ -372,7 +372,7 @@ export default function ChatClient() {
                   const res = await fetch("/api/stripe/credit-checkout", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ businessId: business._id, currency: displayCurrency }),
+                    body: JSON.stringify({ businessId: business._id }),
                   })
                   const data = await res.json()
                   if (data.url) window.location.href = data.url
