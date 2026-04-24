@@ -1265,7 +1265,7 @@ Return ONLY valid JSON:
           ? business.defaultFacebookPageId
           : business.defaultInstagramUserId
       if (!targetId) {
-        const targetsRes = (await ctx.runAction(api.socialPosts.listMetaTargets, {
+        const targetsRes = (await ctx.runAction(api.socialPostsActions.listMetaTargets, {
           businessId: businessId as Id<"businesses">,
         })) as { targets?: Array<{ pageId: string; pageName: string; igUserId?: string }>; error?: string }
         if (targetsRes.error) return { error: targetsRes.error }
@@ -1285,7 +1285,7 @@ Return ONLY valid JSON:
         scheduleAt = parsed
       }
 
-      return await ctx.runAction(api.socialPosts.startFromCreative, {
+      return await ctx.runAction(api.socialPostsActions.startFromCreative, {
         businessId: businessId as Id<"businesses">,
         creativeId: creativeIdRaw as Id<"adCreatives">,
         platform,

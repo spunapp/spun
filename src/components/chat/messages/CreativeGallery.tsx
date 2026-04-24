@@ -38,7 +38,7 @@ function PostActions({ creative }: { creative: Creative }) {
     api.businesses.getByUser,
     userId ? { userId } : "skip"
   )
-  const startFromCreative = useAction(api.socialPosts.startFromCreative)
+  const startFromCreative = useAction(api.socialPostsActions.startFromCreative)
 
   const [state, setState] = useState<"idle" | "posting" | "done" | "error">("idle")
   const [message, setMessage] = useState<string | null>(null)
