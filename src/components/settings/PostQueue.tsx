@@ -37,7 +37,7 @@ type SocialPost = {
 function PostThumbnail({ storageId }: { storageId: Id<"_storage"> }) {
   const url = useQuery(api.adCreatives.getImageUrl, { storageId })
   if (!url) {
-    return <div className="w-14 h-14 rounded-md bg-white/5 animate-pulse flex-shrink-0" />
+    return <div className="w-14 h-14 rounded-md bg-surface-alt animate-pulse flex-shrink-0" />
   }
   return (
     <img
@@ -103,41 +103,41 @@ function PostRow({
       {post.imageStorageId ? (
         <PostThumbnail storageId={post.imageStorageId as Id<"_storage">} />
       ) : (
-        <div className="w-14 h-14 rounded-md bg-white/5 flex-shrink-0" />
+        <div className="w-14 h-14 rounded-md bg-surface-alt flex-shrink-0" />
       )}
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
           <PlatformBadge platform={post.platform} />
           {post.status === "scheduled" && post.scheduledAt && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-amber-300">
+            <span className="inline-flex items-center gap-1 text-[10px] text-amber-700">
               <Clock className="w-3 h-3" />
               {formatWhen(post.scheduledAt)}
             </span>
           )}
           {post.status === "publishing" && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-amber-300">
+            <span className="inline-flex items-center gap-1 text-[10px] text-amber-700">
               <Loader2 className="w-3 h-3 animate-spin" />
               Publishing…
             </span>
           )}
           {post.status === "published" && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400">
+            <span className="inline-flex items-center gap-1 text-[10px] text-spun">
               <CheckCircle2 className="w-3 h-3" />
               {formatWhen(post.publishedAt ?? post._creationTime)}
             </span>
           )}
           {post.status === "failed" && (
-            <span className="inline-flex items-center gap-1 text-[10px] text-red-400">
+            <span className="inline-flex items-center gap-1 text-[10px] text-red-600">
               <AlertCircle className="w-3 h-3" />
               Failed
             </span>
           )}
         </div>
-        <p className="text-xs text-slate-300 line-clamp-2 break-words">
+        <p className="text-xs text-gray-600 line-clamp-2 break-words">
           {post.caption}
         </p>
         {post.status === "failed" && post.error && (
-          <p className="text-[11px] text-red-400/80 mt-1 line-clamp-2 break-words">
+          <p className="text-[11px] text-red-600/80 mt-1 line-clamp-2 break-words">
             {post.error}
           </p>
         )}
@@ -148,7 +148,7 @@ function PostRow({
             href={post.permalink}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-white px-2 py-1 rounded-md hover:bg-white/5"
+            className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-gray-900 px-2 py-1 rounded-md hover:bg-surface-alt"
           >
             <ExternalLink className="w-3 h-3" />
             View
@@ -158,7 +158,7 @@ function PostRow({
           <button
             disabled={busy}
             onClick={() => wrap(onCancel)}
-            className="inline-flex items-center gap-1 text-[11px] text-slate-400 hover:text-red-400 px-2 py-1 rounded-md hover:bg-red-400/5 disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-red-600 px-2 py-1 rounded-md hover:bg-red-400/5 disabled:opacity-50"
           >
             <X className="w-3 h-3" />
             Cancel
@@ -168,7 +168,7 @@ function PostRow({
           <button
             disabled={busy}
             onClick={() => wrap(onRetry)}
-            className="inline-flex items-center gap-1 text-[11px] text-[#5B9BAA] hover:text-white px-2 py-1 rounded-md hover:bg-[#5B9BAA]/10 disabled:opacity-50"
+            className="inline-flex items-center gap-1 text-[11px] text-spun hover:text-gray-900 px-2 py-1 rounded-md hover:bg-spun-50 disabled:opacity-50"
           >
             {busy ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
             Retry
@@ -189,7 +189,7 @@ export function PostQueue({ businessId }: PostQueueProps) {
 
   if (!businessId || posts === undefined) {
     return (
-      <div className="flex items-center gap-2 text-xs text-slate-500">
+      <div className="flex items-center gap-2 text-xs text-gray-400">
         <Loader2 className="w-3 h-3 animate-spin" />
         Loading your posts…
       </div>
@@ -198,7 +198,7 @@ export function PostQueue({ businessId }: PostQueueProps) {
 
   if (posts.length === 0) {
     return (
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-gray-400">
         No posts yet. Generate social creatives in chat, then use Post to
         Facebook / Instagram to publish or schedule them.
       </p>
@@ -226,7 +226,7 @@ export function PostQueue({ businessId }: PostQueueProps) {
     <div className="space-y-5">
       {upcoming.length > 0 && (
         <div>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
             Upcoming
           </h3>
           <ul className="divide-y divide-white/5">
@@ -249,7 +249,7 @@ export function PostQueue({ businessId }: PostQueueProps) {
 
       {failed.length > 0 && (
         <div>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
             Failed
           </h3>
           <ul className="divide-y divide-white/5">
@@ -268,7 +268,7 @@ export function PostQueue({ businessId }: PostQueueProps) {
 
       {published.length > 0 && (
         <div>
-          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-400 mb-2">
             Recently published
           </h3>
           <ul className="divide-y divide-white/5">

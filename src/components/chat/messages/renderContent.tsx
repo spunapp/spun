@@ -17,15 +17,15 @@ export function renderContent(content: string): ReactNode[] {
     if (headingMatch) {
       const level = headingMatch[1].length
       const text = processInline(headingMatch[2])
-      if (level <= 2) return <p key={i} className="font-semibold text-white mt-2 mb-0.5">{text}</p>
-      return <p key={i} className="font-medium text-white mt-1">{text}</p>
+      if (level <= 2) return <p key={i} className="font-semibold text-gray-900 mt-2 mb-0.5">{text}</p>
+      return <p key={i} className="font-medium text-gray-900 mt-1">{text}</p>
     }
 
     const bulletMatch = line.match(/^[*\-•]\s+(.+)/)
     if (bulletMatch) {
       return (
         <p key={i} className="flex gap-2">
-          <span className="text-slate-500 select-none">•</span>
+          <span className="text-gray-400 select-none">•</span>
           <span>{processInline(bulletMatch[1])}</span>
         </p>
       )
@@ -35,7 +35,7 @@ export function renderContent(content: string): ReactNode[] {
     if (numberedMatch) {
       return (
         <p key={i} className="flex gap-2">
-          <span className="text-slate-500 select-none">{numberedMatch[1]}.</span>
+          <span className="text-gray-400 select-none">{numberedMatch[1]}.</span>
           <span>{processInline(numberedMatch[2])}</span>
         </p>
       )

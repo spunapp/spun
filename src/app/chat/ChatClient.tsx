@@ -311,15 +311,15 @@ export default function ChatClient() {
     <ChatSidebarProvider value={sidebarValue}>
     <div className="flex flex-col h-full">
       {/* Header */}
-      <header className="flex items-center justify-between px-4 py-3 border-b border-white/5 pl-14 lg:pl-4">
+      <header className="flex items-center justify-between px-4 py-3 border-b border-grid bg-white pl-14 lg:pl-4">
         <div>
-          <h1 className="text-sm font-medium text-white">
+          <h1 className="text-sm font-semibold text-gray-900">
             {business ? business.name : "Spun"}
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-gray-500">
             {business
               ? `${business.industry} — ${business.trustMode === "draft" ? "preview before executing mode" : business.trustMode === "auto" ? "auto execute mode" : business.trustMode + " mode"}`
-              : "Your local marketing team is ready"}
+              : "Your local marketing agent is ready"}
           </p>
         </div>
       </header>
@@ -346,11 +346,11 @@ export default function ChatClient() {
 
       {/* Error banner */}
       {error && (
-        <div className="mx-4 mb-2 flex items-center justify-between rounded-lg bg-red-500/10 px-4 py-2 text-sm text-red-400">
+        <div className="mx-4 mb-2 flex items-center justify-between rounded-md border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
           <span>{error}</span>
           <button
             onClick={() => setError(null)}
-            className="ml-3 text-red-400 hover:text-red-300"
+            className="ml-3 text-red-700 hover:text-red-900"
           >
             Dismiss
           </button>
@@ -359,8 +359,8 @@ export default function ChatClient() {
 
       {/* Usage limit banner */}
       {atMessageLimit && business && (
-        <div className="mx-4 mb-2 rounded-lg bg-amber-500/10 px-4 py-3 text-sm">
-          <p className="text-amber-300 font-medium mb-1">
+        <div className="mx-4 mb-2 rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm">
+          <p className="text-amber-800 font-medium mb-1">
             You&apos;ve used all {tierConfig.messages} AI responses this month
           </p>
           <div className="flex gap-3">
@@ -376,12 +376,12 @@ export default function ChatClient() {
                   if (data.url) window.location.href = data.url
                 } catch {}
               }}
-              className="text-xs text-[#5B9BAA] hover:text-white transition-colors"
+              className="text-xs text-spun hover:text-spun-dark transition-colors font-medium"
             >
               Buy credits (£{(CREDIT_PACK.price / 100).toFixed(2)})
             </button>
             {tier === "standard" && (
-              <a href="/pricing" className="text-xs text-slate-400 hover:text-white transition-colors">
+              <a href="/pricing" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
                 Upgrade to Pro
               </a>
             )}

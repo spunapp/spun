@@ -96,12 +96,8 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${ibmPlexMono.variable}`}
-      style={{ background: "#273E47" }}
-    >
-      <body className="antialiased font-sans" style={{ background: "#273E47", color: "#f8fafc" }}>
+    <html lang="en" className={`${inter.variable} ${ibmPlexMono.variable}`}>
+      <body className="antialiased font-sans">
         <ConvexClientProvider>{children}</ConvexClientProvider>
         <CookieConsent />
       </body>

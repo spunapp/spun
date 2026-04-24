@@ -177,20 +177,14 @@ export default function CookieConsent() {
       aria-label="Cookie consent"
       className="fixed bottom-4 left-4 right-4 sm:left-6 sm:right-auto sm:bottom-6 sm:max-w-md z-50"
     >
-      <div
-        className="rounded-2xl p-5 shadow-2xl backdrop-blur"
-        style={{
-          background: "rgba(31, 51, 59, 0.97)",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-        }}
-      >
-        <p className="text-sm font-semibold text-white mb-1">Cookies on Spun</p>
-        <p className="text-[13px] text-slate-300 leading-relaxed mb-4">
+      <div className="rounded-md p-5 shadow-xl bg-white border border-grid">
+        <p className="text-sm font-semibold text-gray-900 mb-1">Cookies on Spun</p>
+        <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
           We use strictly necessary cookies to run spun.bot. With your permission,
           we&rsquo;d also like to use <strong>Google Analytics</strong> to understand
           how the site is used so we can improve it. You can change your choice at
           any time in our{" "}
-          <Link href="/cookies" className="text-[#5B9BAA] underline">
+          <Link href="/cookies" className="text-spun underline underline-offset-2">
             Cookie Policy
           </Link>
           .
@@ -199,15 +193,14 @@ export default function CookieConsent() {
           <button
             type="button"
             onClick={handleReject}
-            className="flex-1 text-sm font-medium text-slate-200 hover:text-white transition-colors rounded-lg px-4 py-2.5"
-            style={{ border: "1px solid rgba(255, 255, 255, 0.15)" }}
+            className="flex-1 text-sm font-medium text-gray-700 hover:text-gray-900 border border-grid hover:border-gray-300 transition-colors rounded-md px-4 py-2.5"
           >
             Reject non-essential
           </button>
           <button
             type="button"
             onClick={handleAccept}
-            className="flex-1 text-sm font-semibold text-white bg-[#5B9BAA] hover:bg-[#4d8a99] transition-colors rounded-lg px-4 py-2.5"
+            className="flex-1 text-sm font-semibold text-white bg-spun hover:bg-spun-dark transition-colors rounded-md px-4 py-2.5"
           >
             Accept all
           </button>

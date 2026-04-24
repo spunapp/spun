@@ -38,7 +38,7 @@ export function ApprovalRequest({
 
   return (
     <div className="space-y-3">
-      <div className="text-sm text-slate-200 leading-relaxed">
+      <div className="text-sm text-gray-700 leading-relaxed">
         {content.split("\n").map((line, i) => (
           <p key={i} className={line ? "" : "h-3"}>
             {line}
@@ -46,10 +46,10 @@ export function ApprovalRequest({
         ))}
       </div>
 
-      <div className="p-3 bg-amber-500/5 border border-amber-500/20 rounded-lg space-y-3">
+      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-3">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-amber-400" />
-          <span className="text-sm font-medium text-amber-300">
+          <Shield className="w-4 h-4 text-amber-600" />
+          <span className="text-sm font-medium text-amber-700">
             {actionLabels[approval.actionType ?? ""] ?? "Action"} — Needs
             your approval
           </span>
@@ -57,18 +57,18 @@ export function ApprovalRequest({
 
         <div className="text-xs space-y-1">
           {approval.platform && (
-            <p className="text-slate-400">
-              Platform: <span className="text-slate-200">{approval.platform}</span>
+            <p className="text-gray-500">
+              Platform: <span className="text-gray-700">{approval.platform}</span>
             </p>
           )}
           {approval.budget !== undefined && (
-            <p className="text-slate-400">
-              Budget: <span className="text-slate-200">${approval.budget}/day</span>
+            <p className="text-gray-500">
+              Budget: <span className="text-gray-700">${approval.budget}/day</span>
             </p>
           )}
           {approval.campaignTheme && (
-            <p className="text-slate-400">
-              Campaign: <span className="text-slate-200">{approval.campaignTheme}</span>
+            <p className="text-gray-500">
+              Campaign: <span className="text-gray-700">{approval.campaignTheme}</span>
             </p>
           )}
         </div>
@@ -85,14 +85,14 @@ export function ApprovalRequest({
                   setExecuting(false)
                 }
               }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg hover:bg-emerald-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-emerald-100 text-spun border border-emerald-200 rounded-lg hover:bg-emerald-100 transition-colors"
             >
               <Check className="w-3 h-3" />
               Approve & Launch
             </button>
             <button
               onClick={onReject}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium bg-red-100 text-red-600 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
             >
               <X className="w-3 h-3" />
               Reject
@@ -101,21 +101,21 @@ export function ApprovalRequest({
         )}
 
         {executing && (
-          <div className="flex items-center gap-1.5 text-xs text-amber-400">
+          <div className="flex items-center gap-1.5 text-xs text-amber-600">
             <Loader2 className="w-3 h-3 animate-spin" />
             Launching on {approval.platform ?? "platform"}...
           </div>
         )}
 
         {(approval.status === "approved" || executed) && (
-          <div className="flex items-center gap-1.5 text-xs text-emerald-400">
+          <div className="flex items-center gap-1.5 text-xs text-spun">
             <Check className="w-3 h-3" />
             Launched on {approval.platform ?? "platform"}
           </div>
         )}
 
         {approval.status === "rejected" && (
-          <div className="flex items-center gap-1.5 text-xs text-red-400">
+          <div className="flex items-center gap-1.5 text-xs text-red-600">
             <AlertTriangle className="w-3 h-3" />
             Rejected
           </div>

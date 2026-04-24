@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { ChevronDown, ArrowRight } from "lucide-react"
-import { LOGO_SRC } from "@/lib/logo"
+import { MarketingShell } from "@/components/landing/MarketingShell"
 
 const FAQS = [
   {
@@ -11,19 +11,19 @@ const FAQS = [
     items: [
       {
         q: "What is Spun?",
-        a: "Your always-on AI growth team. Spun handles strategy, campaigns, lead generation, execution, and analytics from a single chat window — at a fraction of the cost of a single hire.",
+        a: "Spun is an AI agent that automates marketing for local businesses. It manages your Google listing, runs your ads, collects reviews, posts on social, and follows up with leads — all while chatting with you via WhatsApp.",
       },
       {
         q: "Who is Spun for?",
-        a: "Built for SMEs and growing businesses who need serious growth firepower without the overhead of a full in-house team.",
+        a: "Local service businesses — plumbers, dentists, salons, gyms, HVAC, restaurants, chiropractors, auto shops, cleaning services. If you know you should be marketing but don't have the time or don't know where to start, Spun is for you.",
       },
       {
         q: "Do I need any marketing experience to use Spun?",
-        a: "No. Just describe your business and goals. Spun asks the right questions, builds the strategy, and executes — you stay in control.",
+        a: "No. Just tell Spun about your business in a WhatsApp conversation. Spun asks the right questions, audits your online presence, builds the plan, and executes — you stay in control with Approve or Auto modes.",
       },
       {
         q: "Is there a free trial?",
-        a: "Yes. All plans include a 14-day free trial.",
+        a: "Yes. You can try Spun risk-free. Cancel anytime before the trial ends.",
       },
     ],
   },
@@ -32,19 +32,19 @@ const FAQS = [
     items: [
       {
         q: "What can Spun actually do?",
-        a: "Strategy & positioning, campaign ideation & briefs, ad copy, social posts, email sequences, image ads, connecting to ad platforms and launching campaigns, and full performance reporting.",
+        a: "Google Business Profile management, Google Ads campaigns, review collection and responses, Facebook/Instagram posting, lead follow-ups, and a plain-English weekly report sent to your WhatsApp every Monday.",
       },
       {
-        q: "What ad platforms does Spun connect to?",
-        a: "Spun integrates with major advertising platforms. The full list is shown in your Settings → Connected Platforms once you're signed in.",
+        q: "What platforms does Spun connect to?",
+        a: "Google Business Profile, Google Ads, Meta (Facebook & Instagram), Twilio for SMS, and WhatsApp Business. Full list is shown in Settings once you sign in.",
       },
       {
-        q: 'What is "preview before executing" mode vs "auto execute" mode?',
-        a: "In preview mode, Spun shows you every action before it runs — you approve each step. In auto execute mode, Spun runs campaigns directly without waiting for approval. You can switch between modes at any time in Settings.",
+        q: "What are Draft, Approve, and Auto modes?",
+        a: "Draft: Spun shows what it would do; you trigger each action manually. Approve: Spun queues actions; you reply YES or NO via WhatsApp. Auto: Spun executes within guardrails (budget caps, content guidelines) and reports after. You can change modes at any time.",
       },
       {
         q: "Will Spun actually launch and run ads for me?",
-        a: "Yes. Spun doesn't just plan — it connects to your ad accounts, runs campaigns on your behalf, and then reports back on performance.",
+        a: "Yes. Spun connects to your Google Ads and Meta Ads accounts, launches campaigns on your behalf within the budget you set, and reports back on performance every week.",
       },
     ],
   },
@@ -53,15 +53,15 @@ const FAQS = [
     items: [
       {
         q: "What plans are available?",
-        a: "Standard (£69.99/mo) covers full strategy, campaigns, image ads, one ad platform, and full reporting. Pro (£119.99/mo) adds blog articles, video ads, podcast episodes, multi-platform advertising, and ROI calculations. Enterprise (price on application) provides custom solutions for multi-location or multi-brand organisations.",
+        a: "Starter ($99/mo) covers Google listing management, review collection, and weekly reports. Growth ($199/mo) adds Google Ads management, social posting, and lead follow-ups. Ad spend is separate — passed through to Google/Meta at cost.",
       },
       {
         q: "Can I cancel anytime?",
-        a: "Yes. All plans are month-to-month and can be cancelled at any time. No lock-in contracts.",
+        a: "Yes. All plans are month-to-month. No lock-in contracts.",
       },
       {
-        q: "Is there a discount for annual billing?",
-        a: "Yes. Annual billing saves you 20% compared to monthly. Standard is £69.99/mo billed annually (vs £87.99 monthly) and Pro is £119.99/mo billed annually (vs £149.99 monthly). You can switch between monthly and annual billing at any time.",
+        q: "Does ad spend come out of my subscription?",
+        a: "No. Your Spun subscription covers the AI agent and the actions it takes. Ad spend on Google/Meta is separate and billed directly by those platforms on your connected account.",
       },
     ],
   },
@@ -70,13 +70,19 @@ const FAQS = [
     items: [
       {
         q: "Is my business data safe?",
-        a: "Yes. Your business information, brand assets, and campaign data are stored securely and used only to power your Spun experience. We don't share your data with third parties.",
+        a: "Yes. Your business information, WhatsApp conversations, and campaign data are stored securely and used only to power your Spun experience. We don't share your data with third parties.",
       },
     ],
   },
 ]
 
-function FaqItem({ q, a, id, openId, setOpenId }: {
+function FaqItem({
+  q,
+  a,
+  id,
+  openId,
+  setOpenId,
+}: {
   q: string
   a: string
   id: string
@@ -87,24 +93,24 @@ function FaqItem({ q, a, id, openId, setOpenId }: {
 
   return (
     <div
-      className={`bg-[var(--background-dark)] border rounded-2xl overflow-hidden transition-colors ${
-        isOpen ? "border-[#5B9BAA]/30" : "border-white/5"
+      className={`bg-white border rounded-md overflow-hidden transition-colors ${
+        isOpen ? "border-spun/30" : "border-grid"
       }`}
     >
       <button
         onClick={() => setOpenId(isOpen ? null : id)}
         className="w-full flex items-center justify-between gap-4 px-6 py-5 text-left"
       >
-        <span className="text-sm font-semibold text-white">{q}</span>
+        <span className="text-[14px] font-semibold text-gray-900">{q}</span>
         <ChevronDown
-          className={`w-4 h-4 text-slate-400 shrink-0 transition-transform duration-200 ${
+          className={`w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 ${
             isOpen ? "rotate-180" : ""
           }`}
         />
       </button>
       {isOpen && (
         <div className="px-6 pb-5">
-          <p className="text-sm text-slate-300 leading-relaxed">{a}</p>
+          <p className="text-[13px] text-gray-600 leading-relaxed">{a}</p>
         </div>
       )}
     </div>
@@ -115,115 +121,81 @@ export default function FaqPage() {
   const [openId, setOpenId] = useState<string | null>(null)
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-white overflow-x-hidden">
-      {/* Nav */}
-      <nav className="border-b border-white/5 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <img src="/spun.gif" alt="" width={36} height={36} className="h-9 w-auto rounded-lg" />
-            <img src={LOGO_SRC} alt="" height={34} className="h-9 w-auto" />
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link href="/pricing" className="text-sm text-slate-400 hover:text-white transition-colors">
-              Pricing
-            </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-slate-300 hover:text-white transition-colors"
-            >
-              Sign in →
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* Hero */}
-      <section className="max-w-3xl mx-auto px-6 pt-20 pb-12 text-center">
-        <div className="inline-flex items-center gap-2 bg-[#5B9BAA]/10 border border-[#5B9BAA]/20 rounded-full px-4 py-1.5 text-xs font-medium text-[#5B9BAA] mb-8">
-          <span className="w-1.5 h-1.5 bg-[#5B9BAA] rounded-full" />
-          Common questions
-        </div>
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight mb-4">
-          Frequently asked questions
-        </h1>
-        <p className="text-slate-400 text-lg leading-relaxed">
-          Everything you need to know about Spun. Can&apos;t find your answer?{" "}
-          <a href="mailto:hello@spun.bot" className="text-[#5B9BAA] hover:underline">
-            Email us.
-          </a>
-        </p>
-      </section>
-
-      {/* FAQ sections */}
-      <section className="max-w-3xl mx-auto px-6 pb-20 space-y-12">
-        {FAQS.map((section) => (
-          <div key={section.category}>
-            <p className="text-xs font-semibold uppercase tracking-widest text-[#5B9BAA] mb-4">
-              {section.category}
-            </p>
-            <div className="space-y-2">
-              {section.items.map((item, i) => {
-                const id = `${section.category}-${i}`
-                return (
-                  <FaqItem
-                    key={id}
-                    id={id}
-                    q={item.q}
-                    a={item.a}
-                    openId={openId}
-                    setOpenId={setOpenId}
-                  />
-                )
-              })}
+    <MarketingShell>
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="px-4 md:px-14 lg:px-20 pt-20 pb-12">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-3 font-mono">
+                FAQ
+              </p>
+              <h1 className="text-3xl md:text-4xl lg:text-[44px] font-bold tracking-tight text-gray-900 leading-[1.1]">
+                Frequently asked questions
+              </h1>
+              <p className="mt-5 text-gray-500 text-[15px] leading-relaxed">
+                Everything you need to know about Spun. Can&apos;t find your answer?{" "}
+                <a href="mailto:hello@spun.bot" className="text-spun hover:text-spun-dark underline underline-offset-2">
+                  Email us.
+                </a>
+              </p>
             </div>
           </div>
-        ))}
-      </section>
-
-      {/* Divider */}
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="border-t border-white/5" />
-      </div>
-
-      {/* Bottom CTA */}
-      <section className="max-w-6xl mx-auto px-6 py-20 text-center">
-        <h2 className="text-2xl font-bold mb-3">Ready to get started?</h2>
-        <p className="text-slate-400 mb-8">Your 14-day free trial is waiting.</p>
-        <Link
-          href="/pricing"
-          className="inline-flex items-center gap-2 bg-[#5B9BAA] hover:bg-[#4d8a99] text-white font-semibold px-7 py-3.5 rounded-xl transition-colors text-sm"
-        >
-          See plans <ArrowRight className="w-4 h-4" />
-        </Link>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/5">
-        <div className="max-w-6xl mx-auto px-6 py-10">
-          <p className="text-sm text-slate-500 font-medium text-center">
-            No sick days, no holidays, no overtime paid, no national insurance paid, no pension
-            contributions, no stress, no fuss:{" "}
-            <span className="text-white font-semibold">All Growth, All the Time.</span>
-          </p>
-          <div className="mt-8 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-slate-500">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            <Link href="/cookies" className="hover:text-white transition-colors">Cookies</Link>
-            <Link href="/dpa" className="hover:text-white transition-colors">DPA</Link>
-            <button
-              type="button"
-              onClick={() => window.openCookieSettings?.()}
-              className="hover:text-white transition-colors"
-            >
-              Cookie settings
-            </button>
-          </div>
-          <p className="text-xs text-slate-600 mt-6 text-center">
-            © {new Date().getFullYear()} Spun App Ltd. Registered in England and Wales,
-            company no. 17136483. 53 Langley Crescent, Brighton, BN2 6NL, United Kingdom.
-          </p>
         </div>
-      </footer>
-    </div>
+      </section>
+
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="h-px bg-ruler" />
+          <div className="px-4 md:px-14 lg:px-20 py-16">
+            <div className="max-w-3xl mx-auto space-y-12">
+              {FAQS.map((section) => (
+                <div key={section.category}>
+                  <p className="text-[11px] text-gray-400 uppercase tracking-[0.15em] mb-4 font-mono">
+                    {section.category}
+                  </p>
+                  <div className="space-y-2">
+                    {section.items.map((item, i) => {
+                      const id = `${section.category}-${i}`
+                      return (
+                        <FaqItem
+                          key={id}
+                          id={id}
+                          q={item.q}
+                          a={item.a}
+                          openId={openId}
+                          setOpenId={setOpenId}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-surface">
+        <div className="mx-4 md:mx-16 lg:mx-20">
+          <div className="h-px bg-ruler" />
+          <div className="px-4 md:px-14 lg:px-20 py-20">
+            <div className="max-w-2xl mx-auto text-center">
+              <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-3">
+                Ready to get started?
+              </h2>
+              <p className="text-gray-500 text-[15px] mb-8">
+                Set up in one conversation. First report in 7 days.
+              </p>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center gap-2 bg-spun hover:bg-spun-dark text-white font-medium px-7 py-3 rounded-md text-sm transition"
+              >
+                See plans <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </MarketingShell>
   )
 }

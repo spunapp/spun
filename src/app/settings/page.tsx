@@ -29,7 +29,7 @@ const CURRENCIES = [
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-4">
+    <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500 mb-4">
       {children}
     </h2>
   )
@@ -37,7 +37,7 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="bg-[var(--background-dark)] border border-white/5 rounded-xl p-5">
+    <div className="bg-white border border-grid rounded-xl p-5">
       {children}
     </div>
   )
@@ -55,7 +55,7 @@ function Toggle({
       type="button"
       onClick={() => onChange(!checked)}
       className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-        checked ? "bg-[#5B9BAA]" : "bg-white/10"
+        checked ? "bg-spun" : "bg-surface-alt"
       }`}
     >
       <span
@@ -256,20 +256,20 @@ export default function SettingsPage() {
   )
 
   function statusIcon(status: string) {
-    if (status === "active") return <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-    if (status === "expired") return <AlertCircle className="w-3.5 h-3.5 text-amber-400" />
-    return <XCircle className="w-3.5 h-3.5 text-red-400" />
+    if (status === "active") return <CheckCircle className="w-3.5 h-3.5 text-spun" />
+    if (status === "expired") return <AlertCircle className="w-3.5 h-3.5 text-amber-600" />
+    return <XCircle className="w-3.5 h-3.5 text-red-600" />
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] text-white">
+    <div className="min-h-screen bg-surface-alt text-gray-900">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-[var(--background)]/80 backdrop-blur border-b border-white/5 px-4 py-3 flex items-center gap-3">
+      <header className="sticky top-0 z-10 bg-surface-alt/80 backdrop-blur border-b border-grid px-4 py-3 flex items-center gap-3">
         <button
           onClick={() => router.push("/chat")}
-          className="p-1.5 hover:bg-white/5 rounded-lg transition-colors"
+          className="p-1.5 hover:bg-surface-alt rounded-lg transition-colors"
         >
-          <ArrowLeft className="w-4 h-4 text-slate-400" />
+          <ArrowLeft className="w-4 h-4 text-gray-500" />
         </button>
         <span className="text-sm font-medium">Settings</span>
       </header>
@@ -281,8 +281,8 @@ export default function SettingsPage() {
           <SectionHeading>Connected Platforms</SectionHeading>
           {connectError && (
             <div className="mb-3 rounded-lg border border-red-400/20 bg-red-400/5 px-4 py-3">
-              <p className="text-xs text-red-400 font-medium mb-0.5">Connection failed</p>
-              <p className="text-xs text-red-300/70 break-all">{connectError}</p>
+              <p className="text-xs text-red-600 font-medium mb-0.5">Connection failed</p>
+              <p className="text-xs text-red-700/70 break-all">{connectError}</p>
             </div>
           )}
           <Card>
@@ -293,19 +293,19 @@ export default function SettingsPage() {
                   <li key={platform.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-2.5">
                       {channel ? statusIcon(channel.status) : (
-                        <span className="w-3.5 h-3.5 rounded-full border border-white/20" />
+                        <span className="w-3.5 h-3.5 rounded-full border border-gray-300" />
                       )}
                       <div>
-                        <p className="text-sm text-white">{platform.label}</p>
+                        <p className="text-sm text-gray-900">{platform.label}</p>
                         {channel?.platformAccountName && (
-                          <p className="text-xs text-slate-500 mt-0.5">{channel.platformAccountName}</p>
+                          <p className="text-xs text-gray-400 mt-0.5">{channel.platformAccountName}</p>
                         )}
                       </div>
                     </div>
                     {channel ? (
                       <button
                         onClick={() => disconnectChannel({ id: channel._id as Id<"connectedChannels"> })}
-                        className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-red-400 transition-colors px-2 py-1 rounded-lg hover:bg-red-400/5"
+                        className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-red-600 transition-colors px-2 py-1 rounded-lg hover:bg-red-400/5"
                       >
                         <Unlink className="w-3 h-3" />
                         Disconnect
@@ -314,13 +314,13 @@ export default function SettingsPage() {
                       <button
                         onClick={() => handleConnect(platform.id, platform.pipedreamApp!, platform.oauthAppId)}
                         disabled={connectingPlatform === platform.id}
-                        className="flex items-center gap-1.5 text-xs text-[#5B9BAA] hover:text-white transition-colors px-2 py-1 rounded-lg hover:bg-[#5B9BAA]/10 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-1.5 text-xs text-spun hover:text-spun-dark transition-colors px-2 py-1 rounded-lg hover:bg-spun-50 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <Link2 className="w-3 h-3" />
                         {connectingPlatform === platform.id ? "Connecting…" : connectFeedback?.platform === platform.id && !connectFeedback.success ? "Failed — retry" : "Connect"}
                       </button>
                     ) : (
-                      <span className="text-xs text-slate-600">Coming soon</span>
+                      <span className="text-xs text-gray-400">Coming soon</span>
                     )}
                   </li>
                 )
@@ -365,8 +365,8 @@ export default function SettingsPage() {
                 <>
                   <div className="flex items-center justify-between mb-5">
                     <div>
-                      <p className="text-sm font-medium text-white">{config.name} plan</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Resets on the 1st of each month</p>
+                      <p className="text-sm font-medium text-gray-900">{config.name} plan</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Resets on the 1st of each month</p>
                     </div>
                     <div className="flex items-center gap-3">
                       {subscription?.stripeCustomerId && (
@@ -378,14 +378,14 @@ export default function SettingsPage() {
                               if (data.url) window.location.href = data.url
                             } catch {}
                           }}
-                          className="text-xs text-slate-400 hover:text-white hover:underline"
+                          className="text-xs text-gray-500 hover:text-gray-900 hover:underline"
                         >
                           Manage billing
                         </button>
                       )}
                       <a
                         href="/pricing"
-                        className="text-xs text-[#5B9BAA] hover:underline"
+                        className="text-xs text-spun hover:underline"
                       >
                         {tier === "standard" ? "Upgrade" : "Change plan"}
                       </a>
@@ -400,10 +400,10 @@ export default function SettingsPage() {
                     ].map(({ label, value, limit }) => (
                       <div key={label}>
                         <div className="flex justify-between text-xs mb-1.5">
-                          <span className="text-slate-300">{label}</span>
-                          <span className="text-slate-400">{value} / {limit}</span>
+                          <span className="text-gray-600">{label}</span>
+                          <span className="text-gray-500">{value} / {limit}</span>
                         </div>
-                        <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div className="h-1.5 bg-surface-alt rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full transition-all"
                             style={{
@@ -418,9 +418,9 @@ export default function SettingsPage() {
 
                   {/* Credit balance */}
                   {creditBalance && (creditBalance.messageCredits > 0 || creditBalance.creativeCredits > 0 || creditBalance.channelCredits > 0) && (
-                    <div className="mt-5 pt-4 border-t border-white/10">
-                      <p className="text-xs font-medium text-slate-300 mb-2">Credit Balance</p>
-                      <div className="flex gap-4 text-xs text-slate-400">
+                    <div className="mt-5 pt-4 border-t border-grid">
+                      <p className="text-xs font-medium text-gray-600 mb-2">Credit Balance</p>
+                      <div className="flex gap-4 text-xs text-gray-500">
                         {creditBalance.messageCredits > 0 && (
                           <span>{creditBalance.messageCredits} responses</span>
                         )}
@@ -448,7 +448,7 @@ export default function SettingsPage() {
                         if (data.url) window.location.href = data.url
                       } catch {}
                     }}
-                    className="mt-4 w-full text-xs text-[#5B9BAA] border border-[#5B9BAA]/30 hover:bg-[#5B9BAA]/10 py-2 rounded-lg transition-colors"
+                    className="mt-4 w-full text-xs text-spun border border-spun/30 hover:bg-spun-50 py-2 rounded-lg transition-colors"
                   >
                     Buy credit pack — £{(CREDIT_PACK.price / 100).toFixed(2)}
                   </button>
@@ -464,7 +464,7 @@ export default function SettingsPage() {
           <Card>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5">Default budget</label>
+                <label className="block text-xs text-gray-500 mb-1.5">Default budget</label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
@@ -474,16 +474,16 @@ export default function SettingsPage() {
                     onChange={(e) => setBudget(e.target.value)}
                     onBlur={handleBudgetSave}
                     placeholder="e.g. 1000"
-                    className="w-full bg-[var(--background)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#5B9BAA]/50"
+                    className="w-full border border-grid bg-white rounded-md px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-spun/40"
                   />
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-slate-400 mb-1.5">Currency</label>
+                <label className="block text-xs text-gray-500 mb-1.5">Currency</label>
                 <select
                   value={currency}
                   onChange={(e) => handleCurrencyChange(e.target.value)}
-                  className="w-full bg-[var(--background)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#5B9BAA]/50"
+                  className="w-full border border-grid bg-white rounded-md px-3 py-2 text-sm text-gray-900 focus:outline-none focus:border-spun/40"
                 >
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>{c.label}</option>
@@ -492,7 +492,7 @@ export default function SettingsPage() {
               </div>
             </div>
             {budgetSaved && (
-              <p className="text-xs text-emerald-400 mt-3">Saved</p>
+              <p className="text-xs text-spun mt-3">Saved</p>
             )}
           </Card>
         </section>
@@ -510,8 +510,8 @@ export default function SettingsPage() {
               ].map(({ key, label, description }) => (
                 <li key={key} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                   <div>
-                    <p className="text-sm text-white">{label}</p>
-                    <p className="text-xs text-slate-500 mt-0.5">{description}</p>
+                    <p className="text-sm text-gray-900">{label}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{description}</p>
                   </div>
                   <Toggle
                     checked={notifs[key]}
@@ -529,24 +529,24 @@ export default function SettingsPage() {
           <Card>
             <div className="space-y-3 mb-5">
               <div>
-                <p className="text-xs text-slate-400 mb-0.5">Name</p>
-                <p className="text-sm text-white">{user?.fullName ?? "—"}</p>
+                <p className="text-xs text-gray-500 mb-0.5">Name</p>
+                <p className="text-sm text-gray-900">{user?.fullName ?? "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-slate-400 mb-0.5">Email</p>
-                <p className="text-sm text-white">{user?.primaryEmailAddress?.emailAddress ?? "—"}</p>
+                <p className="text-xs text-gray-500 mb-0.5">Email</p>
+                <p className="text-sm text-gray-900">{user?.primaryEmailAddress?.emailAddress ?? "—"}</p>
               </div>
               {accountId && (
                 <div>
-                  <p className="text-xs text-slate-400 mb-0.5">Account ID</p>
+                  <p className="text-xs text-gray-500 mb-0.5">Account ID</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-white font-mono">
+                    <p className="text-sm text-gray-900 font-mono">
                       {accountIdVisible ? accountId : "•".repeat(accountId.length)}
                     </p>
                     <button
                       type="button"
                       onClick={() => setAccountIdVisible((v) => !v)}
-                      className="text-slate-500 hover:text-slate-300 transition-colors"
+                      className="text-gray-400 hover:text-gray-600 transition-colors"
                     >
                       {accountIdVisible ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
@@ -559,14 +559,14 @@ export default function SettingsPage() {
                 onClick={async () => {
                   await signOut({ redirectUrl: "/login" })
                 }}
-                className="text-sm text-red-400 hover:text-red-300 transition-colors text-left"
+                className="text-sm text-red-600 hover:text-red-700 transition-colors text-left"
               >
                 Sign out
               </button>
               <button
                 type="button"
                 onClick={() => { setDeleteModalOpen(true); setDeleteInput("") }}
-                className="text-sm text-slate-500 hover:text-slate-400 transition-colors text-left"
+                className="text-sm text-gray-400 hover:text-gray-500 transition-colors text-left"
               >
                 Delete account
               </button>
@@ -579,25 +579,25 @@ export default function SettingsPage() {
       {/* Delete account modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-[var(--background-dark)] border border-white/10 rounded-2xl p-6 w-full max-w-sm mx-4 space-y-5">
+          <div className="bg-white border border-grid rounded-2xl p-6 w-full max-w-sm mx-4 space-y-5">
             {deleting ? (
               <div className="flex flex-col items-center gap-3 py-4">
-                <svg className="animate-spin w-7 h-7 text-red-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg className="animate-spin w-7 h-7 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
                 </svg>
-                <p className="text-sm text-slate-400">Deleting your account…</p>
+                <p className="text-sm text-gray-500">Deleting your account…</p>
               </div>
             ) : (
               <>
                 <div>
-                  <p className="text-base font-semibold text-red-400">Are you sure?</p>
-                  <p className="text-xs text-slate-400 mt-1.5">
+                  <p className="text-base font-semibold text-red-600">Are you sure?</p>
+                  <p className="text-xs text-gray-500 mt-1.5">
                     This will permanently delete your account and all associated data. This action cannot be undone.
                   </p>
                 </div>
                 <div>
-                  <label className="block text-xs text-slate-400 mb-1.5">
+                  <label className="block text-xs text-gray-500 mb-1.5">
                     Enter your Account ID to confirm
                   </label>
                   <input
@@ -605,14 +605,14 @@ export default function SettingsPage() {
                     value={deleteInput}
                     onChange={(e) => setDeleteInput(e.target.value)}
                     placeholder="e.g. 00001"
-                    className="w-full bg-[var(--background)] border border-white/10 rounded-lg px-3 py-2 text-sm text-white font-mono placeholder-slate-600 focus:outline-none focus:border-red-400/50"
+                    className="w-full border border-red-200 bg-white rounded-md px-3 py-2 text-sm text-gray-900 font-mono placeholder-gray-400 focus:outline-none focus:border-red-400"
                   />
                 </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     onClick={() => setDeleteModalOpen(false)}
-                    className="flex-1 text-sm text-slate-400 hover:text-white border border-white/10 hover:border-white/20 rounded-lg py-2 transition-colors"
+                    className="flex-1 text-sm text-gray-700 hover:text-gray-900 border border-grid hover:border-gray-300 rounded-md py-2 transition-colors"
                   >
                     Cancel
                   </button>
@@ -623,7 +623,7 @@ export default function SettingsPage() {
                     className={`flex-1 text-sm rounded-lg py-2 transition-colors ${
                       deleteInput === accountId
                         ? "bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-                        : "bg-red-500/20 text-red-400/40 cursor-not-allowed"
+                        : "bg-red-100 text-red-600/40 cursor-not-allowed"
                     }`}
                   >
                     Delete account

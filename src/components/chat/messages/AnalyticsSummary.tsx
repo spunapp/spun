@@ -21,7 +21,7 @@ export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
 
   return (
     <div className="space-y-3">
-      <div className="text-sm text-slate-200 leading-relaxed">
+      <div className="text-sm text-gray-700 leading-relaxed">
         {content.split("\n").map((line, i) => (
           <p key={i} className={line ? "" : "h-3"}>
             {line}
@@ -32,24 +32,24 @@ export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
       {analytics.summary && (
         <div className="grid grid-cols-2 gap-2">
           {analytics.summary.totalRevenue !== undefined && (
-            <div className="p-2 bg-white/5 rounded-lg">
-              <p className="text-xs text-slate-500">Revenue</p>
-              <p className="text-sm font-semibold text-emerald-400">
+            <div className="p-2 bg-surface-alt rounded-lg">
+              <p className="text-xs text-gray-400">Revenue</p>
+              <p className="text-sm font-semibold text-spun">
                 ${analytics.summary.totalRevenue.toLocaleString()}
               </p>
             </div>
           )}
           {analytics.summary.roi !== undefined && (
-            <div className="p-2 bg-white/5 rounded-lg">
-              <p className="text-xs text-slate-500">ROI</p>
+            <div className="p-2 bg-surface-alt rounded-lg">
+              <p className="text-xs text-gray-400">ROI</p>
               <div className="flex items-center gap-1">
                 {Number(analytics.summary.roi) > 0 ? (
-                  <TrendingUp className="w-3 h-3 text-emerald-400" />
+                  <TrendingUp className="w-3 h-3 text-spun" />
                 ) : (
-                  <TrendingDown className="w-3 h-3 text-red-400" />
+                  <TrendingDown className="w-3 h-3 text-red-600" />
                 )}
                 <p
-                  className={`text-sm font-semibold ${Number(analytics.summary.roi) > 0 ? "text-emerald-400" : "text-red-400"}`}
+                  className={`text-sm font-semibold ${Number(analytics.summary.roi) > 0 ? "text-spun" : "text-red-600"}`}
                 >
                   {analytics.summary.roi}%
                 </p>
@@ -57,17 +57,17 @@ export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
             </div>
           )}
           {analytics.summary.cac !== undefined && (
-            <div className="p-2 bg-white/5 rounded-lg">
-              <p className="text-xs text-slate-500">CAC</p>
-              <p className="text-sm font-semibold text-slate-200">
+            <div className="p-2 bg-surface-alt rounded-lg">
+              <p className="text-xs text-gray-400">CAC</p>
+              <p className="text-sm font-semibold text-gray-700">
                 ${analytics.summary.cac}
               </p>
             </div>
           )}
           {analytics.summary.customerCount !== undefined && (
-            <div className="p-2 bg-white/5 rounded-lg">
-              <p className="text-xs text-slate-500">Customers</p>
-              <p className="text-sm font-semibold text-slate-200">
+            <div className="p-2 bg-surface-alt rounded-lg">
+              <p className="text-xs text-gray-400">Customers</p>
+              <p className="text-sm font-semibold text-gray-700">
                 {analytics.summary.customerCount}
               </p>
             </div>
@@ -80,14 +80,14 @@ export function AnalyticsSummary({ content, metadata }: AnalyticsSummaryProps) {
           {analytics.campaigns.map((c, i) => (
             <div
               key={i}
-              className="flex items-center justify-between text-xs p-2 bg-white/5 rounded"
+              className="flex items-center justify-between text-xs p-2 bg-surface-alt rounded"
             >
-              <span className="text-slate-300">{c.theme}</span>
+              <span className="text-gray-600">{c.theme}</span>
               <span
                 className={`px-1.5 py-0.5 rounded ${
                   c.status === "active"
-                    ? "bg-emerald-500/20 text-emerald-400"
-                    : "bg-slate-500/20 text-slate-400"
+                    ? "bg-emerald-100 text-spun"
+                    : "bg-gray-100 text-gray-500"
                 }`}
               >
                 {c.status}

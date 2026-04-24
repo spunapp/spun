@@ -106,8 +106,8 @@ export function ConnectPrompt({ content, metadata, onSend }: ConnectPromptProps)
   if (metadata.error) {
     return (
       <div className="space-y-2">
-        <p className="text-white/90 whitespace-pre-wrap">{content}</p>
-        <p className="text-red-400 text-sm">{metadata.error as string}</p>
+        <p className="text-gray-800 whitespace-pre-wrap">{content}</p>
+        <p className="text-red-600 text-sm">{metadata.error as string}</p>
       </div>
     )
   }
@@ -117,19 +117,19 @@ export function ConnectPrompt({ content, metadata, onSend }: ConnectPromptProps)
       <p className="text-white/90 whitespace-pre-wrap">{content}</p>
 
       {status === "success" ? (
-        <div className="flex items-center gap-2 text-green-400">
+        <div className="flex items-center gap-2 text-spun">
           <CheckCircle size={18} />
           <span>{label} connected successfully!</span>
         </div>
       ) : status === "error" ? (
         <div className="space-y-2">
-          <div className="flex items-center gap-2 text-red-400">
+          <div className="flex items-center gap-2 text-red-600">
             <XCircle size={18} />
             <span>Connection failed{errorMsg ? `: ${errorMsg}` : ""}</span>
           </div>
           <button
             onClick={handleConnect}
-            className="px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg text-white text-sm transition-colors"
+            className="px-4 py-2 bg-white hover:bg-surface-alt border border-grid rounded-md text-gray-700 text-sm transition-colors"
           >
             Try again
           </button>
@@ -138,7 +138,7 @@ export function ConnectPrompt({ content, metadata, onSend }: ConnectPromptProps)
         <button
           onClick={handleConnect}
           disabled={status === "connecting"}
-          className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-500 disabled:opacity-50 rounded-lg text-white text-sm font-medium transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-spun hover:bg-spun-dark disabled:opacity-50 rounded-lg text-white text-sm font-medium transition-colors"
         >
           <Link2 size={16} />
           {status === "connecting" ? "Connecting..." : `Connect ${label}`}

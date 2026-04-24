@@ -7,7 +7,7 @@ const ChatClient = dynamic(() => import("./ChatClient"), {
   ssr: false,
   loading: () => (
     <div className="flex items-center justify-center h-full">
-      <div className="w-6 h-6 border-2 border-[#5B9BAA] border-t-transparent rounded-full animate-spin" />
+      <div className="w-6 h-6 border-2 border-spun border-t-transparent rounded-full animate-spin" />
     </div>
   ),
 })

@@ -28,8 +28,8 @@ export function ChannelStatus({ channels }: ChannelStatusProps) {
   if (channels.length === 0) {
     return (
       <div className="px-3 py-2">
-        <p className="text-xs text-slate-500">No channels connected</p>
-        <p className="text-xs text-slate-600 mt-1">
+        <p className="text-xs text-gray-500">No channels connected</p>
+        <p className="text-xs text-gray-400 mt-1">
           Say &quot;connect Meta&quot; in chat to get started
         </p>
       </div>
@@ -44,23 +44,23 @@ export function ChannelStatus({ channels }: ChannelStatusProps) {
           className="flex items-center gap-2 px-2 py-1.5 text-xs rounded-md"
         >
           {channel.status === "active" ? (
-            <Wifi className="w-3 h-3 text-emerald-400" />
+            <Wifi className="w-3 h-3 text-spun" />
           ) : channel.status === "error" ? (
-            <AlertCircle className="w-3 h-3 text-red-400" />
+            <AlertCircle className="w-3 h-3 text-red-600" />
           ) : (
-            <WifiOff className="w-3 h-3 text-amber-400" />
+            <WifiOff className="w-3 h-3 text-amber-600" />
           )}
           <span
             className={
               channel.status === "active"
-                ? "text-slate-300"
-                : "text-slate-500"
+                ? "text-gray-700"
+                : "text-gray-500"
             }
           >
             {PLATFORM_LABELS[channel.platform] || channel.platform}
           </span>
           {channel.platformAccountName && (
-            <span className="text-slate-600 truncate">
+            <span className="text-gray-400 truncate">
               {channel.platformAccountName}
             </span>
           )}
