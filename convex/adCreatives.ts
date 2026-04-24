@@ -11,6 +11,13 @@ export const listByCampaign = query({
   },
 })
 
+export const get = query({
+  args: { id: v.id("adCreatives") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id)
+  },
+})
+
 export const create = mutation({
   args: {
     campaignId: v.id("campaigns"),

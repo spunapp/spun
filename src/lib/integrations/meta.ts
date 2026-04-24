@@ -297,4 +297,128 @@ export class MetaIntegration implements IntegrationPlugin {
       body: { status: "PAUSED" },
     })
   }
+
+  // Organic social publishing — Facebook Page and Instagram Business —
+  // reuses the same Meta Pipedream connection used for ads. Avoids Buffer or
+  // any secondary third-party dependency.
+
+  async listPagesAndIgAccounts(): Promise<
+    Array<{ pageId: string; pageName: string; igUserId?: string }>
+  > {
+    const accountId = this.requireAccountId()
+    const res = (await pipedreamProxy(
+      accountId,
+      "https://graph.facebook.com/v19.0/me/accounts?fields=id,name,instagram_business_account"
+    )) as {
+      data?: Array<{
+        id: string
+        name: string
+        instagram_business_account?: { id: string }
+      }>
+    }
+    return (res.data ?? []).map((p) => ({
+      pageId: p.id,
+      pageName: p.name,
+      igUserId: p.instagram_business_account?.id,
+    }))
+  }
+
+  async publishFacebookPhoto(
+    pageId: string,
+    imageUrl: string,
+    caption: string
+  ): Promise<{ postId: string; permalink?: string }> {
+    const accountId = this.requireAccountId()
+    const res = (await pipedreamProxy(
+      accountId,
+      `https://graph.facebook.com/v19.0/${pageId}/photos`,
+      {
+        method: "POST",
+        body: { url: imageUrl, caption, published: true },
+      }
+    )) as { id?: string; post_id?: string }
+
+    const postId = res.post_id ?? res.id
+    if (!postId) throw new Error("Facebook photo publish returned no post id")
+
+    // Best-effort: fetch the permalink so the UI can link out. If this fails
+    // we still succeeded — the post is live.
+    let permalink: string | undefined
+    try {
+      const linkRes = (await pipedreamProxy(
+        accountId,
+        `https://graph.facebook.com/v19.0/${postId}?fields=permalink_url`
+      )) as { permalink_url?: string }
+      permalink = linkRes.permalink_url
+    } catch {
+      // swallow — permalink is nice-to-have
+    }
+    return { postId, permalink }
+  }
+
+  async publishInstagramPhoto(
+    igUserId: string,
+    imageUrl: string,
+    caption: string
+  ): Promise<{ postId: string; permalink?: string }> {
+    const accountId = this.requireAccountId()
+
+    // Step 1: create the media container.
+    const containerRes = (await pipedreamProxy(
+      accountId,
+      `https://graph.facebook.com/v19.0/${igUserId}/media`,
+      {
+        method: "POST",
+        body: { image_url: imageUrl, caption },
+      }
+    )) as { id?: string }
+    const creationId = containerRes.id
+    if (!creationId) throw new Error("Instagram media container creation failed")
+
+    // Step 2: poll until the container is FINISHED (or hit the timeout).
+    const DEADLINE_MS = 15_000
+    const POLL_MS = 1_000
+    const started = Date.now()
+    let statusCode: string | undefined
+
+    while (Date.now() - started < DEADLINE_MS) {
+      const statusRes = (await pipedreamProxy(
+        accountId,
+        `https://graph.facebook.com/v19.0/${creationId}?fields=status_code`
+      )) as { status_code?: string }
+      statusCode = statusRes.status_code
+      if (statusCode === "FINISHED") break
+      if (statusCode === "ERROR" || statusCode === "EXPIRED") {
+        throw new Error(`Instagram container failed: ${statusCode}`)
+      }
+      await new Promise((r) => setTimeout(r, POLL_MS))
+    }
+    if (statusCode !== "FINISHED") {
+      throw new Error("Instagram container did not finish in time")
+    }
+
+    // Step 3: publish.
+    const publishRes = (await pipedreamProxy(
+      accountId,
+      `https://graph.facebook.com/v19.0/${igUserId}/media_publish`,
+      {
+        method: "POST",
+        body: { creation_id: creationId },
+      }
+    )) as { id?: string }
+    const postId = publishRes.id
+    if (!postId) throw new Error("Instagram publish returned no media id")
+
+    let permalink: string | undefined
+    try {
+      const linkRes = (await pipedreamProxy(
+        accountId,
+        `https://graph.facebook.com/v19.0/${postId}?fields=permalink`
+      )) as { permalink?: string }
+      permalink = linkRes.permalink
+    } catch {
+      // swallow
+    }
+    return { postId, permalink }
+  }
 }

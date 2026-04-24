@@ -44,6 +44,8 @@ export default defineSchema({
     onboardingComplete: v.boolean(),
     defaultCampaignBudget: v.optional(v.number()),
     currency: v.optional(v.string()),
+    defaultFacebookPageId: v.optional(v.string()),
+    defaultInstagramUserId: v.optional(v.string()),
     notifications: v.optional(v.object({
       campaignApprovals: v.boolean(),
       usageWarnings: v.boolean(),
@@ -259,6 +261,29 @@ export default defineSchema({
   })
     .index("by_business", ["businessId"])
     .index("by_business_platform", ["businessId", "platform"]),
+
+  socialPosts: defineTable({
+    businessId: v.id("businesses"),
+    creativeId: v.optional(v.id("adCreatives")),
+    platform: v.union(v.literal("facebook"), v.literal("instagram")),
+    caption: v.string(),
+    imageStorageId: v.optional(v.id("_storage")),
+    status: v.union(
+      v.literal("draft"),
+      v.literal("scheduled"),
+      v.literal("publishing"),
+      v.literal("published"),
+      v.literal("failed")
+    ),
+    scheduledAt: v.optional(v.number()),
+    publishedAt: v.optional(v.number()),
+    platformPostId: v.optional(v.string()),
+    permalink: v.optional(v.string()),
+    error: v.optional(v.string()),
+    scheduledJobId: v.optional(v.id("_scheduled_functions")),
+  })
+    .index("by_business", ["businessId"])
+    .index("by_status_scheduledAt", ["status", "scheduledAt"]),
 
   subscriptions: defineTable({
     userId: v.string(),

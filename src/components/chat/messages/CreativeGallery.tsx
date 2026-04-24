@@ -1,13 +1,15 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "convex/react"
+import { useQuery, useAction } from "convex/react"
+import { useUser } from "@clerk/nextjs"
 import { api } from "../../../../convex/_generated/api"
 import type { Id } from "../../../../convex/_generated/dataModel"
-import { X } from "lucide-react"
+import { X, Instagram, Facebook, Loader2, CheckCircle2 } from "lucide-react"
 import { renderContent } from "./renderContent"
 
 type Creative = {
+  creativeId?: string
   headline: string
   copy: string
   cta: string
@@ -27,6 +29,105 @@ function CreativeImage({ storageId }: { storageId: Id<"_storage"> }) {
   const url = useQuery(api.adCreatives.getImageUrl, { storageId })
   if (!url) return <div className="w-full h-20 bg-white/5 rounded animate-pulse" />
   return <img src={url} alt="" className="w-full rounded object-cover" />
+}
+
+function PostActions({ creative }: { creative: Creative }) {
+  const { user } = useUser()
+  const userId = user?.id ?? null
+  const business = useQuery(
+    api.businesses.getByUser,
+    userId ? { userId } : "skip"
+  )
+  const startFromCreative = useAction(api.socialPosts.startFromCreative)
+
+  const [state, setState] = useState<"idle" | "posting" | "done" | "error">("idle")
+  const [message, setMessage] = useState<string | null>(null)
+  const [permalink, setPermalink] = useState<string | null>(null)
+
+  const creativeId = creative.creativeId
+  const canPost = Boolean(
+    creativeId && business?._id && creative.imageStorageId
+  )
+
+  async function post(platform: "facebook" | "instagram") {
+    if (!canPost || !business?._id || !creativeId) return
+    setState("posting")
+    setMessage(null)
+    setPermalink(null)
+    try {
+      const res = await startFromCreative({
+        businessId: business._id,
+        creativeId: creativeId as Id<"adCreatives">,
+        platform,
+        caption: creative.copy,
+      })
+      if (res.status === "published") {
+        setState("done")
+        setMessage(`Posted to ${platform === "facebook" ? "Facebook" : "Instagram"}.`)
+        setPermalink(res.permalink ?? null)
+      } else if (res.status === "failed") {
+        setState("error")
+        setMessage(res.error ?? "Publish failed.")
+      } else {
+        setState("done")
+        setMessage("Scheduled.")
+      }
+    } catch (err) {
+      setState("error")
+      setMessage(err instanceof Error ? err.message : "Publish failed.")
+    }
+  }
+
+  if (!canPost) {
+    return (
+      <p className="text-[10px] text-slate-500 mt-2">
+        Posting needs an image and a saved business — reload and try again.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-2 mt-2">
+      <div className="flex gap-2">
+        <button
+          disabled={state === "posting"}
+          onClick={() => post("facebook")}
+          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-md bg-[#1877F2]/10 hover:bg-[#1877F2]/20 border border-[#1877F2]/30 text-[#5b9fff] disabled:opacity-50"
+        >
+          {state === "posting" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Facebook className="w-3 h-3" />}
+          Post to Facebook
+        </button>
+        <button
+          disabled={state === "posting"}
+          onClick={() => post("instagram")}
+          className="flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-xs rounded-md bg-pink-500/10 hover:bg-pink-500/20 border border-pink-500/30 text-pink-300 disabled:opacity-50"
+        >
+          {state === "posting" ? <Loader2 className="w-3 h-3 animate-spin" /> : <Instagram className="w-3 h-3" />}
+          Post to Instagram
+        </button>
+      </div>
+      {message && (
+        <div
+          className={`flex items-center gap-1.5 text-[11px] ${
+            state === "error" ? "text-red-400" : "text-emerald-400"
+          }`}
+        >
+          {state === "done" && <CheckCircle2 className="w-3 h-3" />}
+          <span>{message}</span>
+          {permalink && (
+            <a
+              href={permalink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline hover:text-white"
+            >
+              View
+            </a>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 function CreativePreviewCard({ creative }: { creative: Creative }) {
@@ -50,6 +151,7 @@ function CreativePreviewCard({ creative }: { creative: Creative }) {
           </span>
           <span className="text-[10px] text-slate-500">{creative.format}</span>
         </div>
+        <PostActions creative={creative} />
       </div>
     </div>
   )
