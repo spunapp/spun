@@ -140,8 +140,12 @@ export const chat = action({
     ])
     if (!conversation) throw new Error("Conversation not found")
 
-    const business = conversation.businessId
-      ? await ctx.runQuery(api.businesses.get, { id: conversation.businessId })
+    // Mutable across the tool loop: onboard_business creates a business
+    // mid-turn, so the conversation pointer we fetched at the start can be
+    // stale by the next tool call. Update it as we go.
+    let activeBusinessId = conversation.businessId
+    const business = activeBusinessId
+      ? await ctx.runQuery(api.businesses.get, { id: activeBusinessId })
       : null
 
     // Check usage limits — parallelise usage + subscription queries
@@ -271,16 +275,16 @@ export const chat = action({
         metadata = toolResult as Record<string, unknown>
       } else if (toolName === "connect_channel") {
         messageType = "connect_prompt"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "show_meta_setup_guide") {
         messageType = "meta_setup_guide"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "show_google_ads_setup_guide") {
         messageType = "google_ads_setup_guide"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "show_ga4_setup_guide") {
         messageType = "ga4_setup_guide"
-        metadata = { ...(toolResult as Record<string, unknown>), businessId: conversation.businessId }
+        metadata = { ...(toolResult as Record<string, unknown>), businessId: activeBusinessId }
       } else if (toolName === "audit_gbp") {
         messageType = "gbp_audit"
         metadata = toolResult as Record<string, unknown>
@@ -310,11 +314,18 @@ export const chat = action({
         try {
           toolResult = await executeToolCall(
             ctx as unknown as ToolCtx, toolName, toolInput,
-            args.userId, conversation.businessId, args.conversationId
+            args.userId, activeBusinessId, args.conversationId
           )
         } catch (err) {
           accMessages.push({ role: "tool", tool_call_id: tc.id, content: JSON.stringify({ error: String(err) }) })
           continue
+        }
+
+        // onboard_business just created and linked a business; adopt the new
+        // id so any further tool calls in this turn see it.
+        if (toolName === "onboard_business") {
+          const newId = (toolResult as { businessId?: Id<"businesses"> })?.businessId
+          if (newId) activeBusinessId = newId
         }
 
         applyToolType(toolName, toolResult)
@@ -376,9 +387,13 @@ export const chat = action({
             try {
               toolResult = await executeToolCall(
                 ctx as unknown as ToolCtx, tc.function.name, toolInput,
-                args.userId, conversation.businessId, args.conversationId
+                args.userId, activeBusinessId, args.conversationId
               )
             } catch { continue }
+            if (tc.function.name === "onboard_business") {
+              const newId = (toolResult as { businessId?: Id<"businesses"> })?.businessId
+              if (newId) activeBusinessId = newId
+            }
             applyToolType(tc.function.name, toolResult)
 
             try {
@@ -973,6 +988,15 @@ async function executeToolCall(
         websiteUrl: (input.websiteUrl as string | undefined) ?? undefined,
         imageryUrls: [],
       })
+      // Link the new business to this conversation so the next tools in the
+      // same turn (find_local_competitors, audit_gbp) — and every turn that
+      // follows — can fetch the business record without another onboarding.
+      if (conversationId) {
+        await ctx.runMutation(api.conversations.linkBusiness, {
+          conversationId,
+          businessId: id,
+        })
+      }
       return { success: true, businessId: id }
     }
 
@@ -1181,6 +1205,32 @@ Return ONLY valid JSON:
         platform: "ga4",
         pipedreamApp: "google_analytics",
       }
+    }
+
+    case "find_local_competitors": {
+      const category = (input.category as string | undefined) ?? ""
+      const area = (input.area as string | undefined) ?? ""
+      if (!category || !area) return { error: "category and area are required" }
+
+      // Belt-and-braces guard: refuse a bare city name so the tool can't
+      // regress into returning results miles away. Looks for a UK postcode
+      // or at least two words (implying neighbourhood + town).
+      const looksLikePostcode = /\b[A-Z]{1,2}\d[A-Z\d]?\s*\d[A-Z]{2}\b/i.test(area)
+      const wordCount = area.trim().split(/\s+/).length
+      if (!looksLikePostcode && wordCount < 2) {
+        return {
+          error: `area "${area}" is too broad — pass a postcode (e.g. 'BN2 6NL') or neighbourhood + town (e.g. 'Woodingdean Brighton'). A bare city name returns irrelevant results.`,
+        }
+      }
+
+      let excludeName: string | undefined
+      if (businessId) {
+        const business = await ctx.runQuery(api.businesses.get, { id: businessId as Id<"businesses"> })
+        excludeName = business?.name
+      }
+
+      const { findLocalCompetitors } = await import("../src/lib/integrations/gbp")
+      return await findLocalCompetitors(category, area, excludeName)
     }
 
     case "audit_gbp": {

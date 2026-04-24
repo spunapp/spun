@@ -125,11 +125,15 @@ export default function ChatClient() {
         } else if (lastMsg.messageType === "strategy") {
           setQuickReplies(["Create the ads", "Adjust targeting", "Now do social posts"])
         } else if (lastMsg.messageType === "gbp_audit") {
-          setQuickReplies([
-            "Fix the top issues",
-            "Help me set up GBP",
-            "Now recommend an ad platform",
-          ])
+          // Branch on whether the audit found an existing GBP. "Fix the top
+          // issues" only makes sense when there's a profile to fix — the
+          // not-found card already has its own "Help me set one up" CTA.
+          const found = (lastMsg.metadata as { found?: boolean } | undefined)?.found
+          setQuickReplies(
+            found
+              ? ["Fix the top issues", "Now recommend an ad platform"]
+              : ["Now recommend an ad platform", "I'll create my GBP first"]
+          )
         } else if (lastMsg.messageType === "creative_gallery") {
           setQuickReplies([
             "Also create social posts",

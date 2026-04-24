@@ -288,6 +288,25 @@ export const TOOL_DEFINITIONS: ToolDefinition[] = [
     },
   },
   {
+    name: "find_local_competitors",
+    description:
+      "Find hyperlocal competitors using Google Places. ALWAYS prefer this over search_web for competitor discovery — it returns businesses ranked by proximity to a postcode/neighbourhood, with ratings, review counts, and Google Maps links. The 'area' parameter MUST be a postcode (e.g. 'BN2 6NL') or a specific neighbourhood plus town (e.g. 'Woodingdean Brighton'). NEVER pass a bare city name like 'Brighton' or 'London' — city-level queries return businesses miles away from the user's actual location and are useless for a local business.",
+    input_schema: {
+      type: "object" as const,
+      properties: {
+        category: {
+          type: "string",
+          description: "The business category, matching the user's industry — e.g. 'cafe', 'coffee shop', 'hair salon', 'barber', 'nail salon', 'gym', 'restaurant', 'dentist'.",
+        },
+        area: {
+          type: "string",
+          description: "Postcode (STRONGLY preferred — e.g. 'BN2 6NL', 'SW11 3AG') or specific neighbourhood plus town (e.g. 'Woodingdean Brighton', 'Clapham Junction London'). NEVER a bare city name.",
+        },
+      },
+      required: ["category", "area"],
+    },
+  },
+  {
     name: "audit_gbp",
     description:
       "Audit the user's Google Business Profile (GBP / Google My Business) and report how well optimised it is. Use this when the user mentions local search, Google Maps, their storefront/location, reviews, or asks for a GBP audit. The only thing you need from the user is their website URL — the tool automatically extracts the business name from the site to find their listing. Don't ask them for the business name separately. If they've already given you a website URL (or the onboarded business has one), just use it. The tool renders a scored report card with specific fixes; don't try to audit in plain text.",
