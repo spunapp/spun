@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TermsPage() {
   return (
-    <LegalLayout title="Terms of Service" lastUpdated="10 April 2026">
+    <LegalLayout title="Terms of Service" lastUpdated="24 April 2026">
       <div className="legal-note">
         These Terms of Service (&ldquo;Terms&rdquo;) form a legally binding agreement
         between you and <strong>Spun App Ltd</strong>. By creating an account or using
@@ -99,8 +99,8 @@ export default function TermsPage() {
 
       <h2>7. Connected platforms</h2>
       <p>
-        Spun can connect to third-party platforms (such as Meta, Google Ads, TikTok
-        Ads, and Klaviyo) on your authorisation. When you connect an account and
+        Spun can connect to third-party platforms (such as Meta and Google Ads)
+        on your authorisation. When you connect an account and
         instruct Spun to run campaigns, you authorise Spun to act on your behalf within
         the scope you grant via OAuth. You are responsible for complying with each
         platform&rsquo;s own terms and policies, and for any costs or ad spend incurred.

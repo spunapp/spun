@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <LegalLayout title="Privacy Policy" lastUpdated="10 April 2026">
+    <LegalLayout title="Privacy Policy" lastUpdated="24 April 2026">
       <div className="legal-note">
         This Privacy Policy explains how <strong>Spun App Ltd</strong> (&ldquo;Spun&rdquo;,
         &ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) collects, uses, and shares
@@ -42,7 +42,7 @@ export default function PrivacyPage() {
         <li><strong>Account data</strong> — name, email address, password hash (via Clerk), profile image.</li>
         <li><strong>Billing data</strong> — billing name, billing address, payment card details (handled directly by Stripe — we do not store full card numbers), VAT number, and subscription history.</li>
         <li><strong>Content you submit</strong> — messages, prompts, uploaded images, brand assets, campaign briefs, and any other content you send to the service.</li>
-        <li><strong>Connected-platform data</strong> — OAuth tokens and account identifiers for advertising platforms you connect (e.g. Meta, Google, TikTok, Klaviyo). These are brokered by Pipedream Connect.</li>
+        <li><strong>Connected-platform data</strong> — OAuth tokens and account identifiers for advertising platforms you connect (e.g. Meta, Google). These are brokered by Pipedream Connect.</li>
         <li><strong>Support data</strong> — correspondence when you contact us by email.</li>
       </ul>
 
@@ -91,7 +91,7 @@ export default function PrivacyPage() {
       </p>
       <p>We may also share personal data:</p>
       <ul>
-        <li>With <strong>advertising platforms you authorise</strong> (e.g. Meta, Google Ads, TikTok Ads, Klaviyo) when you instruct Spun to launch or manage campaigns on them;</li>
+        <li>With <strong>advertising platforms you authorise</strong> (e.g. Meta, Google Ads) when you instruct Spun to launch or manage campaigns on them;</li>
         <li>With <strong>professional advisers</strong> (lawyers, accountants, auditors) bound by confidentiality;</li>
         <li>With <strong>regulators, courts, or law enforcement</strong> where required by law;</li>
         <li>In connection with a <strong>business transfer</strong>, merger, acquisition, or sale of assets.</li>
