@@ -9,6 +9,8 @@ import { ArrowLeft, CheckCircle, XCircle, AlertCircle, Unlink, Eye, EyeOff, Link
 import type { Id, Doc } from "../../../convex/_generated/dataModel"
 import type { PipedreamClient as FrontendClient } from "@pipedream/sdk/browser"
 import { TIERS, CREDIT_PACK } from "@/lib/billing/tiers"
+import { PostingTargets } from "@/components/settings/PostingTargets"
+import { PostQueue } from "@/components/settings/PostQueue"
 
 const PLATFORMS = [
   { id: "meta", label: "Meta (Facebook & Instagram)", pipedreamApp: "facebook_pages", oauthAppId: "oa_K1i8YD" },
@@ -324,6 +326,31 @@ export default function SettingsPage() {
                 )
               })}
             </ul>
+          </Card>
+        </section>
+
+        {/* Posting Targets */}
+        <section>
+          <SectionHeading>Posting Targets</SectionHeading>
+          <Card>
+            <PostingTargets
+              businessId={(business?._id ?? null) as Id<"businesses"> | null}
+              metaConnected={
+                connectedMap.get("meta")?.status === "active"
+              }
+              defaultFacebookPageId={business?.defaultFacebookPageId}
+              defaultInstagramUserId={business?.defaultInstagramUserId}
+            />
+          </Card>
+        </section>
+
+        {/* Post Queue */}
+        <section>
+          <SectionHeading>Social Posts</SectionHeading>
+          <Card>
+            <PostQueue
+              businessId={(business?._id ?? null) as Id<"businesses"> | null}
+            />
           </Card>
         </section>
 
