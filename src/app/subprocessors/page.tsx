@@ -70,7 +70,7 @@ const SUBPROCESSORS: Row[] = [
     name: "Pipedream Connect",
     entity: "Pipedream, Inc.",
     purpose:
-      "OAuth token broker for advertising platform integrations (Meta, Google Ads, TikTok, Klaviyo)",
+      "OAuth token broker for advertising platform integrations (Meta, Google Ads)",
     data: "OAuth tokens and account identifiers for the ad platforms the customer connects",
     location: "United States",
     transfer: "UK IDTA / EU SCCs",
@@ -87,7 +87,7 @@ const SUBPROCESSORS: Row[] = [
 
 export default function SubprocessorsPage() {
   return (
-    <LegalLayout title="Sub-processors" lastUpdated="10 April 2026">
+    <LegalLayout title="Sub-processors" lastUpdated="24 April 2026">
       <div className="legal-note">
         This page lists the third-party <strong>sub-processors</strong> that{" "}
         <strong>Spun App Ltd</strong> engages to deliver the Spun service. It forms
@@ -125,8 +125,8 @@ export default function SubprocessorsPage() {
 
       <h2>A note on advertising platforms</h2>
       <p>
-        When you connect an advertising platform (e.g. Meta, Google Ads, TikTok Ads,
-        Klaviyo) and instruct Spun to launch campaigns, Spun transmits campaign data
+        When you connect an advertising platform (e.g. Meta, Google Ads) and
+        instruct Spun to launch campaigns, Spun transmits campaign data
         to that platform <em>on your behalf and at your direction</em>. Those platforms
         act as independent data controllers for the data you push to them — they are
         not sub-processors of Spun in the strict sense, but are disclosed here for
