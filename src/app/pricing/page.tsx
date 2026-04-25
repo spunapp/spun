@@ -37,7 +37,7 @@ const CARD_FEATURES: Record<string, string[]> = {
     "Onboarding call",
   ],
   enterprise: [
-    "Everything in Pro, plus:",
+    "Everything in Growth, plus:",
     "Custom limits",
     "Multi-location support",
     "Multiple brands",
@@ -167,10 +167,10 @@ export default function PricingPage() {
                 Pricing
               </p>
               <h1 className="text-3xl md:text-4xl lg:text-[44px] font-bold tracking-tight text-gray-900 leading-[1.1]">
-                Start your 14-day free trial
+                Start your 5-day free trial
               </h1>
               <p className="mt-5 text-gray-500 text-[15px] leading-relaxed">
-                Cancel anytime before the 14 days are up. Credit card details
+                Cancel anytime before the 5 days are up. Credit card details
                 required.
               </p>
             </div>
@@ -215,7 +215,7 @@ export default function PricingPage() {
             <div className="grid md:grid-cols-3 gap-px bg-grid border border-grid">
               {/* Standard */}
               <div className="p-8 flex flex-col bg-white">
-                <h2 className="text-lg font-bold text-gray-900">Standard</h2>
+                <h2 className="text-lg font-bold text-gray-900">Starter</h2>
                 <p className="text-[13px] text-gray-500 mt-1">For getting started</p>
                 <div className="mt-6 mb-1">
                   <span className="text-3xl font-bold text-gray-900">{formatFromGBP(standardPriceGBP)}</span>
@@ -251,7 +251,7 @@ export default function PricingPage() {
                 <p className="text-[10px] font-semibold text-spun uppercase tracking-[0.15em] mb-4">
                   Most popular
                 </p>
-                <h2 className="text-lg font-bold text-gray-900">Pro</h2>
+                <h2 className="text-lg font-bold text-gray-900">Growth</h2>
                 <p className="text-[13px] text-gray-500 mt-1">Full marketing on autopilot</p>
                 <div className="mt-6 mb-1">
                   <span className="text-3xl font-bold text-gray-900">{formatFromGBP(proPriceGBP)}</span>
@@ -426,7 +426,7 @@ export default function PricingPage() {
                     <p className="text-gray-400 text-xs mt-1">per year</p>
                   </div>
                   <div className="rounded-md p-5 border border-grid bg-surface-alt">
-                    <p className="text-gray-500 text-xs mb-2">Spun Pro plan</p>
+                    <p className="text-gray-500 text-xs mb-2">Spun Growth plan</p>
                     <p className="text-gray-900 text-2xl font-bold">{format(spunAnnualCostLocal, { whole: true })}</p>
                     <p className="text-gray-400 text-xs mt-1">per year</p>
                   </div>
@@ -447,7 +447,7 @@ export default function PricingPage() {
                     Start saving today
                     <ArrowRight className="w-4 h-4" />
                   </button>
-                  <p className="text-gray-400 text-xs mt-3">14-day free trial. Cancel anytime.</p>
+                  <p className="text-gray-400 text-xs mt-3">5-day free trial. Cancel anytime.</p>
                 </div>
               </div>
             </div>
@@ -474,10 +474,10 @@ export default function PricingPage() {
                 <div className="grid grid-cols-[1fr_repeat(3,minmax(0,1fr))] min-w-[640px] border-b border-grid">
                   <div className="p-6" />
                   <div className="p-6 text-center border-l border-grid">
-                    <h3 className="text-gray-900 text-base font-semibold">Standard</h3>
+                    <h3 className="text-gray-900 text-base font-semibold">Starter</h3>
                   </div>
                   <div className="p-6 text-center border-l border-grid bg-spun-50/40">
-                    <h3 className="text-gray-900 text-base font-semibold">Pro</h3>
+                    <h3 className="text-gray-900 text-base font-semibold">Growth</h3>
                   </div>
                   <div className="p-6 text-center border-l border-grid">
                     <h3 className="text-gray-900 text-base font-semibold">Enterprise</h3>
@@ -549,7 +549,7 @@ export default function PricingPage() {
 
               <p className="text-gray-400 text-sm mt-8 text-center max-w-md mx-auto">
                 Secure payments powered by Stripe. Cancel anytime. All plans
-                include a 14-day free trial.
+                include a 5-day free trial.
               </p>
             </div>
           </div>

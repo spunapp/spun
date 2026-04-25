@@ -23,7 +23,7 @@ export interface TierConfig {
 
 export const TIERS: Record<SubscriptionTier, TierConfig> = {
   standard: {
-    name: "Standard",
+    name: "Starter",
     priceId: "price_1TIy8N86WuAcuQwgw5p0rlzw",
     price: 6999,
     messages: 100,
@@ -39,7 +39,7 @@ export const TIERS: Record<SubscriptionTier, TierConfig> = {
     multiPlatform: false,
   },
   pro: {
-    name: "Pro",
+    name: "Growth",
     priceId: "price_1TIy8l86WuAcuQwgpEXD3TsO",
     price: 11999,
     messages: 300,

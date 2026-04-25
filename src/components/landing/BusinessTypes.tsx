@@ -7,7 +7,7 @@ import {
   Scissors,
   Dumbbell,
   UtensilsCrossed,
-  Thermometer,
+  Zap,
   SprayCan,
   Car,
   PawPrint,
@@ -31,19 +31,19 @@ const initialVisible: Business[] = [
   { Icon: Wrench, label: "Plumbers" },
   { Icon: Scissors, label: "Salons" },
   { Icon: Dumbbell, label: "Gyms" },
-  { Icon: Thermometer, label: "HVAC" },
+  { Icon: Zap, label: "Electricians" },
   { Icon: UtensilsCrossed, label: "Restaurants" },
   { Icon: SprayCan, label: "Cleaning" },
-  { Icon: Car, label: "Auto shops" },
+  { Icon: Car, label: "Mechanics" },
 ];
 
 const initialPool: Business[] = [
   { Icon: PawPrint, label: "Vets" },
   { Icon: Camera, label: "Studios" },
   { Icon: Scale, label: "Law firms" },
-  { Icon: Home, label: "Realtors" },
+  { Icon: Home, label: "Estate agents" },
   { Icon: IceCreamCone, label: "Ice cream shops" },
-  { Icon: Store, label: "Bodegas" },
+  { Icon: Store, label: "Corner shops" },
 ];
 
 const VISIBLE = 8;

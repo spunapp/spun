@@ -384,7 +384,7 @@ export default function ChatClient() {
             </button>
             {tier === "standard" && (
               <a href="/pricing" className="text-xs text-gray-500 hover:text-gray-900 transition-colors">
-                Upgrade to Pro
+                Upgrade to Growth
               </a>
             )}
           </div>

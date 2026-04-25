@@ -9,8 +9,8 @@ import { useCurrency } from "@/lib/currency/context"
 // Pricing-answer base prices in GBP; rendered in the viewer's local currency
 // via useCurrency below.
 const FAQ_PRICES_GBP = {
-  starter: 99,
-  growth: 199,
+  starter: 69.99,
+  growth: 119.99,
 }
 
 function buildFaqs(starter: string, growth: string) {
@@ -24,7 +24,7 @@ function buildFaqs(starter: string, growth: string) {
       },
       {
         q: "Who is Spun for?",
-        a: "Local service businesses — plumbers, dentists, salons, gyms, HVAC, restaurants, chiropractors, auto shops, cleaning services. If you know you should be marketing but don't have the time or don't know where to start, Spun is for you.",
+        a: "Local service businesses — plumbers, dentists, salons, gyms, electricians, restaurants, chiropractors, mechanics, cleaning services. If you know you should be marketing but don't have the time or don't know where to start, Spun is for you.",
       },
       {
         q: "Do I need any marketing experience to use Spun?",
@@ -32,7 +32,7 @@ function buildFaqs(starter: string, growth: string) {
       },
       {
         q: "Is there a free trial?",
-        a: "Yes. You can try Spun risk-free. Cancel anytime before the trial ends.",
+        a: "Yes — every new account includes a 5-day free trial. Cancel anytime before it ends.",
       },
     ],
   },
@@ -131,8 +131,8 @@ export default function FaqPage() {
   const [openId, setOpenId] = useState<string | null>(null)
   const { formatFromGBP } = useCurrency()
   const FAQS = buildFaqs(
-    formatFromGBP(FAQ_PRICES_GBP.starter, { whole: true }),
-    formatFromGBP(FAQ_PRICES_GBP.growth, { whole: true })
+    formatFromGBP(FAQ_PRICES_GBP.starter),
+    formatFromGBP(FAQ_PRICES_GBP.growth)
   )
 
   return (

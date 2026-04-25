@@ -9,7 +9,7 @@ import { useCurrency } from "@/lib/currency/context";
 const plans = [
   {
     name: "Starter",
-    priceGBP: 99,
+    priceGBP: 69.99,
     description: "Get found on Google",
     features: [
       "Google listing management",
@@ -18,22 +18,22 @@ const plans = [
       "100 AI actions / month",
       "WhatsApp chat support",
     ],
-    cta: "Get started",
+    cta: "Start your free trial",
     featured: false,
   },
   {
     name: "Growth",
-    priceGBP: 199,
+    priceGBP: 119.99,
     description: "Full marketing on autopilot",
     features: [
       "Everything in Starter",
       "Google Ads management",
       "Facebook & Instagram posting",
       "Lead tracking & follow-ups",
-      "500 AI actions / month",
+      "300 AI actions / month",
       "Priority support",
     ],
-    cta: "Get started",
+    cta: "Start your free trial",
     featured: true,
   },
 ];
@@ -72,10 +72,13 @@ export function Pricing() {
                   <h3 className="text-lg font-bold text-gray-900">{name}</h3>
                   <p className="text-[13px] text-gray-500 mt-1">{description}</p>
 
-                  <div className="mt-6 mb-8">
-                    <span className="text-3xl font-bold text-gray-900">{formatFromGBP(priceGBP, { whole: true })}</span>
+                  <div className="mt-6 mb-2">
+                    <span className="text-3xl font-bold text-gray-900">{formatFromGBP(priceGBP)}</span>
                     <span className="text-[13px] text-gray-400">/mo</span>
                   </div>
+                  <p className="text-[12px] text-gray-500 mb-6">
+                    5-day free trial · cancel anytime
+                  </p>
 
                   <ul className="space-y-3 mb-8 flex-1">
                     {features.map((feature) => (
@@ -91,7 +94,7 @@ export function Pricing() {
                   </ul>
 
                   <Link
-                    href="/login"
+                    href="/pricing"
                     className={`w-full py-2.5 rounded-md font-medium text-[13px] transition text-center ${
                       featured
                         ? "bg-spun hover:bg-spun-dark text-white"
