@@ -16,6 +16,7 @@ import { useCurrency } from "@/lib/currency/context"
 // Test accounts that bypass the subscription check (matched by email)
 const TEST_ACCOUNT_EMAILS = new Set([
   "azahmed01@gmail.com",
+  "a@buxor.co",
 ])
 
 export default function ChatClient() {
