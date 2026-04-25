@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 import { useCurrency } from "@/lib/currency/context";
 
 // Demo ad-spend figure (GBP base) shown in the hero WhatsApp mockup. Rendered
@@ -122,6 +123,9 @@ function WhatsAppMockup() {
 }
 
 export function Hero() {
+  const { isSignedIn, isLoaded } = useUser();
+  const ctaHref = isLoaded && isSignedIn ? "/chat" : "/pricing";
+
   return (
     <section className="relative pt-32 pb-0 bg-surface overflow-hidden">
       <div className="mx-4 md:mx-16 lg:mx-20 px-4 md:px-14 lg:px-20 pb-20">
@@ -146,7 +150,7 @@ export function Hero() {
 
             <div className="mt-10 flex items-center gap-4">
               <Link
-                href="/login"
+                href={ctaHref}
                 className="bg-spun hover:bg-spun-dark text-white font-medium px-7 py-3 rounded-md text-sm transition"
               >
                 Get started

@@ -1,7 +1,13 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 
 export function Nav() {
+  const { isSignedIn, isLoaded } = useUser();
+  const ctaHref = isLoaded && isSignedIn ? "/chat" : "/pricing";
+
   return (
     <nav className="fixed top-0 w-full z-50 bg-surface/90 backdrop-blur-md">
       <div className="mx-4 md:mx-16 lg:mx-20">
@@ -27,7 +33,7 @@ export function Nav() {
           </div>
 
           <Link
-            href="/login"
+            href={ctaHref}
             className="bg-spun hover:bg-spun-dark text-white text-[13px] font-medium px-4 py-2 rounded-md transition"
           >
             Get started
