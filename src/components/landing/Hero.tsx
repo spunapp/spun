@@ -19,7 +19,7 @@ function buildMessages(dailyBudget: string) {
     },
     {
       from: "user",
-      text: "Hi! I own Bright Smile Dental in Oakland. We do general dentistry and cosmetic work.",
+      text: "Hi! I own Bright Smile Dental in Derby. We do general dentistry and cosmetic work.",
       delay: 2400,
     },
     {
@@ -34,7 +34,7 @@ function buildMessages(dailyBudget: string) {
     },
     {
       from: "spun",
-      text: `Done. I also want to launch a Google Ads campaign targeting "dentist near me" in Oakland — ${dailyBudget}/day. And I'll send review requests to your recent patients. Sound good?`,
+      text: `Done. I also want to launch a Google Ads campaign targeting "dentist near me" in Derby — ${dailyBudget}/day. And I'll send review requests to your recent patients. Sound good?`,
       delay: 7400,
     },
     {
