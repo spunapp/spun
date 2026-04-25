@@ -226,20 +226,35 @@ Anything sent **outside the 24-hour window** from the user's last message
 must be a pre-approved template. Templates we need (category in parens):
 
 1. `verification_code` (utility) — "Your Spun code: {{1}}. Expires in 10 minutes."
-2. `weekly_report_intro` (marketing) — "Hey {{1}}, your Spun week is ready. Calls: {{2}}, reviews: {{3}}, ad spend: {{4}}. Tap to see the full breakdown." + URL button to web version
-3. `campaign_launched` (utility) — triggered by `launch_campaign` tool
-4. `approval_needed_reminder` (utility) — nag after 24h if approval still pending
-5. `usage_limit_warning` (utility) — "You've used 90% of this month's AI responses. Top up or upgrade?"
-6. `integration_expiring` (utility) — "Your Google Ads connection expires in 3 days."
+2. `weekly_report_intro` (utility) — "Spun's weekly check-in: you have {{1}} new reviews and {{2}} leads waiting. Tap to see them." + URL button to web version.
+   *Categorised as utility, not marketing, because it reports concrete account activity — not a promotional nudge. Use this exact wording; Meta rejects vague "we miss you" style copy.*
+3. `dormant_activity_nudge` (marketing) — "Spun's monthly check-in: you have {{1}} new reviews and {{2}} leads waiting. Tap to see them."
+   *Marketing category because it's sent to users who haven't messaged in 30–90 days. Only send if there is genuine unread activity; never send to accounts with nothing happening.*
+4. `campaign_launched` (utility) — triggered by `launch_campaign` tool
+5. `approval_needed_reminder` (utility) — nag after 24h if approval still pending
+6. `usage_limit_warning` (utility) — "You've used 90% of this month's AI responses. Top up or upgrade?"
+7. `integration_expiring` (utility) — "Your Google Ads connection expires in 3 days."
 
-Each template takes 24–48h for Meta to approve. Submit all six in
-parallel on day 1.
+Each template takes 24–48h for Meta to approve. Submit all seven in
+parallel on day 1. Note that `dormant_activity_nudge` is a marketing
+template and requires explicit opt-in from the user — the primary-channel
+WhatsApp opt-in (`business.whatsappOptInAt`) covers this.
 
 ## 10. Web-app UX changes
 
 - **Settings → new section: "WhatsApp"** above Connected Platforms.
-  States: not linked / pending verification / linked. "Send me Spun
-  responses via WhatsApp" toggle (`business.whatsappOptInAt`).
+  States: not linked / pending verification / linked.
+- **Primary channel selector** (radio button, not a toggle):
+  > *"Where do you want Spun to reply?"*  `( ) WhatsApp  (●) Web`
+  - **Web** (default): AI replies appear in `/chat`. WhatsApp is silent
+    except for the Monday weekly-report template.
+  - **WhatsApp**: AI replies go to the user's WhatsApp thread. The web
+    `/chat` shows a **read-only mirror** — it queries Convex normally but
+    the input is disabled with a label "Replies go to your WhatsApp".
+  - Switching to WhatsApp sets `business.whatsappOptInAt` (GDPR consent
+    record); switching back clears it.
+  - Choosing WhatsApp-primary still gates on having verified their number —
+    the radio button is greyed out until `business.phoneVerifiedAt` is set.
 - **Onboarding tweak** (optional, v2) — at end of web onboarding, offer
   "Continue over WhatsApp?" with the verification flow inline.
 - **Chat sidebar** shows web and WhatsApp conversations interleaved,
@@ -266,27 +281,104 @@ for **Meta Platforms Inc.** — DPA commits us to 14 days' notice per
 
 ## 12. Manual setup on Meta's side (user must do this)
 
-These are account-level things that can't be automated. Concrete steps:
+These are account-level tasks that can't be automated. Do them in this
+order — Phases C–F can unblock the dev build immediately; B and H run in
+parallel and are gated on Meta review / business verification.
 
-1. **Meta Business verification** at [business.facebook.com](https://business.facebook.com).
-   Company registration docs, tax ID, address. 1–5 days.
-2. **Create WhatsApp Business Account (WABA)** under the verified business.
-3. **Add a phone number** — a number **not already registered to a
-   personal WhatsApp account** (you'd have to delete the personal account).
-   Most teams buy a fresh number. Verify via SMS / voice code.
-4. **Create / choose a Meta app**, add the **WhatsApp product**. Generate
-   a **system user** + long-lived access token.
-5. **Subscribe the app to webhook events** (`messages`, `message_status`)
-   pointing at `https://spun.bot/api/webhooks/whatsapp` with the verify
-   token.
-6. **Submit templates** (the six listed in §9) in Meta Business Manager
-   → WhatsApp Manager → Message Templates.
-7. **Set up Display Name** ("Spun") — Meta reviews, sometimes rejects,
-   re-submit with proof of business ownership of the name.
+### Prepare before you start (15 min)
 
-During dev: use Meta's **test number** (generated free in the app
-dashboard) which skips 1, 3, and 7 and can send to up to 5 manually-added
-test recipients.
+Gather these before touching Meta:
+
+- Spun's **Companies House registration number** and registered office address
+- **Certificate of Incorporation PDF** (free download from Companies House)
+- A **business email** on `spun.bot` (e.g. `team@spun.bot`)
+- Your **passport or driving licence** (sometimes asked in Phase B)
+- If Spun isn't registered yet: £12 + 24h via gov.uk/limited-company-formation
+  (use gov.uk directly, not a formation agent)
+
+---
+
+### Phase A — Meta Business Portfolio (5 min)
+
+1. Sign in to **[business.facebook.com](https://business.facebook.com)** with
+   your personal Facebook account (required as admin — not user-facing)
+2. **Create Business Portfolio** → Business name: `Spun` (match Companies House)
+3. Your name + a Spun email (e.g. `team@spun.bot`)
+4. Submit
+
+### Phase B — Business verification (3–5 days, run in parallel with everything else)
+
+5. Business Settings → Business Info → **Start Verification**
+6. Upload: legal name, registered address, phone, website, Certificate of
+   Incorporation PDF
+7. Meta may add extra hoops: domain TXT record on `spun.bot` DNS, utility bill
+   at the registered address, or a director's photo ID
+8. *(Gating check: your domain `spun.bot` must be live — it is. Vercel DNS
+   makes the TXT record trivial.)*
+
+### Phase C — Create WhatsApp Business Account (immediate)
+
+9. Business Settings → **WhatsApp Accounts** → Add → Create
+10. Name: `Spun`
+11. **Skip "add phone number"** — Meta gives a free test number in Phase D
+    which is better for dev
+
+### Phase D — Meta App with WhatsApp product (10 min)
+
+12. **[developers.facebook.com](https://developers.facebook.com)** → My Apps →
+    **Create App** → Type: **Business**, link to the Spun Business Portfolio
+13. App dashboard → **Add Product** → WhatsApp → Set Up
+14. Meta generates a **test phone number** automatically (~`+1 555 …`). Add
+    **your UK mobile** as a test recipient (max 5 total)
+
+### Phase E — Gather the six env vars I need (15 min)
+
+15. **System User token** (server uses this to send messages):
+    - Business Settings → System Users → Add → name `spun-cloud-api`, role **Admin**
+    - Click the user → **Generate New Token** → select the Spun app →
+      permissions: **`whatsapp_business_messaging`** + **`whatsapp_business_management`**
+      → Expiry: **Never**
+    - Copy token → this is **`META_ACCESS_TOKEN`**
+16. From WhatsApp → API Setup, copy:
+    - **`META_PHONE_NUMBER_ID`** (the test number's ID, swapped in Phase H)
+    - **`META_WABA_ID`** (WhatsApp Business Account ID)
+17. From App → Settings → Basic, copy:
+    - **`META_APP_ID`**
+    - **`META_APP_SECRET`** (click Show)
+18. Invent any random 32+ char string → **`META_WEBHOOK_VERIFY_TOKEN`**
+    (shared secret for the GET webhook handshake)
+
+**Drop all six into Vercel + Convex secrets and tell me. That's the handoff
+that starts Phase 1 of the build.**
+
+### Phase F — Webhook subscription (5 min)
+
+19. App → WhatsApp → **Configuration** → Webhooks → Edit
+20. Callback URL: `https://spun.bot/api/webhooks/whatsapp`
+21. Verify Token: paste **`META_WEBHOOK_VERIFY_TOKEN`**
+22. Subscribe fields: **`messages`**, **`message_status`**
+23. Click **Verify and Save**, then **Test** to confirm Meta can reach the server
+
+*Note: the webhook route must be deployed before Step 23. I'll have it live
+before you reach this step.*
+
+### Phase G — Templates (24–48h Meta approval each, submit in parallel)
+
+24. Business Manager → **WhatsApp Manager** → Message Templates → Create Template
+25. Submit all 6 templates from §9 in one sitting (see §9 for approved wording)
+
+### Phase H — Production phone number (after Phase B is done)
+
+26. Buy a UK mobile number **never registered to a personal WhatsApp account**.
+    Options: virtual number from Twilio / 8x8, or a fresh giffgaff/Smarty SIM (£5–£10)
+27. WABA → Phone Numbers → **Add phone number** → verify via SMS or voice code
+28. Apply for **Display Name** "Spun" — domain ownership of `spun.bot` is
+    sufficient proof
+29. Once verified, copy the new **`META_PHONE_NUMBER_ID`** and swap it into the
+    env vars on Vercel
+
+*Phase H is gated on Phase B (business verification). During dev the test
+number from Phase D handles everything.*
 
 ## 13. Phased delivery
 
@@ -319,27 +411,40 @@ Total build time once verification is in flight: ~1 week of focused work.
 
 ## 15. Pricing note
 
-Meta charges per **24-hour conversation window**, not per message.
+Meta charges per **24-hour conversation window**, not per message. Back-and-forth
+in the same 24h counts as one conversation — which makes pricing surprisingly
+forgiving for an AI assistant.
+
 Current UK pricing:
 
 - Service conversations (user-initiated): free tier up to 1,000/month, then £0.01–0.03
 - Utility conversations (template-based, service-related): £0.01–0.03
 - Marketing conversations (template-based, promotional): £0.04–0.09
 
-Weekly reports are **utility**, not marketing, if worded as status
-updates (which they are). Budget ~£0.05/user/month for the average Spun
-user on Standard.
+### Inactivity tiers and send rules
 
-## 16. Open questions to confirm before implementation
+| Status | Definition | What we send | Template category |
+|--------|-----------|-------------|------------------|
+| **Active** | Messaged in the last **30 days** | Weekly report every Monday | Utility (~£0.02) |
+| **Dormant** | 30–90 days no activity | Skip weekly report. One monthly nudge **only if there is genuine unread activity** (new reviews, leads, etc.) | Marketing (~£0.06) |
+| **Inactive** | 90+ days no activity | Pause all proactive messages. Transactional alerts only (payment failed, subscription renewing) | Utility |
 
-1. Meta Cloud API OK, or any reason to prefer Twilio? (Sometimes chosen
-   for built-in SMS fallback.)
-2. Who owns the Meta Business verification — personal or a Spun company
-   entity? Affects phone-number ownership and template display name.
-3. During dev: which `+44` / `+1` test-recipient numbers go on the
-   allowlist? (Need yours + any beta testers.)
-4. Weekly reports — send even if user has been inactive? (Affects
-   utility-vs-marketing template approval wording.)
-5. Settings toggle default — if a user links WhatsApp, should web
-   replies *also* go to WhatsApp, or is WhatsApp-linking = "primary
-   channel is WhatsApp now"?
+*30 days catches holidays and busy periods without overcommunicating. 90 days
+signals a churned user — more nudges at that point are counterproductive and
+burn margin.*
+
+**Cost model**: budget ~£0.05/user/month for an average active Spun user on
+WhatsApp-primary. Dormant users who get a monthly nudge add ~£0.06 each that
+month. Inactive users cost nothing.
+
+## 16. Decisions record
+
+All open questions resolved 2026-04-25. Recorded here for reference.
+
+| # | Question | Decision |
+|---|---------|---------|
+| 1 | Meta Cloud API vs Twilio? | **Meta Cloud API direct.** No reason to pay Twilio's markup — same verification overhead, cleaner webhooks. |
+| 2 | Business verification entity? | **Spun as a UK Limited company.** Meta requires Companies House cert + registered address. See §12 Phase B for what to gather. |
+| 3 | Test-recipient allowlist? | **Your UK mobile** is the dev test recipient. Provide the number when Phase D is complete. |
+| 4 | Weekly reports to inactive users? | **No.** Three-tier model: Active (0–30 days) gets Monday reports; Dormant (30–90 days) gets at most one monthly nudge if there's real activity; Inactive (90+ days) gets nothing except transactional alerts. See §15 for full breakdown. |
+| 5 | Primary channel model? | **Radio button, not a toggle**: user picks WhatsApp _or_ Web as their reply channel. Web is always available as a read-only mirror. No "send to both" — avoids doubling Meta costs. |
