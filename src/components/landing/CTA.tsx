@@ -1,6 +1,12 @@
+"use client";
+
 import Link from "next/link";
+import { useUser } from "@clerk/nextjs";
 
 export function CTA() {
+  const { isSignedIn, isLoaded } = useUser();
+  const ctaHref = isLoaded && isSignedIn ? "/chat" : "/pricing";
+
   return (
     <section className="bg-surface">
       <div className="mx-4 md:mx-16 lg:mx-20">
@@ -17,7 +23,7 @@ export function CTA() {
               </p>
             </div>
             <Link
-              href="/login"
+              href={ctaHref}
               className="bg-spun hover:bg-spun-dark text-white font-medium px-8 py-3 rounded-md text-sm transition shrink-0"
             >
               Automate your business
