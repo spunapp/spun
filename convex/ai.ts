@@ -161,7 +161,7 @@ export const chat = action({
 
       if (!limitCheck.allowed && limitCheck.limitType === "messages") {
         if (credits.messageCredits <= 0) {
-          const limitMsg = `You've used all ${limitCheck.limit} AI responses this month on your ${tier === "standard" ? "Standard" : "Pro"} plan. Buy a credit pack for 100 more responses, or upgrade your plan.`
+          const limitMsg = `You've used all ${limitCheck.limit} AI responses this month on your ${tier === "standard" ? "Starter" : "Growth"} plan. Buy a credit pack for 100 more responses, or upgrade your plan.`
           await ctx.runMutation(api.messages.send, {
             conversationId: args.conversationId,
             role: "assistant",

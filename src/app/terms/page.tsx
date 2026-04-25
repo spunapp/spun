@@ -53,7 +53,7 @@ export default function TermsPage() {
         on our <Link href="/pricing">pricing page</Link>.
       </p>
       <ul>
-        <li><strong>Free trial</strong> — new accounts include a 14-day free trial. You can cancel before the trial ends at no charge.</li>
+        <li><strong>Free trial</strong> — new accounts include a 5-day free trial. You can cancel before the trial ends at no charge.</li>
         <li><strong>Billing</strong> — subscriptions renew automatically each month or year, charged to your payment method via Stripe, until you cancel.</li>
         <li><strong>Taxes</strong> — prices exclude VAT and other applicable taxes, which will be added at checkout.</li>
         <li><strong>Price changes</strong> — we may change prices with at least 30 days&rsquo; notice. Changes take effect at the start of your next billing cycle.</li>
